@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { pingDatabase } from '../db/pool.js';
 import { validateRequest } from '../validate.js';
 
 const healthQuerySchema = z
@@ -20,9 +21,19 @@ export async function registerHealthRoutes(app: FastifyInstance): Promise<void> 
     };
 
     if (query.verbose) {
+      let database: 'up' | 'down' | 'skipped' = 'skipped';
+      if (app.db) {
+        try {
+          database = (await pingDatabase(app.db)) ? 'up' : 'down';
+        } catch {
+          database = 'down';
+        }
+      }
+
       return {
         ...payload,
         uptimeSeconds: process.uptime(),
+        database,
       };
     }
 

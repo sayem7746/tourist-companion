@@ -1,6 +1,7 @@
 import Fastify, { type FastifyInstance } from 'fastify';
 import { ZodError } from 'zod';
 import type { AppConfig } from './config.js';
+import { registerDb } from './db/pool.js';
 import { AppError, NotFoundError } from './errors.js';
 import { registerHealthRoutes } from './routes/health.js';
 
@@ -10,6 +11,8 @@ export function buildApp(config: AppConfig): FastifyInstance {
       level: config.LOG_LEVEL,
     },
   });
+
+  void registerDb(app, config);
 
   app.setNotFoundHandler((request) => {
     throw new NotFoundError(`Route ${request.method} ${request.url} not found`);

@@ -13,6 +13,19 @@ Malaysia tourist companion MVP: trip setup, KLIA arrival help, AI concierge, nea
 | `docs/` | Product and engineering documentation |
 | `infra/` | CI, environments, and deployment config |
 
+## Local PostgreSQL
+
+```bash
+docker compose -f infra/docker-compose.yml up -d
+cd backend
+cp .env.example .env
+npm install
+npm run db:migrate
+npm run db:seed
+```
+
+See `backend/README.md` for schema, migrate, and seed details.
+
 ## Status
 
 Foundation work is in progress. See the Asana project **Tourist companion**.

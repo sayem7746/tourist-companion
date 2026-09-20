@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: tourist-companion-postgres
+    environment:
+      POSTGRES_USER: tourist
+      POSTGRES_PASSWORD: tourist
+      POSTGRES_DB: tourist_companion
+    ports:
+      - "5432:5432"
+    volumes:
+      - tourist_companion_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tourist -d tourist_companion"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  tourist_companion_pgdata:

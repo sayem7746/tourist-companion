@@ -39,4 +39,15 @@ describe('GET /health', () => {
     const body = response.json() as { error: { code: string } };
     expect(body.error.code).toBe('VALIDATION_ERROR');
   });
+
+  it('reports skipped database when DATABASE_URL is unset', async () => {
+    const response = await app.inject({
+      method: 'GET',
+      url: '/health?verbose=true',
+    });
+
+    expect(response.statusCode).toBe(200);
+    const body = response.json() as { database: string };
+    expect(body.database).toBe('skipped');
+  });
 });
