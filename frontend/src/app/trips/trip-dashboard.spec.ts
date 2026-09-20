@@ -5,11 +5,15 @@ import { provideRouter } from '@angular/router';
 import { environment } from '../../environments/environment';
 import {
   buildTimeline,
+  findTempTimeSlot,
   formatTime12h,
   highlightCount,
   inclusiveDayCount,
   itineraryIsEmpty,
   localTodayIso,
+  movedItemIds,
+  neighborItem,
+  nextActivityTimes,
   selectFeaturedTrip,
   selectPlanDayNumber,
   TripDashboard,
@@ -168,6 +172,14 @@ describe('trip dashboard helpers', () => {
     expect(rows[2]).toEqual(jasmine.objectContaining({ type: 'commute', minutes: 15 }));
     expect(rows[3]).toEqual(jasmine.objectContaining({ type: 'block' }));
   });
+
+  it('suggests a gap after the last stop and finds a free parking slot', () => {
+    const items = filledPlan('trip-1').days[0].items;
+    expect(nextActivityTimes(items)).toEqual({ startTime: '15:30', endTime: '17:00' });
+    expect(findTempTimeSlot(items)?.startTime).toBe('23:58');
+    expect(neighborItem(items, 'a1', 'down')?.id).toBe('m1');
+    expect(movedItemIds(['a1', 'm1', 'n1'], 'a1', 'down')).toEqual(['m1', 'a1', 'n1']);
+  });
 });
 
 describe('TripDashboard', () => {
@@ -260,6 +272,10 @@ describe('TripDashboard', () => {
     expect(compiled.textContent).toContain('Partner referrals will appear');
     expect(compiled.querySelector('a[href="/trips/new"]')?.textContent).toContain('Plan a trip');
     expect(compiled.querySelector('a[href="/arrival"]')?.textContent).toContain('Arrival checklist');
+    expect(compiled.textContent).toContain('Add stop');
+    expect(compiled.textContent).toContain('Move up');
+    expect(compiled.textContent).toContain('Replace');
+    expect(compiled.textContent).toContain('Remove');
     expect(localTodayIso().length).toBe(10);
   });
 
@@ -294,5 +310,141 @@ describe('TripDashboard', () => {
 
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.textContent).toContain('Could not load your trips');
+  });
+
+  function loadFilledPlan(): HTMLElement {
+    fixture.detectChanges();
+    http.expectOne(`${environment.apiBaseUrl}/trips`).flush({
+      trips: [trip({ id: 'trip-2', destination: 'Kuala Lumpur', startDate: '2099-02-01', endDate: '2099-02-07' })],
+    });
+    http.expectOne(`${environment.apiBaseUrl}/trips/trip-2/places`).flush({
+      places: [
+        {
+          tripId: 'trip-2',
+          placeId: 'my-food-madam-kwan',
+          catalogId: 'cat-1',
+          name: 'Madam Kwan’s (Suria KLCC)',
+          category: 'food' as const,
+          city: 'Kuala Lumpur',
+          address: null,
+          latitude: 3.15,
+          longitude: 101.71,
+          notes: null,
+          sortOrder: 0,
+        },
+      ],
+    });
+    http.expectOne(`${environment.apiBaseUrl}/trips/trip-2/itinerary`).flush({ itinerary: filledPlan('trip-2') });
+    fixture.detectChanges();
+    return fixture.nativeElement as HTMLElement;
+  }
+
+  it('adds a stop with POST /itinerary/items', () => {
+    const compiled = loadFilledPlan();
+    const dashboard = fixture.componentInstance;
+    dashboard.openAdd();
+    dashboard.draftTitle = 'KLCC Park';
+    dashboard.saveEditor();
+
+    const req = http.expectOne(`${environment.apiBaseUrl}/trips/trip-2/itinerary/items`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.withCredentials).toBeTrue();
+    expect(req.request.body).toEqual(
+      jasmine.objectContaining({
+        dayId: 'day-1',
+        kind: 'activity',
+        title: 'KLCC Park',
+        startTime: '15:30',
+        endTime: '17:00',
+      }),
+    );
+    const nextPlan = filledPlan('trip-2');
+    nextPlan.days[0].items = [
+      ...nextPlan.days[0].items,
+      item({
+        id: 'a2',
+        kind: 'activity',
+        startTime: '15:30',
+        endTime: '17:00',
+        title: 'KLCC Park',
+      }),
+    ];
+    req.flush({ itinerary: nextPlan });
+    fixture.detectChanges();
+    expect(compiled.textContent).toContain('KLCC Park');
+    expect(compiled.textContent).not.toContain('Add a stop');
+  });
+
+  it('replaces a stop with PATCH /itinerary/items/:id', () => {
+    const compiled = loadFilledPlan();
+    const first = filledPlan('trip-2').days[0].items[0];
+    const dashboard = fixture.componentInstance;
+    dashboard.openReplace(first);
+    dashboard.draftTitle = 'Suria KLCC';
+    dashboard.saveEditor();
+
+    const req = http.expectOne(`${environment.apiBaseUrl}/trips/trip-2/itinerary/items/a1`);
+    expect(req.request.method).toBe('PATCH');
+    expect(req.request.body).toEqual(
+      jasmine.objectContaining({
+        title: 'Suria KLCC',
+        kind: 'activity',
+        startTime: '09:30',
+        endTime: '11:00',
+      }),
+    );
+    const nextPlan = filledPlan('trip-2');
+    nextPlan.days[0].items[0] = { ...nextPlan.days[0].items[0], title: 'Suria KLCC' };
+    req.flush({ itinerary: nextPlan });
+    fixture.detectChanges();
+    expect(compiled.textContent).toContain('Suria KLCC');
+  });
+
+  it('removes a stop with DELETE /itinerary/items/:id', () => {
+    const compiled = loadFilledPlan();
+    const remove = Array.from(compiled.querySelectorAll('button')).find((button) => button.textContent?.trim() === 'Remove');
+    remove?.click();
+
+    const req = http.expectOne(`${environment.apiBaseUrl}/trips/trip-2/itinerary/items/a1`);
+    expect(req.request.method).toBe('DELETE');
+    expect(req.request.withCredentials).toBeTrue();
+    const nextPlan = filledPlan('trip-2');
+    nextPlan.days[0].items = nextPlan.days[0].items.filter((entry) => entry.id !== 'a1');
+    req.flush({ itinerary: nextPlan });
+    fixture.detectChanges();
+    expect(compiled.textContent).not.toContain('Petronas Twin Towers');
+  });
+
+  it('moves a stop by swapping times then reordering', () => {
+    loadFilledPlan();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const moveDown = Array.from(compiled.querySelectorAll('button')).find((button) => button.textContent?.trim() === 'Move down');
+    moveDown?.click();
+
+    const park = http.expectOne(`${environment.apiBaseUrl}/trips/trip-2/itinerary/items/a1`);
+    expect(park.request.method).toBe('PATCH');
+    expect(park.request.body).toEqual({ startTime: '23:58', endTime: '23:59' });
+    park.flush({ itinerary: filledPlan('trip-2') });
+
+    const neighbor = http.expectOne(`${environment.apiBaseUrl}/trips/trip-2/itinerary/items/m1`);
+    expect(neighbor.request.body).toEqual({ startTime: '09:30', endTime: '11:00' });
+    neighbor.flush({ itinerary: filledPlan('trip-2') });
+
+    const swapped = http.expectOne(`${environment.apiBaseUrl}/trips/trip-2/itinerary/items/a1`);
+    expect(swapped.request.body).toEqual({ startTime: '12:00', endTime: '13:00' });
+    swapped.flush({ itinerary: filledPlan('trip-2') });
+
+    const reorder = http.expectOne(`${environment.apiBaseUrl}/trips/trip-2/itinerary/reorder`);
+    expect(reorder.request.method).toBe('POST');
+    expect(reorder.request.body).toEqual({ dayId: 'day-1', itemIds: ['m1', 'a1', 'n1'] });
+    const nextPlan = filledPlan('trip-2');
+    nextPlan.days[0].items = [
+      { ...nextPlan.days[0].items[1], startTime: '09:30', endTime: '11:00', sortOrder: 0 },
+      { ...nextPlan.days[0].items[0], startTime: '12:00', endTime: '13:00', sortOrder: 1 },
+      nextPlan.days[0].items[2],
+    ];
+    reorder.flush({ itinerary: nextPlan });
+    fixture.detectChanges();
+    expect(compiled.textContent).toContain('Petronas Twin Towers');
   });
 });

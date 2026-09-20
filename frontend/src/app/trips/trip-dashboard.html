@@ -86,6 +86,32 @@
             @if (row.directionsHref) {
               <a class="directions" [href]="row.directionsHref" target="_blank" rel="noreferrer">Directions</a>
             }
+            @if (row.item && !generating() && !itineraryPending()) {
+              <div class="edit-pills commute-edits" role="group" [attr.aria-label]="'Edit ' + (row.title || 'travel')">
+                <button
+                  type="button"
+                  class="chip"
+                  [disabled]="editBusy() || !canMove(row.item, 'up')"
+                  (click)="moveItem(row.item, 'up')"
+                >
+                  Move up
+                </button>
+                <button
+                  type="button"
+                  class="chip"
+                  [disabled]="editBusy() || !canMove(row.item, 'down')"
+                  (click)="moveItem(row.item, 'down')"
+                >
+                  Move down
+                </button>
+                <button type="button" class="chip" [disabled]="editBusy()" (click)="openReplace(row.item)">
+                  Replace
+                </button>
+                <button type="button" class="chip chip-danger" [disabled]="editBusy()" (click)="removeItem(row.item)">
+                  Remove
+                </button>
+              </div>
+            }
           </li>
         } @else {
           <li class="block" [attr.data-kind]="row.item.kind">
@@ -116,11 +142,115 @@
                 }
                 <a class="btn btn-secondary" routerLink="/concierge">Ask concierge</a>
               </div>
+              @if (!generating() && !itineraryPending()) {
+                <div class="edit-pills" role="group" [attr.aria-label]="'Edit ' + itemTitle(row.item)">
+                  <button
+                    type="button"
+                    class="chip"
+                    [disabled]="editBusy() || !canMove(row.item, 'up')"
+                    (click)="moveItem(row.item, 'up')"
+                  >
+                    Move up
+                  </button>
+                  <button
+                    type="button"
+                    class="chip"
+                    [disabled]="editBusy() || !canMove(row.item, 'down')"
+                    (click)="moveItem(row.item, 'down')"
+                  >
+                    Move down
+                  </button>
+                  <button type="button" class="chip" [disabled]="editBusy()" (click)="openReplace(row.item)">
+                    Replace
+                  </button>
+                  <button type="button" class="chip chip-danger" [disabled]="editBusy()" (click)="removeItem(row.item)">
+                    Remove
+                  </button>
+                </div>
+              }
             </article>
           </li>
         }
       }
     </ol>
+
+    @if (!itineraryPending() && !generating() && itinerary()) {
+      <button type="button" class="btn add-stop" [disabled]="editBusy()" (click)="openAdd()">Add stop</button>
+    }
+
+    @if (editError()) {
+      <p class="error" role="alert">{{ editError() }}</p>
+    }
+
+    @if (editorOpen()) {
+      <article class="plan-card editor-card">
+        <h3>{{ editorMode() === 'add' ? 'Add a stop' : 'Replace stop' }}</h3>
+        <form (ngSubmit)="saveEditor()">
+          <div class="kind-pills" role="group" aria-label="Stop type">
+            @for (option of kinds; track option.kind) {
+              <button
+                type="button"
+                class="chip"
+                [class.chip-primary]="draftKind === option.kind"
+                [attr.aria-pressed]="draftKind === option.kind"
+                (click)="setDraftKind(option.kind)"
+              >
+                {{ option.label }}
+              </button>
+            }
+          </div>
+          <label>
+            Title
+            <input name="stopTitle" type="text" maxlength="200" [(ngModel)]="draftTitle" />
+          </label>
+          <div class="time-row">
+            <label>
+              Start
+              <input name="stopStart" type="time" required [(ngModel)]="draftStart" />
+            </label>
+            <label>
+              End
+              <input name="stopEnd" type="time" required [(ngModel)]="draftEnd" />
+            </label>
+          </div>
+          @if (savedPlaces().length) {
+            <p class="meta">Replace with a saved place</p>
+            <div class="kind-pills" role="group" aria-label="Saved places">
+              <button
+                type="button"
+                class="chip"
+                [class.chip-primary]="draftPlaceId === ''"
+                (click)="setDraftPlace('')"
+              >
+                None
+              </button>
+              @for (place of savedPlaces(); track place.placeId) {
+                <button
+                  type="button"
+                  class="chip"
+                  [class.chip-primary]="draftPlaceId === place.placeId"
+                  (click)="setDraftPlace(place.placeId)"
+                >
+                  {{ place.name }}
+                </button>
+              }
+            </div>
+          }
+          <label>
+            Notes
+            <textarea name="stopNotes" rows="2" maxlength="2000" [(ngModel)]="draftNotes"></textarea>
+          </label>
+          <div class="item-actions">
+            <button type="submit" class="btn" [disabled]="editBusy()">
+              {{ editorMode() === 'add' ? 'Add to plan' : 'Save replacement' }}
+            </button>
+            <button type="button" class="btn btn-secondary" [disabled]="editBusy()" (click)="closeEditor()">
+              Cancel
+            </button>
+          </div>
+        </form>
+      </article>
+    }
   }
 
   <h2>Saved places</h2>
@@ -135,7 +265,12 @@
       @for (place of savedPlaces(); track place.placeId) {
         <li>
           <a [routerLink]="['/explore', place.placeId]">{{ place.name }}</a>
-          <button type="button" class="secondary" (click)="unsave(place)">Remove</button>
+          <div class="saved-actions">
+            <button type="button" class="chip" [disabled]="editBusy() || !featured()" (click)="addSavedPlace(place)">
+              Add to plan
+            </button>
+            <button type="button" class="secondary" (click)="unsave(place)">Remove</button>
+          </div>
         </li>
       }
     </ul>

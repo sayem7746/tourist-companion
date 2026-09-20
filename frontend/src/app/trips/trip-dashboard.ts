@@ -1,13 +1,20 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { concat, last } from 'rxjs';
 import {
   buildTimeline,
+  findTempTimeSlot,
   formatPlanDate,
   formatTime12h,
   highlightCount,
   inclusiveDayCount,
   itineraryIsEmpty,
   localTodayIso,
+  movedItemIds,
+  neighborItem,
+  nextActivityTimes,
+  orderedDayItems,
   selectFeaturedTrip,
   selectPlanDayNumber,
   Trip,
@@ -15,30 +22,48 @@ import {
   type Itinerary,
   type ItineraryDay,
   type ItineraryItem,
+  type ItineraryItemKind,
   type SavedTripPlace,
 } from './trip.service';
 
 export {
   buildTimeline,
+  findTempTimeSlot,
   formatPlanDate,
   formatTime12h,
   highlightCount,
   inclusiveDayCount,
   itineraryIsEmpty,
   localTodayIso,
+  movedItemIds,
+  neighborItem,
+  nextActivityTimes,
+  orderedDayItems,
   selectFeaturedTrip,
   selectPlanDayNumber,
 } from './trip.service';
 
+export const KIND_PILLS: { kind: ItineraryItemKind; label: string }[] = [
+  { kind: 'activity', label: 'Activity' },
+  { kind: 'meal', label: 'Meal' },
+  { kind: 'travel', label: 'Travel' },
+  { kind: 'note', label: 'Note' },
+];
+
+export function clockValue(value: string): string {
+  return value.slice(0, 5);
+}
+
 @Component({
   selector: 'app-trip-dashboard',
-  imports: [RouterLink],
+  imports: [FormsModule, RouterLink],
   templateUrl: './trip-dashboard.html',
   styleUrl: './trip-dashboard.css',
 })
 export class TripDashboard implements OnInit {
   private readonly tripsApi = inject(TripService);
 
+  readonly kinds = KIND_PILLS;
   readonly pending = signal(true);
   readonly loadError = signal('');
   readonly featured = signal<Trip | null>(null);
@@ -51,6 +76,19 @@ export class TripDashboard implements OnInit {
   readonly itineraryError = signal('');
   readonly generating = signal(false);
   readonly selectedDayNumber = signal(1);
+  readonly editBusy = signal(false);
+  readonly editError = signal('');
+  readonly editorOpen = signal(false);
+  readonly editorMode = signal<'add' | 'replace'>('add');
+
+  draftKind: ItineraryItemKind = 'activity';
+  draftTitle = '';
+  draftStart = '09:30';
+  draftEnd = '11:00';
+  draftPlaceId = '';
+  draftNotes = '';
+  draftDayId = '';
+  draftItemId: string | null = null;
 
   readonly selectedDay = computed<ItineraryDay | null>(() => {
     const plan = this.itinerary();
@@ -71,6 +109,7 @@ export class TripDashboard implements OnInit {
     this.loadError.set('');
     this.savedError.set('');
     this.itineraryError.set('');
+    this.editError.set('');
     this.tripsApi.list().subscribe({
       next: ({ trips }) => {
         const today = localTodayIso();
@@ -109,6 +148,7 @@ export class TripDashboard implements OnInit {
 
   selectDay(dayNumber: number): void {
     this.selectedDayNumber.set(dayNumber);
+    this.closeEditor();
   }
 
   formatTime(hhmm: string): string {
@@ -121,6 +161,10 @@ export class TripDashboard implements OnInit {
 
   itemTitle(item: ItineraryItem): string {
     return item.title?.trim() || 'Planned stop';
+  }
+
+  canMove(item: ItineraryItem, direction: 'up' | 'down'): boolean {
+    return neighborItem(this.selectedDay()?.items ?? [], item.id, direction) != null;
   }
 
   generate(): void {
@@ -140,6 +184,157 @@ export class TripDashboard implements OnInit {
         this.itineraryError.set('Could not generate a plan. Try again.');
       },
     });
+  }
+
+  openAdd(): void {
+    const day = this.selectedDay();
+    if (!day) {
+      return;
+    }
+    const times = nextActivityTimes(day.items);
+    this.editorMode.set('add');
+    this.draftItemId = null;
+    this.draftDayId = day.id;
+    this.draftKind = 'activity';
+    this.draftTitle = '';
+    this.draftStart = times.startTime;
+    this.draftEnd = times.endTime;
+    this.draftPlaceId = '';
+    this.draftNotes = '';
+    this.editorOpen.set(true);
+    this.editError.set('');
+  }
+
+  openReplace(item: ItineraryItem): void {
+    this.editorMode.set('replace');
+    this.draftItemId = item.id;
+    this.draftDayId = item.dayId;
+    this.draftKind = item.kind;
+    this.draftTitle = item.title ?? '';
+    this.draftStart = item.startTime;
+    this.draftEnd = item.endTime;
+    this.draftPlaceId = item.placeId ?? '';
+    this.draftNotes = item.notes ?? '';
+    this.editorOpen.set(true);
+    this.editError.set('');
+  }
+
+  closeEditor(): void {
+    this.editorOpen.set(false);
+    this.draftItemId = null;
+  }
+
+  setDraftKind(kind: ItineraryItemKind): void {
+    this.draftKind = kind;
+  }
+
+  setDraftPlace(placeId: string): void {
+    this.draftPlaceId = placeId;
+    const place = this.savedPlaces().find((entry) => entry.placeId === placeId);
+    if (place && !this.draftTitle.trim()) {
+      this.draftTitle = place.name;
+    }
+  }
+
+  addSavedPlace(place: SavedTripPlace): void {
+    const day = this.selectedDay();
+    if (!day) {
+      return;
+    }
+    this.openAdd();
+    this.setDraftPlace(place.placeId);
+    this.draftTitle = place.name;
+  }
+
+  saveEditor(): void {
+    const trip = this.featured();
+    const day = this.selectedDay();
+    if (!trip || !day) {
+      return;
+    }
+    const startTime = clockValue(this.draftStart);
+    const endTime = clockValue(this.draftEnd);
+    if (endTime <= startTime) {
+      this.editError.set('End time must be after start time.');
+      return;
+    }
+    const title = this.draftTitle.trim();
+    if (!title && !this.draftPlaceId) {
+      this.editError.set('Add a title or pick a saved place.');
+      return;
+    }
+    const body = {
+      kind: this.draftKind,
+      startTime,
+      endTime,
+      title: title || null,
+      placeId: this.draftPlaceId || null,
+      notes: this.draftNotes.trim() || null,
+    };
+    if (this.editorMode() === 'add') {
+      this.runEdit(
+        this.tripsApi.createItem(trip.id, { ...body, dayId: this.draftDayId || day.id }),
+        'Could not add that stop.',
+        true,
+      );
+      return;
+    }
+    if (!this.draftItemId) {
+      return;
+    }
+    this.runEdit(
+      this.tripsApi.updateItem(trip.id, this.draftItemId, { ...body, dayId: this.draftDayId || day.id }),
+      'Could not replace that stop.',
+      true,
+    );
+  }
+
+  removeItem(item: ItineraryItem): void {
+    const trip = this.featured();
+    if (!trip) {
+      return;
+    }
+    this.runEdit(this.tripsApi.deleteItem(trip.id, item.id), 'Could not remove that stop.', item.id === this.draftItemId);
+  }
+
+  moveItem(item: ItineraryItem, direction: 'up' | 'down'): void {
+    const trip = this.featured();
+    const day = this.selectedDay();
+    const neighbor = neighborItem(day?.items ?? [], item.id, direction);
+    if (!trip || !day || !neighbor) {
+      return;
+    }
+    const parked = findTempTimeSlot(day.items.filter((entry) => entry.id !== item.id));
+    if (!parked) {
+      this.editError.set('Could not move that stop. The day is fully booked.');
+      return;
+    }
+    const original = { startTime: item.startTime, endTime: item.endTime };
+    const swapped = { startTime: neighbor.startTime, endTime: neighbor.endTime };
+    const orderedIds = orderedDayItems(day.items).map((entry) => entry.id);
+    const nextIds = movedItemIds(orderedIds, item.id, direction);
+    const steps = [
+      this.tripsApi.updateItem(trip.id, item.id, parked),
+      this.tripsApi.updateItem(trip.id, neighbor.id, original),
+      this.tripsApi.updateItem(trip.id, item.id, swapped),
+    ];
+    if (nextIds) {
+      steps.push(this.tripsApi.reorderItems(trip.id, day.id, nextIds));
+    }
+    this.editBusy.set(true);
+    this.editError.set('');
+    concat(...steps)
+      .pipe(last())
+      .subscribe({
+        next: ({ itinerary }) => {
+          this.applyItinerary(itinerary, true);
+          this.editBusy.set(false);
+        },
+        error: () => {
+          this.editBusy.set(false);
+          this.editError.set('Could not move that stop.');
+        },
+      });
   }
 
   private loadSaved(tripId: string): void {
@@ -184,9 +379,33 @@ export class TripDashboard implements OnInit {
     });
   }
 
-  private applyItinerary(itinerary: Itinerary): void {
+  private runEdit(
+    request: ReturnType<TripService['createItem']>,
+    failMessage: string,
+    closeEditor: boolean,
+  ): void {
+    this.editBusy.set(true);
+    this.editError.set('');
+    request.subscribe({
+      next: ({ itinerary }) => {
+        this.applyItinerary(itinerary, true);
+        this.editBusy.set(false);
+        if (closeEditor) {
+          this.closeEditor();
+        }
+      },
+      error: () => {
+        this.editBusy.set(false);
+        this.editError.set(failMessage);
+      },
+    });
+  }
+
+  private applyItinerary(itinerary: Itinerary, keepDay = false): void {
     this.itinerary.set(itinerary);
-    this.selectedDayNumber.set(selectPlanDayNumber(itinerary, localTodayIso()));
+    if (!keepDay) {
+      this.selectedDayNumber.set(selectPlanDayNumber(itinerary, localTodayIso()));
+    }
   }
 
   unsave(place: SavedTripPlace): void {

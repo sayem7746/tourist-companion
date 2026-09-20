@@ -102,8 +102,36 @@ export interface Itinerary {
 }
 
 export type TimelineRow =
-  | { type: 'commute'; minutes: number; title: string | null; directionsHref: string | null }
+  | {
+      type: 'commute';
+      minutes: number;
+      title: string | null;
+      directionsHref: string | null;
+      item?: ItineraryItem;
+    }
   | { type: 'block'; item: ItineraryItem };
+
+export interface CreateItineraryItemRequest {
+  kind: ItineraryItemKind;
+  startTime: string;
+  endTime: string;
+  dayId?: string;
+  dayNumber?: number;
+  placeId?: string | null;
+  travelTimeMinutes?: number | null;
+  notes?: string | null;
+  bookingUrl?: string | null;
+  title?: string | null;
+  sortOrder?: number;
+}
+
+export type PatchItineraryItemRequest = Partial<
+  Omit<CreateItineraryItemRequest, 'dayId' | 'dayNumber'>
+> & {
+  dayId?: string;
+  dayNumber?: number;
+  locked?: boolean;
+};
 
 export function itineraryIsEmpty(itinerary: Itinerary | null | undefined): boolean {
   return !itinerary || itinerary.days.every((day) => day.items.length === 0);
@@ -146,9 +174,90 @@ export function formatPlanDate(isoDate: string): string {
   }).format(new Date(Date.UTC(year, month - 1, day)));
 }
 
-function timeToMinutes(hhmm: string): number {
+export function timeToMinutes(hhmm: string): number {
   const [hour, minute] = hhmm.split(':').map(Number);
   return hour * 60 + minute;
+}
+
+export function minutesToTime(totalMinutes: number): string {
+  const minutes = ((totalMinutes % (24 * 60)) + 24 * 60) % (24 * 60);
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
+}
+
+export function timesOverlap(
+  a: Pick<ItineraryItem, 'startTime' | 'endTime'>,
+  b: Pick<ItineraryItem, 'startTime' | 'endTime'>,
+): boolean {
+  return timeToMinutes(a.startTime) < timeToMinutes(b.endTime) && timeToMinutes(b.startTime) < timeToMinutes(a.endTime);
+}
+
+export function orderedDayItems(items: ItineraryItem[]): ItineraryItem[] {
+  return [...items].sort(
+    (a, b) => a.startTime.localeCompare(b.startTime) || a.sortOrder - b.sortOrder || a.id.localeCompare(b.id),
+  );
+}
+
+export function neighborItem(
+  items: ItineraryItem[],
+  itemId: string,
+  direction: 'up' | 'down',
+): ItineraryItem | null {
+  const ordered = orderedDayItems(items);
+  const index = ordered.findIndex((item) => item.id === itemId);
+  if (index < 0) {
+    return null;
+  }
+  return ordered[direction === 'up' ? index - 1 : index + 1] ?? null;
+}
+
+export function movedItemIds(itemIds: string[], itemId: string, direction: 'up' | 'down'): string[] | null {
+  const index = itemIds.indexOf(itemId);
+  const swapWith = direction === 'up' ? index - 1 : index + 1;
+  if (index < 0 || swapWith < 0 || swapWith >= itemIds.length) {
+    return null;
+  }
+  const next = [...itemIds];
+  [next[index], next[swapWith]] = [next[swapWith], next[index]];
+  return next;
+}
+
+export function findTempTimeSlot(
+  items: ItineraryItem[],
+  durationMinutes = 1,
+): { startTime: string; endTime: string } | null {
+  if (durationMinutes < 1) {
+    return null;
+  }
+  for (let start = 23 * 60 + 59 - durationMinutes; start >= 0; start -= 1) {
+    const candidate = {
+      startTime: minutesToTime(start),
+      endTime: minutesToTime(start + durationMinutes),
+    };
+    if (!items.some((item) => timesOverlap(item, candidate))) {
+      return candidate;
+    }
+  }
+  return null;
+}
+
+export function nextActivityTimes(
+  items: ItineraryItem[],
+  durationMinutes = 90,
+): { startTime: string; endTime: string } {
+  const last = orderedDayItems(items).at(-1);
+  let start = last ? timeToMinutes(last.endTime) + 30 : 9 * 60 + 30;
+  let end = start + durationMinutes;
+  if (end > 23 * 60 + 30) {
+    start = Math.max(0, 23 * 60 + 30 - durationMinutes);
+    end = start + durationMinutes;
+  }
+  const proposed = { startTime: minutesToTime(start), endTime: minutesToTime(end) };
+  if (!items.some((item) => timesOverlap(item, proposed))) {
+    return proposed;
+  }
+  return findTempTimeSlot(items, durationMinutes) ?? proposed;
 }
 
 function blockMinutes(item: ItineraryItem): number {
@@ -191,6 +300,7 @@ export function buildTimeline(items: ItineraryItem[], savedPlaces: SavedTripPlac
         minutes: blockMinutes(item),
         title: item.title,
         directionsHref: directionsHref(item, savedPlaces),
+        item,
       });
       lastWasCommute = true;
       continue;
@@ -289,5 +399,38 @@ export class TripService {
     return this.http.post<{ itinerary: Itinerary }>(`${this.base}/${tripId}/itinerary/generate`, body, {
       withCredentials: true,
     });
+  }
+
+  createItem(tripId: string, body: CreateItineraryItemRequest): Observable<{ itinerary: Itinerary }> {
+    return this.http.post<{ itinerary: Itinerary }>(`${this.base}/${tripId}/itinerary/items`, body, {
+      withCredentials: true,
+    });
+  }
+
+  updateItem(
+    tripId: string,
+    itemId: string,
+    body: PatchItineraryItemRequest,
+  ): Observable<{ itinerary: Itinerary }> {
+    return this.http.patch<{ itinerary: Itinerary }>(
+      `${this.base}/${tripId}/itinerary/items/${encodeURIComponent(itemId)}`,
+      body,
+      { withCredentials: true },
+    );
+  }
+
+  deleteItem(tripId: string, itemId: string): Observable<{ itinerary: Itinerary }> {
+    return this.http.delete<{ itinerary: Itinerary }>(
+      `${this.base}/${tripId}/itinerary/items/${encodeURIComponent(itemId)}`,
+      { withCredentials: true },
+    );
+  }
+
+  reorderItems(tripId: string, dayId: string, itemIds: string[]): Observable<{ itinerary: Itinerary }> {
+    return this.http.post<{ itinerary: Itinerary }>(
+      `${this.base}/${tripId}/itinerary/reorder`,
+      { dayId, itemIds },
+      { withCredentials: true },
+    );
   }
 }
