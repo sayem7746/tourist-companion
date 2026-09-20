@@ -7,6 +7,8 @@ import { itemsOverlap, minutesToTime, timeToMinutes } from './days.js';
 import type { Itinerary, ItineraryDay, ItineraryItem, ItemInput } from './types.js';
 
 const TRAVEL_WALK_THRESHOLD_MINUTES = 20;
+/** Seed hops longer than this are treated as impractical same-day zig-zags. */
+export const FAR_HOP_METERS = 5_000;
 const DAY_END_BY_STYLE: Record<TravelStyle, number> = {
   relaxed: 20 * 60,
   balanced: 21 * 60,
@@ -165,6 +167,68 @@ function catalogForKind(
   );
 }
 
+export function hopMeters(
+  from: MalaysiaPlaceSeedRecord | undefined,
+  to: MalaysiaPlaceSeedRecord | undefined,
+): number {
+  const origin = coords(from);
+  const dest = coords(to);
+  if (!origin || !dest) return 0;
+  return distanceMeters(origin, dest);
+}
+
+export function isFarHop(
+  from: MalaysiaPlaceSeedRecord | undefined,
+  to: MalaysiaPlaceSeedRecord | undefined,
+): boolean {
+  if (!from || !to) return false;
+  return hopMeters(from, to) > FAR_HOP_METERS;
+}
+
+export function travelMinutesBetween(
+  from: MalaysiaPlaceSeedRecord | undefined,
+  to: MalaysiaPlaceSeedRecord | undefined,
+): number {
+  const origin = coords(from);
+  const dest = coords(to);
+  if (!origin || !dest) return 0;
+  return transitMinutes(origin, dest);
+}
+
+function themeAllowsExcursion(theme: Interest): boolean {
+  return theme === 'nature' || theme === 'adventure';
+}
+
+function proximityScore(
+  origin: MalaysiaPlaceSeedRecord | undefined,
+  place: MalaysiaPlaceSeedRecord,
+  theme: Interest,
+  allowFarHop: boolean,
+): number {
+  if (!origin) return 0;
+  const meters = hopMeters(origin, place);
+  if (meters <= 800) return 12;
+  if (meters <= 2_500) return 6;
+  if (meters <= FAR_HOP_METERS) return 1;
+  if (allowFarHop && themeAllowsExcursion(theme) && matchesInterest(place, theme)) return 20;
+  return -18;
+}
+
+/** Nearest-neighbor order so clustered stops stay consecutive. */
+export function orderPlacesByTravel(places: MalaysiaPlaceSeedRecord[]): MalaysiaPlaceSeedRecord[] {
+  if (places.length <= 1) return [...places];
+  const remaining = [...places].sort((a, b) => a.id.localeCompare(b.id));
+  const ordered: MalaysiaPlaceSeedRecord[] = [remaining.shift()!];
+  while (remaining.length > 0) {
+    const last = ordered[ordered.length - 1];
+    remaining.sort(
+      (a, b) => hopMeters(last, a) - hopMeters(last, b) || a.id.localeCompare(b.id),
+    );
+    ordered.push(remaining.shift()!);
+  }
+  return ordered;
+}
+
 export function pickPlace(options: {
   places: MalaysiaPlaceSeedRecord[];
   trip: Trip;
@@ -174,15 +238,57 @@ export function pickPlace(options: {
   kind: 'activity' | 'meal' | 'travel';
   theme: Interest;
   usedIds: Set<string>;
+  origin?: MalaysiaPlaceSeedRecord;
+  allowFarHop?: boolean;
 }): MalaysiaPlaceSeedRecord | undefined {
-  const { places, trip, date, startMinutes, endMinutes, kind, theme, usedIds } = options;
+  const {
+    places,
+    trip,
+    date,
+    startMinutes,
+    endMinutes,
+    kind,
+    theme,
+    usedIds,
+    origin,
+    allowFarHop = true,
+  } = options;
   const open = catalogForKind(places, kind).filter((place) =>
     isPlaceOpenDuring(place, date, startMinutes, endMinutes),
   );
   const ranked = [...open].sort(
-    (a, b) => scorePlace(b, trip, theme, kind) - scorePlace(a, trip, theme, kind) || a.id.localeCompare(b.id),
+    (a, b) =>
+      scorePlace(b, trip, theme, kind) +
+        proximityScore(origin, b, theme, allowFarHop) -
+        (scorePlace(a, trip, theme, kind) + proximityScore(origin, a, theme, allowFarHop)) ||
+      hopMeters(origin, a) - hopMeters(origin, b) ||
+      a.id.localeCompare(b.id),
   );
-  return ranked.find((place) => !usedIds.has(place.id)) ?? ranked[0];
+  const unused = ranked.filter((place) => !usedIds.has(place.id));
+  if (unused.length === 0) {
+    if (kind === 'meal' || kind === 'travel') return ranked[0];
+    return undefined;
+  }
+  if (!origin) return unused[0];
+  const nearby = unused.filter((place) => !isFarHop(origin, place));
+  if (nearby.length > 0) {
+    if (allowFarHop && kind === 'activity' && themeAllowsExcursion(theme)) {
+      const excursion = unused.find(
+        (place) => isFarHop(origin, place) && matchesInterest(place, theme),
+      );
+      if (excursion) {
+        const nearbyBest = nearby[0];
+        const excursionScore =
+          scorePlace(excursion, trip, theme, kind) + proximityScore(origin, excursion, theme, true);
+        const nearbyScore =
+          scorePlace(nearbyBest, trip, theme, kind) + proximityScore(origin, nearbyBest, theme, true);
+        if (excursionScore > nearbyScore) return excursion;
+      }
+    }
+    return nearby[0];
+  }
+  if (allowFarHop || kind === 'meal') return unused[0];
+  return undefined;
 }
 
 function findSlot(
@@ -214,7 +320,8 @@ function transitMinutes(from: GeoPoint, to: GeoPoint): number {
   const meters = distanceMeters(from, to);
   const walk = walkMinutesFromMeters(meters);
   if (walk <= TRAVEL_WALK_THRESHOLD_MINUTES) return walk;
-  return Math.min(75, Math.max(20, Math.round(meters / 400)));
+  // ~15 km/h urban transfer so a 9 km hop is a real block, not a 20-minute blip.
+  return Math.min(90, Math.max(25, Math.round(meters / 250)));
 }
 
 function itemFromPlace(
@@ -270,12 +377,13 @@ export function generateDayItems(options: {
 
   let cursor = dayStartMinutes(trip, day, style);
   let lastPlace: MalaysiaPlaceSeedRecord | undefined;
+  let farHopUsed = false;
 
   const pushItem = (item: ItemInput, place?: MalaysiaPlaceSeedRecord) => {
     generated.push(item);
     occupied.push(item);
     cursor = timeToMinutes(item.endTime) + (style === 'packed' ? 10 : 20);
-    if (place) lastPlace = place;
+    if (place && (item.kind === 'activity' || item.kind === 'meal')) lastPlace = place;
     markUsed(used, place);
   };
 
@@ -287,6 +395,7 @@ export function generateDayItems(options: {
   ): MalaysiaPlaceSeedRecord | undefined => {
     const slotGuess = findSlot(occupied, preferredStart, duration, dayEnd);
     if (!slotGuess) return undefined;
+    const allowFarHop = kind === 'meal' || (kind === 'activity' && !farHopUsed);
     const picked = pickPlace({
       places,
       trip,
@@ -296,61 +405,58 @@ export function generateDayItems(options: {
       kind,
       theme,
       usedIds: used,
+      origin: lastPlace,
+      allowFarHop,
     });
-    const origin = coords(lastPlace);
-    const dest = coords(picked);
+    if (!picked) return undefined;
+
     let start = preferredStart;
-    if (origin && dest && picked) {
-      const minutes = transitMinutes(origin, dest);
-      if (minutes > TRAVEL_WALK_THRESHOLD_MINUTES) {
-        const travelSlot = findSlot(occupied, start, minutes, dayEnd);
-        if (travelSlot) {
-          const hub =
-            pickPlace({
-              places,
-              trip,
-              date: day.date,
-              startMinutes: timeToMinutes(travelSlot.startTime),
-              endMinutes: timeToMinutes(travelSlot.endTime),
-              kind: 'travel',
-              theme,
-              usedIds: new Set(),
-            }) ?? places.find((place) => place.nearbyCategory === 'transport');
-          pushItem(
-            {
-              kind: 'travel',
-              startTime: travelSlot.startTime,
-              endTime: travelSlot.endTime,
-              placeId: hub?.id ?? null,
-              title: hub ? `Transfer via ${hub.name}` : `Travel to ${picked.name}`,
-              travelTimeMinutes: minutes,
-              notes: `About ${minutes} min from the previous stop`,
-              locked: false,
-            },
-            hub,
-          );
-          start = cursor;
-        }
+    const minutes = travelMinutesBetween(lastPlace, picked);
+    if (lastPlace && minutes > TRAVEL_WALK_THRESHOLD_MINUTES) {
+      const travelSlot = findSlot(occupied, start, minutes, dayEnd);
+      if (travelSlot) {
+        const hub =
+          pickPlace({
+            places,
+            trip,
+            date: day.date,
+            startMinutes: timeToMinutes(travelSlot.startTime),
+            endMinutes: timeToMinutes(travelSlot.endTime),
+            kind: 'travel',
+            theme,
+            usedIds: new Set(),
+            origin: lastPlace,
+            allowFarHop: true,
+          }) ?? places.find((place) => place.nearbyCategory === 'transport');
+        pushItem({
+          kind: 'travel',
+          startTime: travelSlot.startTime,
+          endTime: travelSlot.endTime,
+          placeId: hub?.id ?? null,
+          title: hub ? `Transfer via ${hub.name}` : `Travel to ${picked.name}`,
+          travelTimeMinutes: minutes,
+          notes: `About ${minutes} min from the previous stop`,
+          locked: false,
+        });
+        start = cursor;
       }
     }
 
     const slot = findSlot(occupied, Math.max(start, preferredStart), duration, dayEnd);
     if (!slot) return undefined;
-    if (picked && isPlaceOpenDuring(picked, day.date, timeToMinutes(slot.startTime), timeToMinutes(slot.endTime))) {
-      const originNow = coords(lastPlace);
-      const destNow = coords(picked);
-      const inbound =
-        originNow && destNow ? Math.min(transitMinutes(originNow, destNow), TRAVEL_WALK_THRESHOLD_MINUTES) : 0;
-      const walkOnly = originNow && destNow ? walkMinutesFromMeters(distanceMeters(originNow, destNow)) : 0;
+    if (isPlaceOpenDuring(picked, day.date, timeToMinutes(slot.startTime), timeToMinutes(slot.endTime))) {
+      const walkOnly = lastPlace ? walkMinutesFromMeters(hopMeters(lastPlace, picked)) : 0;
+      if (isFarHop(lastPlace, picked)) farHopUsed = true;
       pushItem(
         itemFromPlace(picked, kind, slot, {
-          travelTimeMinutes: walkOnly > 0 && walkOnly <= TRAVEL_WALK_THRESHOLD_MINUTES ? inbound : null,
+          travelTimeMinutes: walkOnly > 0 && walkOnly <= TRAVEL_WALK_THRESHOLD_MINUTES ? minutes : null,
         }),
         picked,
       );
       return picked;
     }
 
+    if (kind === 'activity') return undefined;
     pushItem({
       kind,
       startTime: slot.startTime,

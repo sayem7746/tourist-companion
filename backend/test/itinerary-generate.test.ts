@@ -3,16 +3,21 @@ import { MALAYSIA_NEARBY_PLACES } from '../src/places/malaysia-seed.js';
 import { assertNoOverlaps } from '../src/itinerary/days.js';
 import {
   generateDayItems,
+  hopMeters,
+  isFarHop,
   isPlaceOpenDuring,
   matchesInterest,
+  orderPlacesByTravel,
   pickPlace,
   planItinerary,
   placesForDestination,
+  travelMinutesBetween,
 } from '../src/itinerary/generate.js';
 import type { Itinerary, ItineraryDay } from '../src/itinerary/types.js';
 import type { Trip } from '../src/trips/types.js';
 
 const SEED_IDS = new Set(MALAYSIA_NEARBY_PLACES.map((place) => place.id));
+const seedPlace = (id: string) => MALAYSIA_NEARBY_PLACES.find((place) => place.id === id)!;
 
 function trip(overrides: Partial<Trip> = {}): Trip {
   return {
@@ -166,6 +171,72 @@ describe('itinerary generation', () => {
     expect(items.some((item) => item.placeId === 'my-attr-batu-caves' || item.kind === 'travel')).toBe(
       true,
     );
+  });
+
+  it('reorders clustered seed places and skips a second far hop', () => {
+    const petronas = seedPlace('my-attr-petronas');
+    const park = seedPlace('my-attr-klcc-park');
+    const caves = seedPlace('my-attr-batu-caves');
+    expect(isFarHop(petronas, caves)).toBe(true);
+    expect(isFarHop(petronas, park)).toBe(false);
+    expect(hopMeters(petronas, caves)).toBeGreaterThan(hopMeters(petronas, park));
+    expect(travelMinutesBetween(petronas, caves)).toBeGreaterThan(travelMinutesBetween(petronas, park));
+
+    const ordered = orderPlacesByTravel([caves, park, petronas]);
+    const parkIdx = ordered.findIndex((place) => place.id === park.id);
+    const petronasIdx = ordered.findIndex((place) => place.id === petronas.id);
+    expect(Math.abs(parkIdx - petronasIdx)).toBe(1);
+
+    const nearby = pickPlace({
+      places: MALAYSIA_NEARBY_PLACES,
+      trip: trip({ interests: ['culture'], destination: 'Kuala Lumpur' }),
+      date: '2026-09-21',
+      startMinutes: 10 * 60,
+      endMinutes: 12 * 60,
+      kind: 'activity',
+      theme: 'culture',
+      usedIds: new Set(),
+      origin: petronas,
+      allowFarHop: false,
+    });
+    expect(nearby?.id).not.toBe('my-attr-batu-caves');
+    expect(nearby && isFarHop(petronas, nearby)).toBe(false);
+
+    const skipped = pickPlace({
+      places: MALAYSIA_NEARBY_PLACES,
+      trip: trip({ interests: ['culture'] }),
+      date: '2026-09-21',
+      startMinutes: 14 * 60,
+      endMinutes: 16 * 60,
+      kind: 'activity',
+      theme: 'culture',
+      usedIds: new Set([
+        'my-attr-petronas',
+        'my-attr-klcc-park',
+        'my-attr-merdeka',
+        'my-attr-batu-caves',
+      ]),
+      origin: caves,
+      allowFarHop: false,
+    });
+    expect(skipped).toBeUndefined();
+  });
+
+  it('does not zig-zag KLCC and Batu Caves on a culture day', () => {
+    const items = generateDayItems({
+      trip: trip({ interests: ['culture'], travelStyle: 'packed', destination: 'Kuala Lumpur' }),
+      day: skeleton(['2026-09-21']).days[0],
+    });
+    const stops = items
+      .filter((item) => item.kind === 'activity' || item.kind === 'meal')
+      .map((item) => (item.placeId ? seedPlace(item.placeId) : undefined))
+      .filter((place): place is NonNullable<typeof place> => place != null);
+    let farHops = 0;
+    for (let index = 1; index < stops.length; index += 1) {
+      if (isFarHop(stops[index - 1], stops[index])) farHops += 1;
+    }
+    expect(farHops).toBeLessThanOrEqual(1);
+    expect(items.filter((item) => item.placeId === 'my-attr-batu-caves')).toHaveLength(0);
   });
 
   it('keeps Jalan Alor in evening hours', () => {
