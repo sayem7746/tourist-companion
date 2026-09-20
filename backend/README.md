@@ -44,10 +44,11 @@ SQL source of truth: `db/seed.sql`. Do not run seed in production.
 | Table | Purpose |
 | --- | --- |
 | `users` | Traveller accounts (email, display name, password hash) |
+| `tourist_profiles` | Language, dietary preferences, mobility needs, travel style |
 | `trips` | A user's visit window and destination |
 | `places` | Airports, attractions, and other POIs |
 | `trip_places` | Itinerary links between trips and places |
 | `providers` | Partner businesses used for referrals |
 | `referrals` | Attribution codes from a user/trip to a provider |
 
-The API opens a `pg` pool (optional `DATABASE_URL`), reports DB status on `GET /health?verbose=true`, exposes `GET /metrics`, and serves tourist auth under `/auth/*`. See `docs/observability.md`.
+The API opens a `pg` pool (optional `DATABASE_URL`), reports DB status on `GET /health?verbose=true`, exposes `GET /metrics`, serves tourist auth under `/auth/*`, and tourist profile under authenticated `GET`/`PATCH /profile`. See `docs/observability.md`.

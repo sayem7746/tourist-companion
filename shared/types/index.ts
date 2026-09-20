@@ -12,6 +12,34 @@ export interface User {
   displayName: string;
 }
 
+export type DietaryPreference =
+  | 'vegetarian'
+  | 'vegan'
+  | 'halal'
+  | 'kosher'
+  | 'gluten_free'
+  | 'dairy_free'
+  | 'nut_free'
+  | 'pescatarian';
+
+export type MobilityNeed =
+  | 'wheelchair'
+  | 'limited_walking'
+  | 'visual_impairment'
+  | 'hearing_impairment';
+
+export type TravelStyle = 'relaxed' | 'balanced' | 'packed';
+
+export interface TouristProfile {
+  userId: UserId;
+  email: string;
+  displayName: string;
+  language: string;
+  dietaryPreferences: DietaryPreference[];
+  mobilityNeeds: MobilityNeed[];
+  travelStyle: TravelStyle | null;
+}
+
 export interface Trip {
   id: TripId;
   userId: UserId;

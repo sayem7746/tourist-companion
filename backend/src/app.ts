@@ -4,6 +4,10 @@ import { createMemoryAuthStore } from './auth/memory-store.js';
 import { createPgAuthStore } from './auth/pg-store.js';
 import { registerAuthRoutes } from './auth/routes.js';
 import type { AuthStore } from './auth/types.js';
+import { createMemoryProfileStore } from './profile/memory-store.js';
+import { createPgProfileStore } from './profile/pg-store.js';
+import { registerProfileRoutes } from './profile/routes.js';
+import type { ProfileStore } from './profile/types.js';
 import type { AppConfig } from './config.js';
 import { registerDb } from './db/pool.js';
 import { AppError, NotFoundError } from './errors.js';
@@ -149,14 +153,31 @@ export function buildApp(config: AppConfig): FastifyInstance {
   void registerHealthRoutes(app);
   void registerMetricsRoutes(app);
 
-  let memoryStore: AuthStore | undefined;
-  void registerAuthRoutes(app, config, () => {
+  let memoryAuthStore: AuthStore | undefined;
+  let memoryProfileStore: ProfileStore | undefined;
+
+  const resolveAuthStore = (): AuthStore | undefined => {
     if (app.db) {
       return createPgAuthStore(app.db);
     }
     if (config.NODE_ENV === 'test') {
-      memoryStore ??= createMemoryAuthStore();
-      return memoryStore;
+      memoryAuthStore ??= createMemoryAuthStore();
+      return memoryAuthStore;
+    }
+    return undefined;
+  };
+
+  void registerAuthRoutes(app, config, resolveAuthStore);
+
+  void registerProfileRoutes(app, config, () => {
+    if (app.db) {
+      return createPgProfileStore(app.db);
+    }
+    if (config.NODE_ENV === 'test') {
+      const authStore = resolveAuthStore();
+      if (!authStore) return undefined;
+      memoryProfileStore ??= createMemoryProfileStore(authStore);
+      return memoryProfileStore;
     }
     return undefined;
   });
