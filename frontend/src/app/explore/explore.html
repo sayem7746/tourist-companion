@@ -1,0 +1,189 @@
+<section class="explore">
+  <header class="page-head">
+    <div>
+      <h1>Explore &amp; Nearby Helper</h1>
+      <p class="lede">Map and list of places around your pin, with walking distance and hours when we know them.</p>
+    </div>
+    <button
+      type="button"
+      class="sos-btn"
+      data-path="emergency-help"
+      [style.background]="sosColor"
+      (click)="openSos()"
+    >
+      SOS
+    </button>
+  </header>
+
+  @if (sosOpen()) {
+    <aside
+      id="emergency-help"
+      class="sos-panel"
+      data-path="emergency-help"
+      role="alertdialog"
+      aria-labelledby="sos-sheet-title"
+      [style.background]="sosColor"
+    >
+      <div class="sos-sheet-head">
+        <p id="sos-sheet-title" class="sos-title">Emergency help</p>
+        <button type="button" class="sos-close" (click)="closeSos()">Close</button>
+      </div>
+      <p>Stay safe. Call now and share your location if you can.</p>
+      @for (number of sosNumbers; track number.code) {
+        <p>
+          <a class="sos-dial" [href]="'tel:' + number.code">{{ number.code }} — {{ number.label }}</a>
+        </p>
+      }
+    </aside>
+  }
+
+  <div class="search-wrap">
+    <label class="sr-only" for="exploreSearchInput">Search nearby places</label>
+    <input
+      id="exploreSearchInput"
+      class="search-input"
+      type="search"
+      [style.height.px]="searchHeightPx"
+      [placeholder]="searchPlaceholder"
+      [ngModel]="q"
+      (ngModelChange)="onSearchInput($event)"
+    />
+    @if (q) {
+      <button type="button" class="clear-search" aria-label="Clear search" (click)="clearSearch()">×</button>
+    }
+  </div>
+
+  <div class="scope-row">
+    <label class="area-field">
+      <span class="sr-only">Area</span>
+      <select [ngModel]="areaId" (ngModelChange)="onAreaChange($event)" [disabled]="pending()">
+        @for (area of areas; track area.id) {
+          <option [value]="area.id">{{ area.label }}</option>
+        }
+      </select>
+      <span class="radius-chip">{{ radiusKmLabel() }}</span>
+    </label>
+    <div class="view-toggle" role="group" aria-label="Results view">
+      <button type="button" [class.active]="view === 'list'" (click)="setView('list')">List</button>
+      <button type="button" [class.active]="view === 'map'" (click)="setView('map')">Map</button>
+    </div>
+  </div>
+
+  <div class="mini-map" [class.expanded]="view === 'map'" [attr.data-view]="view">
+    <div class="radar-copy">
+      <p class="radar-kicker">Radar active</p>
+      <p class="radar-title">{{ places().length }} curated gems around you</p>
+    </div>
+    <div class="pin-field" aria-hidden="true">
+      <span class="you-pin" title="You"></span>
+      @for (pin of pins(); track pin.id) {
+        <span class="place-pin" [style.left.%]="pin.left" [style.top.%]="pin.top" [title]="pin.name"></span>
+      }
+    </div>
+  </div>
+
+  <div class="chip-row" role="tablist" aria-label="Nearby categories">
+    @for (chip of chips(); track chip.id) {
+      <button
+        type="button"
+        class="chip category-pill"
+        role="tab"
+        [class.chip-primary]="category === chip.id"
+        [attr.data-category]="chip.id"
+        [attr.aria-selected]="category === chip.id"
+        (click)="selectCategory(chip.id)"
+      >
+        {{ chip.label }}
+        @if (chipCount(chip.id) != null) {
+          <span class="count">{{ chipCount(chip.id) }}</span>
+        }
+      </button>
+    }
+  </div>
+
+  @if (pending()) {
+    <p class="meta" aria-live="polite">Loading nearby places…</p>
+  }
+
+  @if (loadError()) {
+    <p class="error" role="alert">{{ loadError() }}</p>
+    <button type="button" class="btn" (click)="load()">Retry</button>
+  }
+
+  @if (!pending() && !loadError() && places().length === 0) {
+    <p class="meta">No places match these filters. Try All, a wider area, or clear search.</p>
+  }
+
+  <div class="place-list">
+    @for (place of places(); track place.id) {
+      <article class="place-card" [attr.data-cat]="place.nearbyCategory" [attr.data-place-id]="place.id">
+        <div class="place-media" [style.background]="mediaTone(place)">
+          <span class="media-label">{{ place.nearbyCategory.replace('_', ' ') }}</span>
+          @if (distanceLabel(place)) {
+            <span class="distance-pill">{{ distanceLabel(place) }}</span>
+          }
+          <button
+            type="button"
+            class="bookmark"
+            [class.on]="isBookmarked(place.id)"
+            [attr.aria-pressed]="isBookmarked(place.id)"
+            [attr.aria-label]="isBookmarked(place.id) ? 'Remove bookmark' : 'Bookmark'"
+            (click)="toggleBookmark(place.id)"
+          >
+            {{ isBookmarked(place.id) ? '★' : '☆' }}
+          </button>
+        </div>
+        <div class="place-body">
+          <div class="place-head">
+            <h2>{{ place.name }}</h2>
+            @if (place.halal) {
+              <span class="chip chip-gold">Halal</span>
+            }
+          </div>
+          <p class="meta">
+            {{ place.area || place.city }}
+            @if (place.address) {
+              · {{ place.address }}
+            }
+          </p>
+          @if (openingLabel(place); as hours) {
+            <p class="hours" [class.closed]="place.openNow === false">{{ hours }}</p>
+          }
+          @if (place.badges.length) {
+            <div class="badge-row">
+              @for (badge of place.badges; track badge) {
+                <span class="chip">{{ badge }}</span>
+              }
+            </div>
+          }
+          @if (place.description) {
+            <p>{{ place.description }}</p>
+          }
+          @if (place.priceBandMyr) {
+            <p class="price">{{ place.priceBandMyr }}</p>
+          }
+          <div class="place-actions">
+            <a class="btn" [href]="mapsHref(place)" target="_blank" rel="noreferrer">Directions</a>
+            <a class="btn btn-secondary" routerLink="/concierge">Ask concierge</a>
+          </div>
+        </div>
+      </article>
+    }
+  </div>
+
+  <div class="quick-bar" aria-label="Quick filters">
+    <span class="quick-label">Quick</span>
+    @for (filter of quickFilters; track filter.id) {
+      <button
+        type="button"
+        class="chip"
+        [class.chip-primary]="isQuickOn(filter.id)"
+        [attr.data-quick]="filter.id"
+        [attr.aria-pressed]="isQuickOn(filter.id)"
+        (click)="toggleQuick(filter.id)"
+      >
+        {{ filter.label }}
+      </button>
+    }
+  </div>
+</section>

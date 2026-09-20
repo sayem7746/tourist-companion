@@ -61,6 +61,13 @@ describe('App', () => {
     expect(concierge?.title).toBe('Malaysia AI Concierge');
   });
 
+  it('should expose a public Explore nearby route', () => {
+    const explore = routes.find((route) => route.path === 'explore');
+    expect(explore?.component).toBeTruthy();
+    expect(explore?.canActivate).toBeUndefined();
+    expect(explore?.title).toBe('Explore');
+  });
+
   it('should expose a public currency and payment guide route', () => {
     const money = routes.find((route) => route.path === 'arrival/money');
     expect(money?.component).toBeTruthy();
