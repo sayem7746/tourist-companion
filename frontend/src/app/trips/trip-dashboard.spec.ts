@@ -273,6 +273,9 @@ describe('TripDashboard', () => {
     expect(compiled.querySelector('a[href="/trips/new"]')?.textContent).toContain('Plan a trip');
     expect(compiled.querySelector('a[href="/arrival"]')?.textContent).toContain('Arrival checklist');
     expect(compiled.textContent).toContain('Add stop');
+    expect(compiled.textContent).toContain('Lock');
+    expect(compiled.textContent).toContain('Regenerate day');
+    expect(compiled.textContent).toContain('Regenerate all');
     expect(compiled.textContent).toContain('Move up');
     expect(compiled.textContent).toContain('Replace');
     expect(compiled.textContent).toContain('Remove');
@@ -446,5 +449,57 @@ describe('TripDashboard', () => {
     reorder.flush({ itinerary: nextPlan });
     fixture.detectChanges();
     expect(compiled.textContent).toContain('Petronas Twin Towers');
+  });
+
+  it('locks a stop with PATCH /itinerary/items/:id', () => {
+    const compiled = loadFilledPlan();
+    const lock = Array.from(compiled.querySelectorAll('button')).find((button) => button.textContent?.trim() === 'Lock');
+    lock?.click();
+
+    const req = http.expectOne(`${environment.apiBaseUrl}/trips/trip-2/itinerary/items/a1`);
+    expect(req.request.method).toBe('PATCH');
+    expect(req.request.withCredentials).toBeTrue();
+    expect(req.request.body).toEqual({ locked: true });
+    const nextPlan = filledPlan('trip-2');
+    nextPlan.days[0].items[0] = { ...nextPlan.days[0].items[0], locked: true };
+    req.flush({ itinerary: nextPlan });
+    fixture.detectChanges();
+    expect(compiled.textContent).toContain('Locked');
+    expect(compiled.textContent).toContain('Unlock');
+  });
+
+  it('regenerates the selected day with POST /itinerary/generate', () => {
+    const compiled = loadFilledPlan();
+    const regenDay = Array.from(compiled.querySelectorAll('button')).find(
+      (button) => button.textContent?.trim() === 'Regenerate day',
+    );
+    regenDay?.click();
+
+    const req = http.expectOne(`${environment.apiBaseUrl}/trips/trip-2/itinerary/generate`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.withCredentials).toBeTrue();
+    expect(req.request.body).toEqual({ dayId: 'day-1', dayNumber: 1 });
+    const nextPlan = filledPlan('trip-2');
+    nextPlan.days[0].items[0] = { ...nextPlan.days[0].items[0], title: 'KLCC Park' };
+    req.flush({ itinerary: nextPlan });
+    fixture.detectChanges();
+    expect(compiled.textContent).toContain('KLCC Park');
+  });
+
+  it('regenerates the full itinerary with POST /itinerary/generate', () => {
+    const compiled = loadFilledPlan();
+    const regenAll = Array.from(compiled.querySelectorAll('button')).find(
+      (button) => button.textContent?.trim() === 'Regenerate all',
+    );
+    regenAll?.click();
+
+    const req = http.expectOne(`${environment.apiBaseUrl}/trips/trip-2/itinerary/generate`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({});
+    const nextPlan = filledPlan('trip-2');
+    nextPlan.days[0].items[1] = { ...nextPlan.days[0].items[1], title: 'Jalan Alor' };
+    req.flush({ itinerary: nextPlan });
+    fixture.detectChanges();
+    expect(compiled.textContent).toContain('Jalan Alor');
   });
 });

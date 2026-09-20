@@ -56,6 +56,21 @@
       @if (selectedDay(); as day) {
         <p class="meta">{{ formatDate(day.date) }} · {{ highlights() }} highlight{{ highlights() === 1 ? '' : 's' }}</p>
       }
+      @if (!itineraryPending() && itinerary() && !planEmpty()) {
+        <div class="regen-pills" role="group" aria-label="Regenerate itinerary">
+          <button
+            type="button"
+            class="chip"
+            [disabled]="generating() || editBusy()"
+            (click)="regenerateDay()"
+          >
+            Regenerate day
+          </button>
+          <button type="button" class="chip" [disabled]="generating() || editBusy()" (click)="generate()">
+            Regenerate all
+          </button>
+        </div>
+      }
     </header>
 
     @if (itineraryPending() || generating()) {
@@ -88,6 +103,16 @@
             }
             @if (row.item && !generating() && !itineraryPending()) {
               <div class="edit-pills commute-edits" role="group" [attr.aria-label]="'Edit ' + (row.title || 'travel')">
+                <button
+                  type="button"
+                  class="chip"
+                  [class.chip-primary]="row.item.locked"
+                  [attr.aria-pressed]="row.item.locked"
+                  [disabled]="editBusy()"
+                  (click)="toggleLock(row.item)"
+                >
+                  {{ row.item.locked ? 'Unlock' : 'Lock' }}
+                </button>
                 <button
                   type="button"
                   class="chip"
@@ -125,8 +150,15 @@
                 } @else {
                   <h3>{{ itemTitle(row.item) }}</h3>
                 }
-                @if (row.item.kind === 'meal') {
-                  <span class="chip chip-gold">Meal</span>
+                @if (row.item.kind === 'meal' || row.item.locked) {
+                  <div class="card-badges">
+                    @if (row.item.kind === 'meal') {
+                      <span class="chip chip-gold">Meal</span>
+                    }
+                    @if (row.item.locked) {
+                      <span class="chip chip-primary">Locked</span>
+                    }
+                  </div>
                 }
               </div>
               <p class="meta">{{ formatTime(row.item.startTime) }} – {{ formatTime(row.item.endTime) }}</p>
@@ -144,6 +176,16 @@
               </div>
               @if (!generating() && !itineraryPending()) {
                 <div class="edit-pills" role="group" [attr.aria-label]="'Edit ' + itemTitle(row.item)">
+                  <button
+                    type="button"
+                    class="chip"
+                    [class.chip-primary]="row.item.locked"
+                    [attr.aria-pressed]="row.item.locked"
+                    [disabled]="editBusy()"
+                    (click)="toggleLock(row.item)"
+                  >
+                    {{ row.item.locked ? 'Unlock' : 'Lock' }}
+                  </button>
                   <button
                     type="button"
                     class="chip"

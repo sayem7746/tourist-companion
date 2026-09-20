@@ -39,6 +39,18 @@ h2 {
   margin: 0;
 }
 
+.regen-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.65rem;
+}
+
+.regen-pills .chip {
+  cursor: pointer;
+  min-height: 2.25rem;
+}
+
 .day-chips {
   display: flex;
   flex-wrap: wrap;
@@ -103,6 +115,13 @@ h2 {
 .card-head a {
   color: inherit;
   text-decoration: none;
+}
+
+.card-badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.35rem;
 }
 
 .notes {

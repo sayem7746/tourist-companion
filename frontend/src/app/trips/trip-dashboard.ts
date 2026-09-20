@@ -167,23 +167,47 @@ export class TripDashboard implements OnInit {
     return neighborItem(this.selectedDay()?.items ?? [], item.id, direction) != null;
   }
 
-  generate(): void {
+  generate(scope: { dayId?: string; dayNumber?: number } = {}): void {
     const trip = this.featured();
     if (!trip) {
       return;
     }
     this.generating.set(true);
     this.itineraryError.set('');
-    this.tripsApi.generateItinerary(trip.id).subscribe({
+    this.tripsApi.generateItinerary(trip.id, scope).subscribe({
       next: ({ itinerary }) => {
-        this.applyItinerary(itinerary);
+        this.applyItinerary(itinerary, true);
         this.generating.set(false);
       },
       error: () => {
         this.generating.set(false);
-        this.itineraryError.set('Could not generate a plan. Try again.');
+        this.itineraryError.set(
+          scope.dayId || scope.dayNumber
+            ? 'Could not regenerate that day. Try again.'
+            : 'Could not generate a plan. Try again.',
+        );
       },
     });
+  }
+
+  regenerateDay(): void {
+    const day = this.selectedDay();
+    if (!day) {
+      return;
+    }
+    this.generate({ dayId: day.id, dayNumber: day.dayNumber });
+  }
+
+  toggleLock(item: ItineraryItem): void {
+    const trip = this.featured();
+    if (!trip) {
+      return;
+    }
+    this.runEdit(
+      this.tripsApi.updateItem(trip.id, item.id, { locked: !item.locked }),
+      item.locked ? 'Could not unlock that stop.' : 'Could not lock that stop.',
+      false,
+    );
   }
 
   openAdd(): void {
