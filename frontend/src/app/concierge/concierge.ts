@@ -1,6 +1,7 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { AuthService } from '../auth/auth.service';
 import {
   ConciergeService,
   DEFAULT_LIVE_CONTEXT,
@@ -10,8 +11,10 @@ import {
   SUGGESTED_CHIPS,
   type ConciergeCategory,
   type ConciergeChatResponse,
+  type ConciergeHistoryResponse,
   type ConciergeHistoryTurn,
   type ConciergeReply,
+  type ConciergeRetention,
 } from './concierge.service';
 
 export interface ThreadTurn {
@@ -27,8 +30,9 @@ export interface ThreadTurn {
   templateUrl: './concierge.html',
   styleUrl: './concierge.css',
 })
-export class Concierge {
+export class Concierge implements OnInit {
   private readonly api = inject(ConciergeService);
+  private readonly auth = inject(AuthService);
 
   readonly chips = SUGGESTED_CHIPS;
   readonly liveContextLabel = DEFAULT_LIVE_CONTEXT_LABEL;
@@ -37,12 +41,30 @@ export class Concierge {
 
   draft = '';
   conversationId: string | undefined;
+  tripId: string | undefined;
   private lastHint: ConciergeCategory | undefined;
 
   readonly pending = signal(false);
   readonly sendError = signal('');
   readonly sosOpen = signal(false);
   readonly turns = signal<ThreadTurn[]>([]);
+  readonly signedIn = signal(false);
+  readonly retentionNote = signal('');
+  readonly historyError = signal('');
+  readonly clearing = signal(false);
+
+  ngOnInit(): void {
+    this.auth.me().subscribe({
+      next: () => {
+        this.signedIn.set(true);
+        this.api.history().subscribe({
+          next: (body) => this.applyHistory(body),
+          error: () => this.historyError.set('Could not load saved chat.'),
+        });
+      },
+      error: () => this.signedIn.set(false),
+    });
+  }
 
   submitDraft(): void {
     this.send(this.draft);
@@ -75,6 +97,38 @@ export class Concierge {
     this.sosOpen.set(false);
   }
 
+  clearHistory(): void {
+    if (!this.signedIn() || this.clearing()) {
+      return;
+    }
+    this.clearing.set(true);
+    this.historyError.set('');
+    this.api.deleteHistory(this.tripId).subscribe({
+      next: () => {
+        this.clearing.set(false);
+        this.turns.set([]);
+        this.conversationId = undefined;
+      },
+      error: () => {
+        this.clearing.set(false);
+        this.historyError.set('Could not delete saved chat. Try again.');
+      },
+    });
+  }
+
+  private applyHistory(body: ConciergeHistoryResponse): void {
+    this.tripId = body.tripId ?? undefined;
+    this.conversationId = body.conversationId ?? undefined;
+    this.retentionNote.set(formatRetentionNote(body.retention, Boolean(body.tripId)));
+    this.turns.set(
+      body.messages.map((message) => ({
+        role: message.role,
+        content: message.content,
+        time: formatClock(new Date(message.createdAt)),
+      })),
+    );
+  }
+
   private send(raw: string, categoryHint?: ConciergeCategory): void {
     const message = raw.trim();
     if (!message || this.pending()) {
@@ -97,6 +151,7 @@ export class Concierge {
       .chat({
         message,
         conversationId: this.conversationId,
+        tripId: this.tripId,
         history,
         context: DEFAULT_LIVE_CONTEXT,
         categoryHint,
@@ -112,6 +167,9 @@ export class Concierge {
 
   private onReply(body: ConciergeChatResponse): void {
     this.conversationId = body.conversationId;
+    if (body.tripId) {
+      this.tripId = body.tripId;
+    }
     this.pending.set(false);
     this.turns.update((list) => [
       ...list,
@@ -125,6 +183,14 @@ export class Concierge {
 
 export function formatClock(now = new Date()): string {
   return now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+}
+
+export function formatRetentionNote(retention: ConciergeRetention, hasTrip: boolean): string {
+  if (!hasTrip) {
+    return 'Save a trip to keep the last messages of this chat on the server.';
+  }
+  const days = Math.max(1, Math.round(retention.ttlMs / 86_400_000));
+  return `We keep the last ${retention.maxMessages} messages for this trip for ${days} day${days === 1 ? '' : 's'}. Emergency chats are not stored. You can delete them anytime.`;
 }
 
 export function historyFromTurns(turns: ThreadTurn[]): ConciergeHistoryTurn[] {

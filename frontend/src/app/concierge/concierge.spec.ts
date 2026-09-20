@@ -3,7 +3,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
 import { environment } from '../../environments/environment';
-import { Concierge, historyFromTurns } from './concierge';
+import { Concierge, formatRetentionNote, historyFromTurns } from './concierge';
 import {
   DEFAULT_LIVE_CONTEXT,
   SOS_COLOR,
@@ -76,6 +76,10 @@ describe('Concierge', () => {
     fixture = TestBed.createComponent(Concierge);
     http = TestBed.inject(HttpTestingController);
     fixture.detectChanges();
+    http
+      .expectOne(`${environment.apiBaseUrl}/auth/me`)
+      .flush({ error: 'unauthenticated' }, { status: 401, statusText: 'Unauthorized' });
+    fixture.detectChanges();
   });
 
   afterEach(() => {
@@ -118,6 +122,7 @@ describe('Concierge', () => {
     expect(req.request.body).toEqual({
       message: 'Is this food spicy?',
       conversationId: undefined,
+      tripId: undefined,
       history: [],
       context: DEFAULT_LIVE_CONTEXT,
       categoryHint: 'food_spice_diet',
@@ -213,5 +218,86 @@ describe('Concierge', () => {
     expect(card.textContent).not.toContain('Bukit Bintang Food Map');
     expect(compiled().querySelector('#emergency-help')).not.toBeNull();
     expect(compiled().querySelector('.sos-btn')?.textContent).toContain('SOS');
+  });
+});
+
+describe('formatRetentionNote', () => {
+  it('explains last-N retention and skip-emergency storage', () => {
+    expect(
+      formatRetentionNote({ maxMessages: 20, ttlMs: 7 * 86_400_000, persistEmergency: false }, true),
+    ).toContain('last 20 messages for this trip for 7 days');
+    expect(
+      formatRetentionNote({ maxMessages: 20, ttlMs: 7 * 86_400_000, persistEmergency: false }, false),
+    ).toContain('Save a trip');
+  });
+});
+
+describe('signed-in concierge history', () => {
+  let fixture: ComponentFixture<Concierge>;
+  let http: HttpTestingController;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [Concierge],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(Concierge);
+    http = TestBed.inject(HttpTestingController);
+    fixture.detectChanges();
+    http.expectOne(`${environment.apiBaseUrl}/auth/me`).flush({
+      user: { id: 'user-1', email: 'a@b.c', displayName: 'Alex' },
+    });
+    http.expectOne(`${environment.apiBaseUrl}/concierge/history`).flush({
+      tripId: '11111111-1111-4111-8111-111111111111',
+      conversationId: 'conv-saved',
+      messages: [
+        { role: 'user', content: 'How to ride the LRT?', createdAt: '2026-09-20T02:00:00.000Z', expiresAt: '2026-09-27T02:00:00.000Z' },
+        { role: 'assistant', content: 'Use Touch n Go.', createdAt: '2026-09-20T02:00:01.000Z', expiresAt: '2026-09-27T02:00:00.000Z' },
+      ],
+      retention: { maxMessages: 20, ttlMs: 7 * 86_400_000, persistEmergency: false },
+    });
+    fixture.detectChanges();
+  });
+
+  afterEach(() => {
+    http.verify();
+  });
+
+  it('restores saved turns and can delete them', () => {
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain('How to ride the LRT?');
+    expect(compiled.textContent).toContain('Use Touch n Go.');
+    expect(compiled.textContent).toContain('last 20 messages');
+    expect(compiled.textContent).toContain('Emergency chats are not stored');
+
+    const spice = compiled.querySelector('button[data-label="Is this food spicy?"]') as HTMLButtonElement;
+    spice.click();
+    fixture.detectChanges();
+    const chat = http.expectOne(`${environment.apiBaseUrl}/concierge/chat`);
+    expect(chat.request.body.tripId).toBe('11111111-1111-4111-8111-111111111111');
+    expect(chat.request.body.conversationId).toBe('conv-saved');
+    expect(chat.request.body.history).toEqual([
+      { role: 'user', content: 'How to ride the LRT?' },
+      { role: 'assistant', content: 'Use Touch n Go.' },
+    ]);
+    chat.flush(reply({ conversationId: 'conv-saved', tripId: '11111111-1111-4111-8111-111111111111', persisted: true }));
+    fixture.detectChanges();
+
+    (compiled.querySelector('button.btn-secondary') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    const del = http.expectOne(
+      (req) =>
+        req.method === 'DELETE' &&
+        req.url.startsWith(`${environment.apiBaseUrl}/concierge/history`),
+    );
+    expect(del.request.withCredentials).toBeTrue();
+    expect(del.request.params.get('tripId')).toBe('11111111-1111-4111-8111-111111111111');
+    del.flush(null);
+    fixture.detectChanges();
+    const thread = compiled.querySelector('.thread')?.textContent ?? '';
+    expect(thread).not.toContain('How to ride the LRT?');
+    expect(thread).not.toContain('Use Touch n Go.');
+    expect(thread).not.toContain('Welcome to Bukit Bintang');
   });
 });

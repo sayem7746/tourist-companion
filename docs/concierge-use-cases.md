@@ -169,6 +169,10 @@ Refuse clearly, name the boundary, and offer the nearest in-bounds category or S
 
 **Assistant:** Explain the product cannot book. Offer Show on Map, Add to Plan, and a phrase to request a table in person.
 
+## Conversation history and retention
+
+Signed-in travelers with a current trip can persist the last N concierge messages (default 20) on the server for a TTL (default 7 days). Anonymous chats stay on-device only. SOS / emergency turns are never stored. `GET /concierge/history` and `DELETE /concierge/history` are authenticated and scoped to a trip the user owns.
+
 ## Analytics (suggested)
 
 Log `category`, `escalation_level` (`none` | `handoff` | `sos`), and whether SOS was tapped. Do not log raw emergency transcripts beyond the category flag.

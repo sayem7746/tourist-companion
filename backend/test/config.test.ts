@@ -38,5 +38,7 @@ describe('loadConfig', () => {
     });
     expect(cfg.APP_ENV).toBe('production');
     expect(cfg.LLM_MODEL).toBe('gpt-4o-mini');
+    expect(cfg.CONCIERGE_HISTORY_MAX_MESSAGES).toBe(20);
+    expect(cfg.CONCIERGE_HISTORY_TTL_MS).toBe(7 * 24 * 60 * 60 * 1000);
   });
 });

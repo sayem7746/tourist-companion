@@ -52,6 +52,20 @@ h2 {
   background: var(--color-primary);
 }
 
+.history-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.65rem;
+  margin: 0 0 0.75rem;
+}
+
+.retention {
+  flex: 1;
+  min-width: 12rem;
+}
+
 .sos-panel,
 .sos-card {
   margin: 0.75rem 0;

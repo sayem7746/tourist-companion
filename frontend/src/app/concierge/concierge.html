@@ -20,6 +20,26 @@
     Live context: {{ liveContextLabel }}
   </p>
 
+  @if (signedIn()) {
+    <div class="history-bar">
+      <p class="meta retention">{{ retentionNote() }}</p>
+      @if (tripId) {
+        <button
+          type="button"
+          class="btn btn-secondary"
+          [disabled]="clearing() || pending()"
+          (click)="clearHistory()"
+        >
+          Delete saved chat
+        </button>
+      }
+    </div>
+  }
+
+  @if (historyError()) {
+    <p class="error" role="alert">{{ historyError() }}</p>
+  }
+
   @if (sosOpen()) {
     <aside
       id="emergency-help"

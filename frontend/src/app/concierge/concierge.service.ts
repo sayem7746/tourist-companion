@@ -40,6 +40,7 @@ export interface ConciergeHistoryTurn {
 export interface ConciergeChatRequest {
   message: string;
   conversationId?: string;
+  tripId?: string;
   history?: ConciergeHistoryTurn[];
   context?: ConciergeLiveContext;
   categoryHint?: ConciergeCategory;
@@ -78,6 +79,8 @@ export interface ConciergeReply {
 
 export interface ConciergeChatResponse {
   conversationId: string;
+  tripId?: string;
+  persisted?: boolean;
   category: ConciergeCategory;
   escalationLevel: 'none' | 'handoff' | 'sos' | 'out_of_bounds';
   mode: 'retrieve_and_rank' | 'llm';
@@ -120,13 +123,46 @@ export const SOS_NUMBERS = [
   { code: '112', label: 'Mobile networks' },
 ] as const;
 
+export interface ConciergeRetention {
+  maxMessages: number;
+  ttlMs: number;
+  persistEmergency: false;
+}
+
+export interface ConciergeHistoryResponse {
+  tripId: string | null;
+  conversationId: string | null;
+  messages: Array<{
+    role: 'user' | 'assistant';
+    content: string;
+    createdAt: string;
+    expiresAt: string;
+  }>;
+  retention: ConciergeRetention;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ConciergeService {
   private readonly url = `${environment.apiBaseUrl}/concierge/chat`;
+  private readonly historyUrl = `${environment.apiBaseUrl}/concierge/history`;
 
   constructor(private readonly http: HttpClient) {}
 
   chat(body: ConciergeChatRequest): Observable<ConciergeChatResponse> {
     return this.http.post<ConciergeChatResponse>(this.url, body, { withCredentials: true });
+  }
+
+  history(tripId?: string): Observable<ConciergeHistoryResponse> {
+    return this.http.get<ConciergeHistoryResponse>(this.historyUrl, {
+      withCredentials: true,
+      params: tripId ? { tripId } : {},
+    });
+  }
+
+  deleteHistory(tripId?: string): Observable<void> {
+    return this.http.delete<void>(this.historyUrl, {
+      withCredentials: true,
+      params: tripId ? { tripId } : {},
+    });
   }
 }

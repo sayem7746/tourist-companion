@@ -23,6 +23,9 @@ import { serializeErrorForLog } from './observability/error-log.js';
 import { createMetricsCollector } from './observability/metrics.js';
 import { REQUEST_ID_HEADER, resolveRequestId } from './observability/request-id.js';
 import { registerConciergeRoutes } from './concierge/routes.js';
+import { createMemoryConciergeHistoryStore } from './concierge/memory-store.js';
+import { createPgConciergeHistoryStore } from './concierge/pg-store.js';
+import type { ConciergeHistoryStore } from './concierge/history-types.js';
 import { registerKnowledgeRoutes } from './knowledge/routes.js';
 import { registerHealthRoutes } from './routes/health.js';
 import { registerMetricsRoutes } from './routes/metrics.js';
@@ -168,6 +171,7 @@ export function buildApp(config: AppConfig): FastifyInstance {
   let memoryProfileStore: ProfileStore | undefined;
   let memoryTripStore: TripStore | undefined;
   let memoryArrivalStore: ArrivalChecklistStore | undefined;
+  let memoryHistoryStore: ConciergeHistoryStore | undefined;
 
   const resolveAuthStore = (): AuthStore | undefined => {
     if (app.db) {
@@ -204,12 +208,24 @@ export function buildApp(config: AppConfig): FastifyInstance {
     return undefined;
   };
 
+  const resolveHistoryStore = (): ConciergeHistoryStore | undefined => {
+    if (app.db) {
+      return createPgConciergeHistoryStore(app.db);
+    }
+    if (config.NODE_ENV === 'test') {
+      memoryHistoryStore ??= createMemoryConciergeHistoryStore();
+      return memoryHistoryStore;
+    }
+    return undefined;
+  };
+
   void registerAuthRoutes(app, config, resolveAuthStore);
   void registerProfileRoutes(app, config, resolveProfileStore);
   void registerTripRoutes(app, config, resolveTripStore);
   void registerConciergeRoutes(app, config, {
     resolveProfileStore,
     resolveTripStore,
+    resolveHistoryStore,
   });
 
   void registerArrivalRoutes(app, config, () => {

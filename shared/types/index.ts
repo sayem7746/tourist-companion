@@ -247,6 +247,20 @@ export type KnowledgeEscalation = 'none' | 'handoff' | 'sos' | 'out_of_bounds';
 export type ConciergeEscalationLevel = KnowledgeEscalation;
 export type ConciergeMode = 'retrieve_and_rank' | 'llm';
 
+export interface ConciergeHistoryTurn {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+export interface ConciergeChatRequest {
+  message: string;
+  conversationId?: string;
+  tripId?: string;
+  history?: ConciergeHistoryTurn[];
+  context?: ConciergeLiveContext;
+  categoryHint?: ConciergeCategory;
+}
+
 export interface ConciergeLiveContext {
   area?: string;
   tripMode?: string;
@@ -274,11 +288,6 @@ export interface ConciergeReply {
     path: 'emergency-help';
     numbers: Array<{ code: string; label: string }>;
   } | null;
-}
-
-export interface ConciergeHistoryTurn {
-  role: 'user' | 'assistant';
-  content: string;
 }
 
 export interface ConciergeRetention {
