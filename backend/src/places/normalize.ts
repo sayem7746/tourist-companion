@@ -1,4 +1,9 @@
-import { PLACE_CATEGORY_BY_NEARBY, type NearbyCategory, type NearbyPlace } from './types.js';
+import {
+  PLACE_CATEGORY_BY_NEARBY,
+  type LicensedPlacePhoto,
+  type NearbyCategory,
+  type NearbyPlace,
+} from './types.js';
 
 const HALAL_RE = /\bhalal\b/i;
 
@@ -18,6 +23,15 @@ export function stablePlaceId(source: NearbyPlace['source'], externalId: string)
 
 export function emptyBadges(badges?: string[]): string[] {
   return badges?.filter((badge) => badge.trim().length > 0) ?? [];
+}
+
+export function licensedPhotosOnly(photos?: LicensedPlacePhoto[]): LicensedPlacePhoto[] {
+  return (photos ?? []).filter(
+    (photo) =>
+      photo.url.trim().length > 0 &&
+      photo.license.trim().length > 0 &&
+      photo.attribution.trim().length > 0,
+  );
 }
 
 export function normalizePlace(partial: Omit<NearbyPlace, 'category' | 'badges' | 'country'> & {

@@ -196,6 +196,34 @@ export interface NearbyPlace extends Place {
   externalId?: string;
 }
 
+/** Photo shown only when a reuse license and attribution are known. */
+export interface LicensedPlacePhoto {
+  url: string;
+  license: string;
+  attribution: string;
+  sourceUrl?: string;
+}
+
+export const PLACE_ACTION_KINDS = ['directions', 'call', 'website', 'booking'] as const;
+export type PlaceActionKind = (typeof PLACE_ACTION_KINDS)[number];
+
+export interface PlaceExternalAction {
+  kind: PlaceActionKind;
+  label: string;
+  href: string;
+}
+
+export interface PlaceDetails extends NearbyPlace {
+  phone?: string;
+  website?: string;
+  bookingUrl?: string;
+  bookingLabel?: string;
+  hoursSummary?: string | null;
+  hoursLines: string[];
+  photos: LicensedPlacePhoto[];
+  actions: PlaceExternalAction[];
+}
+
 export type ProviderCategory =
   | 'transport'
   | 'lodging'

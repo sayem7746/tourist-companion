@@ -107,6 +107,32 @@ export interface NearbyPlace {
   externalId?: string;
 }
 
+export interface LicensedPlacePhoto {
+  url: string;
+  license: string;
+  attribution: string;
+  sourceUrl?: string;
+}
+
+export type PlaceActionKind = 'directions' | 'call' | 'website' | 'booking';
+
+export interface PlaceExternalAction {
+  kind: PlaceActionKind;
+  label: string;
+  href: string;
+}
+
+export interface PlaceDetails extends NearbyPlace {
+  phone?: string;
+  website?: string;
+  bookingUrl?: string;
+  bookingLabel?: string;
+  hoursSummary?: string | null;
+  hoursLines: string[];
+  photos: LicensedPlacePhoto[];
+  actions: PlaceExternalAction[];
+}
+
 export interface NearbySearchResult {
   provider: string;
   fallback: boolean;
@@ -207,6 +233,10 @@ export function coverTone(category: NearbyCategory): string {
   return CATEGORY_COVER[category];
 }
 
+export function actionButtonClass(kind: PlaceActionKind): string {
+  return kind === 'directions' || kind === 'booking' ? 'btn' : 'btn btn-secondary';
+}
+
 export function mapPins(
   places: Array<Pick<NearbyPlace, 'id' | 'name' | 'latitude' | 'longitude'>>,
   origin: { latitude: number; longitude: number },
@@ -232,10 +262,15 @@ function clampPercent(value: number): number {
 @Injectable({ providedIn: 'root' })
 export class ExploreService {
   private readonly nearbyUrl = `${environment.apiBaseUrl}/places/nearby`;
+  private readonly placesUrl = `${environment.apiBaseUrl}/places`;
 
   constructor(private readonly http: HttpClient) {}
 
   nearby(query: NearbyQuery): Observable<NearbySearchResult> {
     return this.http.get<NearbySearchResult>(this.nearbyUrl, { params: nearbyHttpParams(query) });
+  }
+
+  place(id: string): Observable<PlaceDetails> {
+    return this.http.get<PlaceDetails>(`${this.placesUrl}/${encodeURIComponent(id)}`);
   }
 }

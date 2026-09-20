@@ -68,6 +68,13 @@ describe('App', () => {
     expect(explore?.title).toBe('Explore');
   });
 
+  it('should expose a public place details route', () => {
+    const details = routes.find((route) => route.path === 'explore/:id');
+    expect(details?.component).toBeTruthy();
+    expect(details?.canActivate).toBeUndefined();
+    expect(details?.title).toBe('Place details');
+  });
+
   it('should expose a public currency and payment guide route', () => {
     const money = routes.find((route) => route.path === 'arrival/money');
     expect(money?.component).toBeTruthy();

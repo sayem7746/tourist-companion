@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import type { AppConfig } from '../config.js';
 import { validateRequest } from '../validate.js';
+import { getPlaceDetails } from './details.js';
 import { searchNearbyPlaces } from './search.js';
 import {
   NEARBY_AREA_IDS,
@@ -24,6 +25,28 @@ const nearbyQuerySchema = z
     halalOnly: boolQuery,
     walk15: boolQuery,
     area: z.enum(NEARBY_AREA_IDS).optional(),
+  })
+  .strict()
+  .superRefine((value, ctx) => {
+    if ((value.lat == null) !== (value.lng == null)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'lat and lng must be provided together',
+        path: ['lat'],
+      });
+    }
+  });
+
+const placeIdParamsSchema = z
+  .object({
+    id: z.string().trim().min(1).max(160),
+  })
+  .strict();
+
+const placeIdQuerySchema = z
+  .object({
+    lat: z.coerce.number().gte(-90).lte(90).optional(),
+    lng: z.coerce.number().gte(-180).lte(180).optional(),
   })
   .strict()
   .superRefine((value, ctx) => {
@@ -62,6 +85,18 @@ export async function registerPlacesRoutes(app: FastifyInstance, config: AppConf
       halalOnly: asBool(query.halalOnly),
       walk15: asBool(query.walk15),
       areaId: query.area,
+    });
+  });
+
+  app.get('/places/:id', async (request) => {
+    const { params, query } = validateRequest(request, {
+      params: placeIdParamsSchema,
+      query: placeIdQuerySchema,
+    });
+    return getPlaceDetails(config, {
+      id: params.id,
+      latitude: query.lat,
+      longitude: query.lng,
     });
   });
 }

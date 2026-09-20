@@ -24,4 +24,5 @@ Source: https://stitch.withgoogle.com/projects/10046914594084234943
 - KLIA Currency & Payment Guide (`screens/a6b6ac0f2aed4cbdb5a9cd9cf428c6d1`)
 - AI Malaysia Concierge
 - Explore & Nearby Helper
+- Place details (`screens/61acea1620b34fedb9c8c39df537ee97`)
 - Logo

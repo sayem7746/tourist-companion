@@ -20,6 +20,7 @@ export const MALAYSIA_NEARBY_PLACES: MalaysiaPlaceSeedRecord[] = [
     englishSpoken: true,
     badges: ['Halal', 'Kid Favorite'],
     priceBandMyr: 'RM 35–70',
+    website: 'https://www.madamkwans.com.my/',
   },
   {
     id: 'my-food-suria-court',
@@ -87,6 +88,18 @@ export const MALAYSIA_NEARBY_PLACES: MalaysiaPlaceSeedRecord[] = [
     halal: null,
     englishSpoken: true,
     badges: ['Landmark'],
+    phone: '+60 3-2331 8080',
+    website: 'https://www.petronastwintowers.com.my/',
+    bookingUrl: 'https://www.petronastwintowers.com.my/',
+    bookingLabel: 'Book tickets',
+    photos: [
+      {
+        url: 'https://commons.wikimedia.org/wiki/Special:FilePath/Petronas%20Twin%20Towers%20(Kuala%20Lumpur).jpg?width=1280',
+        license: 'CC BY-SA 4.0',
+        attribution: 'Wikimedia Commons — Petronas Twin Towers (Kuala Lumpur)',
+        sourceUrl: 'https://commons.wikimedia.org/wiki/File:Petronas_Twin_Towers_(Kuala_Lumpur).jpg',
+      },
+    ],
   },
   {
     id: 'my-attr-klcc-park',
@@ -103,6 +116,14 @@ export const MALAYSIA_NEARBY_PLACES: MalaysiaPlaceSeedRecord[] = [
     halal: null,
     englishSpoken: true,
     badges: ['Free', 'Family'],
+    photos: [
+      {
+        url: 'https://commons.wikimedia.org/wiki/Special:FilePath/KLCC%20Park.jpg?width=1280',
+        license: 'CC BY-SA 3.0',
+        attribution: 'Wikimedia Commons — KLCC Park',
+        sourceUrl: 'https://commons.wikimedia.org/wiki/File:KLCC_Park.jpg',
+      },
+    ],
   },
   {
     id: 'my-attr-batu-caves',
@@ -119,6 +140,14 @@ export const MALAYSIA_NEARBY_PLACES: MalaysiaPlaceSeedRecord[] = [
     halal: null,
     englishSpoken: true,
     badges: ['Must-see', 'Temple'],
+    photos: [
+      {
+        url: 'https://commons.wikimedia.org/wiki/Special:FilePath/The%20Lord%20Murugan%20statue%20at%20Batu%20Caves.jpg?width=1280',
+        license: 'CC BY-SA 3.0',
+        attribution: 'Wikimedia Commons — Lord Murugan statue at Batu Caves',
+        sourceUrl: 'https://commons.wikimedia.org/wiki/File:The_Lord_Murugan_statue_at_Batu_Caves.jpg',
+      },
+    ],
   },
   {
     id: 'my-attr-merdeka',
@@ -285,6 +314,7 @@ export const MALAYSIA_NEARBY_PLACES: MalaysiaPlaceSeedRecord[] = [
     hours: everyday(8 * 60, 22 * 60),
     englishSpoken: true,
     badges: ['Official'],
+    website: 'https://www.matic.gov.my/',
   },
   {
     id: 'my-svc-suria-guest',
@@ -300,6 +330,7 @@ export const MALAYSIA_NEARBY_PLACES: MalaysiaPlaceSeedRecord[] = [
     hours: everyday(10 * 60, 22 * 60),
     englishSpoken: true,
     badges: ['Info desk'],
+    website: 'https://www.suriaklcc.com.my/',
   },
 ];
 

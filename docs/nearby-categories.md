@@ -66,7 +66,7 @@ Do not overload concierge ids (`nearby_dining`, `food_spice_diet`, `local_transp
 
 ## Places providers
 
-`GET /places/nearby` and `GET /places/categories` serve Explore. Results are always normalized to `NearbyPlace` (`nearbyCategory` from this spec, `category` via `PLACE_CATEGORY_BY_NEARBY`).
+`GET /places/nearby` and `GET /places/categories` serve Explore. `GET /places/:id` returns one place for the details screen (address, contact, hours, licensed photos, and external navigation/booking actions). Results are always normalized to `NearbyPlace` (`nearbyCategory` from this spec, `category` via `PLACE_CATEGORY_BY_NEARBY`); details add `PlaceDetails` fields.
 
 | `PLACES_PROVIDER` | When used |
 | --- | --- |
@@ -94,6 +94,12 @@ Public `GET /places/nearby` applies category, radius, open-now, text, and approx
 Unknown query keys are rejected (`400`). Send `lat` and `lng` together. When both `area` and coordinates are present, coordinates set the origin and `area` still labels the neighborhood if it matches a known id.
 
 The JSON body includes `origin`, `radiusMeters`, `category`, `q`, `quickFilters`, chip `counts`, and normalized `places`.
+
+## Place details API
+
+Public `GET /places/:id` loads one nearby place. Seed ids are the Malaysia seed keys (e.g. `my-attr-petronas`). Google and Overpass ids are prefixed (`google:…`, `overpass:…`). Optional `lat` and `lng` (together) coarsen the walking-distance origin the same way as nearby search; otherwise the default is KLCC.
+
+The body is a `PlaceDetails` record: the nearby fields plus `phone`, `website`, `bookingUrl`, `hoursLines` / `hoursSummary` when known, `photos` only when a reuse license and attribution are present, and `actions` (`directions`, `call`, `website`, `booking`) for external maps and booking. Missing contact, hours, or photos are omitted rather than invented. Unknown ids return `404`.
 
 ## Out of scope for MVP chips
 

@@ -11,6 +11,7 @@ import { ArrivalTransport } from './arrival/arrival-transport';
 import { ArrivalConnectivity } from './arrival/arrival-connectivity';
 import { ArrivalCurrency } from './arrival/arrival-currency';
 import { Explore } from './explore/explore';
+import { PlaceDetailsPage } from './explore/place-details';
 import { Concierge } from './concierge/concierge';
 
 export const routes: Routes = [
@@ -22,6 +23,7 @@ export const routes: Routes = [
   { path: 'arrival/money', component: ArrivalCurrency, title: 'Currency and payments' },
   { path: 'arrival', component: ArrivalChecklist, title: 'Arrival checklist' },
   { path: 'explore', component: Explore, title: 'Explore' },
+  { path: 'explore/:id', component: PlaceDetailsPage, title: 'Place details' },
   { path: 'concierge', component: Concierge, title: 'Malaysia AI Concierge' },
   {
     path: 'trips',

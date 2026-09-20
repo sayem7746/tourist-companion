@@ -5,8 +5,9 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { buildApp } from '../src/app.js';
 import { loadConfig } from '../src/config.js';
 import { resolvePlacesProviderKind } from '../src/places/factory.js';
-import { googlePlaceToNearby, nearbyCategoryFromGoogleTypes } from '../src/places/google-provider.js';
-import { isSeedPlaceOpen } from '../src/places/hours.js';
+import { getPlaceDetails } from '../src/places/details.js';
+import { googlePlaceToDetails, googlePlaceToNearby, nearbyCategoryFromGoogleTypes } from '../src/places/google-provider.js';
+import { formatHoursLines, isSeedPlaceOpen } from '../src/places/hours.js';
 import { MALAYSIA_PLACES_SEED } from '../src/places/malaysia-seed.js';
 import { PLACE_CATEGORY_BY_NEARBY } from '../src/places/types.js';
 import {
@@ -80,6 +81,11 @@ describe('hours (Asia/Kuala_Lumpur)', () => {
   it('alwaysOpen venues stay open', () => {
     expect(isSeedPlaceOpen(pelita, new Date('2026-09-22T16:00:00.000Z'))).toBe(true);
   });
+
+  it('formats daily and 24-hour hours for details', () => {
+    expect(formatHoursLines(madam)).toEqual(['Daily 10 am – 10 pm']);
+    expect(formatHoursLines(pelita)).toEqual(['Open 24 hours']);
+  });
 });
 
 describe('resolvePlacesProviderKind', () => {
@@ -123,6 +129,41 @@ describe('provider normalization', () => {
     expect(place?.source).toBe('google');
     expect(place?.id).toBe('google:ChIJtest');
     expect(place?.country).toBe('MY');
+  });
+
+  it('maps Google Place Details including licensed photos and contact', () => {
+    const details = googlePlaceToDetails(
+      {
+        id: 'ChIJtest',
+        primaryType: 'tourist_attraction',
+        types: ['tourist_attraction'],
+        displayName: { text: 'Petronas Twin Towers' },
+        formattedAddress: 'Kuala Lumpur City Centre',
+        location: { latitude: 3.15785, longitude: 101.71165 },
+        currentOpeningHours: { openNow: true },
+        regularOpeningHours: { weekdayDescriptions: ['Monday: 9:00 AM – 9:00 PM'] },
+        internationalPhoneNumber: '+60 3-2331 8080',
+        websiteUri: 'https://www.petronastwintowers.com.my/',
+      },
+      {
+        origin: { latitude: baseQuery.latitude, longitude: baseQuery.longitude },
+        now: new Date('2026-09-22T04:00:00.000Z'),
+      },
+      [
+        {
+          url: 'https://example.com/licensed.jpg',
+          license: 'Google Places (attribution required)',
+          attribution: 'Photo Bot',
+        },
+      ],
+    );
+    expect(details?.phone).toBe('+60 3-2331 8080');
+    expect(details?.website).toContain('petronastwintowers');
+    expect(details?.hoursLines[0]).toContain('Monday');
+    expect(details?.photos).toHaveLength(1);
+    expect(details?.photos[0]?.attribution).toBe('Photo Bot');
+    expect(details?.actions.some((action) => action.kind === 'directions')).toBe(true);
+    expect(details?.actions.some((action) => action.kind === 'call')).toBe(true);
   });
 
   it('maps Overpass tags and infers halal from OSM diet tag', () => {
@@ -412,5 +453,89 @@ describe('GET /places', () => {
 
     const tinyRadius = await app.inject({ method: 'GET', url: '/places/nearby?radius=50' });
     expect(tinyRadius.statusCode).toBe(400);
+  });
+
+  it('returns seed place details with address, hours, licensed photos, and actions', async () => {
+    const response = await app.inject({ method: 'GET', url: '/places/my-attr-petronas' });
+    expect(response.statusCode).toBe(200);
+    const body = response.json() as {
+      id: string;
+      address?: string;
+      phone?: string;
+      website?: string;
+      hoursLines: string[];
+      photos: Array<{ license: string; attribution: string }>;
+      actions: Array<{ kind: string; label: string; href: string }>;
+    };
+    expect(body.id).toBe('my-attr-petronas');
+    expect(body.address).toContain('Kuala Lumpur City Centre');
+    expect(body.phone).toContain('2331');
+    expect(body.website).toContain('petronastwintowers');
+    expect(body.hoursLines[0]).toMatch(/Daily 9 am/);
+    expect(body.photos.length).toBeGreaterThan(0);
+    expect(body.photos[0]?.license).toMatch(/CC BY-SA/);
+    expect(body.photos[0]?.attribution).toContain('Wikimedia');
+    expect(body.actions.map((action) => action.kind)).toEqual(
+      expect.arrayContaining(['directions', 'call', 'website', 'booking']),
+    );
+    expect(body.actions.find((action) => action.kind === 'booking')?.label).toBe('Book tickets');
+  });
+
+  it('omits photos that are not licensed and still returns contact when present', async () => {
+    const response = await app.inject({ method: 'GET', url: '/places/my-food-madam-kwan' });
+    expect(response.statusCode).toBe(200);
+    const body = response.json() as { photos: unknown[]; website?: string; hoursLines: string[] };
+    expect(body.photos).toEqual([]);
+    expect(body.website).toContain('madamkwans');
+    expect(body.hoursLines[0]).toMatch(/Daily/);
+  });
+
+  it('returns 404 for an unknown place id', async () => {
+    const response = await app.inject({ method: 'GET', url: '/places/not-a-real-place' });
+    expect(response.statusCode).toBe(404);
+  });
+});
+
+describe('getPlaceDetails (google)', () => {
+  it('loads Google Place Details and resolves photo URIs', async () => {
+    const googleConfig = testConfig({
+      PLACES_PROVIDER: 'google',
+      GOOGLE_PLACES_API_KEY: 'AIzaSyTestKeyValue',
+    });
+    const details = await getPlaceDetails(
+      googleConfig,
+      { id: 'google:ChIJ1', now: new Date('2026-09-22T04:00:00.000Z') },
+      {
+        fetchImpl: async (input) => {
+          const url = String(input);
+          if (url.includes('/media')) {
+            return new Response(JSON.stringify({ photoUri: 'https://example.com/p.jpg' }), {
+              status: 200,
+              headers: { 'Content-Type': 'application/json' },
+            });
+          }
+          return new Response(
+            JSON.stringify({
+              id: 'ChIJ1',
+              primaryType: 'restaurant',
+              types: ['restaurant'],
+              displayName: { text: 'Halal Dummy Cafe' },
+              formattedAddress: 'Suria KLCC',
+              location: { latitude: 3.1579, longitude: 101.7117 },
+              currentOpeningHours: { openNow: true },
+              internationalPhoneNumber: '+60 3-1111 1111',
+              websiteUri: 'https://example.com',
+              photos: [{ name: 'places/ChIJ1/photos/abc', authorAttributions: [{ displayName: 'Owner' }] }],
+            }),
+            { status: 200, headers: { 'Content-Type': 'application/json' } },
+          );
+        },
+      },
+    );
+    expect(details.source).toBe('google');
+    expect(details.phone).toBe('+60 3-1111 1111');
+    expect(details.photos[0]?.url).toBe('https://example.com/p.jpg');
+    expect(details.photos[0]?.attribution).toBe('Owner');
+    expect(details.actions.some((action) => action.kind === 'website')).toBe(true);
   });
 });

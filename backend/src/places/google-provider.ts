@@ -1,9 +1,13 @@
+import { toPlaceDetails } from './place-view.js';
 import { distanceMeters, walkMinutesFromMeters } from './geo.js';
 import { inferHalal, normalizePlace, stablePlaceId } from './normalize.js';
 import {
   NEARBY_CATEGORIES,
+  type LicensedPlacePhoto,
   type NearbyCategory,
   type NearbyPlace,
+  type PlaceDetails,
+  type PlaceDetailsQuery,
   type PlacesProvider,
   type PlacesSearchQuery,
 } from './types.js';
@@ -39,7 +43,37 @@ interface GooglePlace {
   displayName?: { text?: string };
   location?: { latitude?: number; longitude?: number };
   currentOpeningHours?: { openNow?: boolean };
+  regularOpeningHours?: { weekdayDescriptions?: string[] };
+  nationalPhoneNumber?: string;
+  internationalPhoneNumber?: string;
+  websiteUri?: string;
+  googleMapsUri?: string;
+  editorialSummary?: { text?: string };
+  photos?: Array<{
+    name?: string;
+    authorAttributions?: Array<{ displayName?: string; uri?: string }>;
+  }>;
 }
+
+const GOOGLE_DETAILS_FIELD_MASK = [
+  'id',
+  'displayName',
+  'formattedAddress',
+  'location',
+  'types',
+  'primaryType',
+  'currentOpeningHours',
+  'regularOpeningHours',
+  'nationalPhoneNumber',
+  'internationalPhoneNumber',
+  'websiteUri',
+  'googleMapsUri',
+  'editorialSummary',
+  'photos',
+].join(',');
+
+const GOOGLE_SEARCH_FIELD_MASK =
+  'places.id,places.displayName,places.formattedAddress,places.location,places.types,places.primaryType,places.currentOpeningHours';
 
 export function nearbyCategoryFromGoogleTypes(
   primaryType: string | undefined,
@@ -82,6 +116,69 @@ export function googlePlaceToNearby(
   });
 }
 
+export function googlePlaceToDetails(
+  raw: GooglePlace,
+  query: PlaceDetailsQuery,
+  photos: LicensedPlacePhoto[] = [],
+): PlaceDetails | null {
+  const nearby = googlePlaceToNearby(raw, {
+    latitude: query.origin.latitude,
+    longitude: query.origin.longitude,
+    radiusMeters: 20_000,
+    category: 'all',
+  });
+  if (!nearby) return null;
+  if (raw.editorialSummary?.text && !nearby.description) {
+    nearby.description = raw.editorialSummary.text;
+  }
+  const hoursLines = (raw.regularOpeningHours?.weekdayDescriptions ?? []).map((line) => line.trim()).filter(Boolean);
+  return toPlaceDetails(nearby, {
+    phone: raw.internationalPhoneNumber || raw.nationalPhoneNumber,
+    website: raw.websiteUri,
+    hoursLines,
+    photos,
+  });
+}
+
+export async function resolveGooglePhotos(
+  photos: GooglePlace['photos'] = [],
+  config: { baseUrl: string; apiKey: string; fetchImpl: typeof fetch; timeoutMs: number },
+): Promise<LicensedPlacePhoto[]> {
+  const licensed: LicensedPlacePhoto[] = [];
+  for (const photo of photos.slice(0, 3)) {
+    if (!photo.name) continue;
+    const attribution =
+      photo.authorAttributions
+        ?.map((author) => author.displayName?.trim())
+        .filter(Boolean)
+        .join(', ') || 'Google Places';
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), config.timeoutMs);
+    try {
+      const response = await config.fetchImpl(
+        `${config.baseUrl}/v1/${photo.name}/media?maxHeightPx=800&skipHttpRedirect=true`,
+        {
+          headers: { 'X-Goog-Api-Key': config.apiKey },
+          signal: controller.signal,
+        },
+      );
+      if (!response.ok) continue;
+      const data = (await response.json()) as { photoUri?: string };
+      if (!data.photoUri) continue;
+      licensed.push({
+        url: data.photoUri,
+        license: 'Google Places (attribution required)',
+        attribution,
+      });
+    } catch {
+      continue;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+  return licensed;
+}
+
 function categoriesToQuery(category: PlacesSearchQuery['category']): NearbyCategory[] {
   if (category === 'all') return [...NEARBY_CATEGORIES];
   return [category];
@@ -104,8 +201,7 @@ export function createGooglePlacesProvider(config: GooglePlacesConfig): PlacesPr
         headers: {
           'Content-Type': 'application/json',
           'X-Goog-Api-Key': config.apiKey,
-          'X-Goog-FieldMask':
-            'places.id,places.displayName,places.formattedAddress,places.location,places.types,places.primaryType,places.currentOpeningHours',
+          'X-Goog-FieldMask': GOOGLE_SEARCH_FIELD_MASK,
         },
         body: JSON.stringify({
           includedTypes,
@@ -158,8 +254,7 @@ export function createGooglePlacesProvider(config: GooglePlacesConfig): PlacesPr
         headers: {
           'Content-Type': 'application/json',
           'X-Goog-Api-Key': config.apiKey,
-          'X-Goog-FieldMask':
-            'places.id,places.displayName,places.formattedAddress,places.location,places.types,places.primaryType,places.currentOpeningHours',
+          'X-Goog-FieldMask': GOOGLE_SEARCH_FIELD_MASK,
         },
         body: JSON.stringify(payload),
         signal: controller.signal,
@@ -195,6 +290,34 @@ export function createGooglePlacesProvider(config: GooglePlacesConfig): PlacesPr
         merged.push(place);
       }
       return merged;
+    },
+    async get(id, query) {
+      const placeId = id.startsWith('google:') ? id.slice('google:'.length) : id;
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
+      try {
+        const response = await fetchImpl(`${baseUrl}/v1/places/${encodeURIComponent(placeId)}`, {
+          headers: {
+            'X-Goog-Api-Key': config.apiKey,
+            'X-Goog-FieldMask': GOOGLE_DETAILS_FIELD_MASK,
+          },
+          signal: controller.signal,
+        });
+        if (response.status === 404) return null;
+        if (!response.ok) {
+          throw new Error(`Google Places HTTP ${response.status}`);
+        }
+        const raw = (await response.json()) as GooglePlace;
+        const photos = await resolveGooglePhotos(raw.photos, {
+          baseUrl,
+          apiKey: config.apiKey,
+          fetchImpl,
+          timeoutMs,
+        });
+        return googlePlaceToDetails(raw, query, photos);
+      } finally {
+        clearTimeout(timer);
+      }
     },
   };
 }

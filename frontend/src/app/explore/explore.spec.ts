@@ -190,6 +190,10 @@ describe('Explore', () => {
     const directions = compiled().querySelector('.place-actions a.btn') as HTMLAnchorElement;
     expect(directions.textContent).toContain('Directions');
     expect(directions.getAttribute('href')).toContain('google.com/maps/dir');
+    const details = Array.from(compiled().querySelectorAll('.place-actions a')).find((el) =>
+      el.textContent?.includes('Details'),
+    ) as HTMLAnchorElement;
+    expect(details.getAttribute('href')).toContain('/explore/my-food-madam-kwan');
   });
 
   it('filters by category chip', () => {

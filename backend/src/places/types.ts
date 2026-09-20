@@ -139,6 +139,39 @@ export interface NearbyPlace {
   externalId?: string;
 }
 
+/** Photo shown only when a reuse license and attribution are known. */
+export interface LicensedPlacePhoto {
+  url: string;
+  license: string;
+  attribution: string;
+  sourceUrl?: string;
+}
+
+export const PLACE_ACTION_KINDS = ['directions', 'call', 'website', 'booking'] as const;
+export type PlaceActionKind = (typeof PLACE_ACTION_KINDS)[number];
+
+export interface PlaceExternalAction {
+  kind: PlaceActionKind;
+  label: string;
+  href: string;
+}
+
+export interface PlaceDetails extends NearbyPlace {
+  phone?: string;
+  website?: string;
+  bookingUrl?: string;
+  bookingLabel?: string;
+  hoursSummary?: string | null;
+  hoursLines: string[];
+  photos: LicensedPlacePhoto[];
+  actions: PlaceExternalAction[];
+}
+
+export interface PlaceDetailsQuery {
+  origin: GeoPoint;
+  now: Date;
+}
+
 export interface MalaysiaPlaceSeedRecord {
   id: string;
   name: string;
@@ -156,6 +189,11 @@ export interface MalaysiaPlaceSeedRecord {
   englishSpoken?: boolean | null;
   badges: string[];
   priceBandMyr?: string;
+  phone?: string;
+  website?: string;
+  bookingUrl?: string;
+  bookingLabel?: string;
+  photos?: LicensedPlacePhoto[];
 }
 
 export interface MalaysiaPlacesSeed {
@@ -196,4 +234,5 @@ export interface PlacesSearchResult {
 export interface PlacesProvider {
   readonly kind: PlacesProviderKind;
   search(query: PlacesSearchQuery): Promise<NearbyPlace[]>;
+  get?(id: string, query: PlaceDetailsQuery): Promise<PlaceDetails | null>;
 }

@@ -1,9 +1,11 @@
+import { toPlaceDetails } from './place-view.js';
 import { distanceMeters, walkMinutesFromMeters } from './geo.js';
 import { inferHalal, normalizePlace, stablePlaceId } from './normalize.js';
 import {
   NEARBY_CATEGORIES,
   type NearbyCategory,
   type NearbyPlace,
+  type PlaceDetailsQuery,
   type PlacesProvider,
   type PlacesSearchQuery,
 } from './types.js';
@@ -107,6 +109,23 @@ export function overpassElementToNearby(
   });
 }
 
+export function overpassElementToDetails(element: OverpassElement, query: PlaceDetailsQuery) {
+  const nearby = overpassElementToNearby(element, {
+    latitude: query.origin.latitude,
+    longitude: query.origin.longitude,
+    radiusMeters: 20_000,
+    category: 'all',
+  });
+  if (!nearby) return null;
+  const tags = element.tags ?? {};
+  const hours = tags.opening_hours?.trim();
+  return toPlaceDetails(nearby, {
+    phone: tags.phone || tags['contact:phone'],
+    website: tags.website || tags['contact:website'],
+    hoursLines: hours ? [hours] : [],
+  });
+}
+
 function filtersFor(category: PlacesSearchQuery['category']): string[] {
   const cats = category === 'all' ? [...NEARBY_CATEGORIES] : [category];
   return cats.flatMap((cat) => OVERPASS_FILTERS_BY_NEARBY[cat]);
@@ -145,6 +164,32 @@ export function createOverpassPlacesProvider(config: OverpassConfig = {}): Place
         return (data.elements ?? [])
           .map((element) => overpassElementToNearby(element, query))
           .filter((place): place is NearbyPlace => place != null);
+      } finally {
+        clearTimeout(timer);
+      }
+    },
+    async get(id, query: PlaceDetailsQuery) {
+      const osmId = id.startsWith('overpass:') ? id.slice('overpass:'.length) : id;
+      if (!/^\d+$/.test(osmId)) return null;
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
+      const body = `[out:json][timeout:25];node(${osmId});out body;`;
+      try {
+        const response = await fetchImpl(endpointUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+            'User-Agent': 'tourist-companion/0.0.0 (place details)',
+          },
+          body: `data=${encodeURIComponent(body)}`,
+          signal: controller.signal,
+        });
+        if (!response.ok) {
+          throw new Error(`Overpass HTTP ${response.status}`);
+        }
+        const data = (await response.json()) as { elements?: OverpassElement[] };
+        const element = data.elements?.[0];
+        return element ? overpassElementToDetails(element, query) : null;
       } finally {
         clearTimeout(timer);
       }

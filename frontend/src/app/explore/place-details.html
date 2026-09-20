@@ -1,0 +1,126 @@
+<section class="details">
+  <header class="page-head">
+    <a class="back" routerLink="/explore">← Explore</a>
+  </header>
+
+  @if (pending()) {
+    <p class="meta" aria-live="polite">Loading place details…</p>
+  }
+
+  @if (notFound()) {
+    <p class="error" role="alert">This place is not available.</p>
+    <a class="btn" routerLink="/explore">Back to Explore</a>
+  }
+
+  @if (loadError()) {
+    <p class="error" role="alert">{{ loadError() }}</p>
+    <button type="button" class="btn" (click)="load()">Retry</button>
+  }
+
+  @if (place(); as venue) {
+    <article class="hero-card">
+      <div class="place-media" [style.background]="mediaTone(venue)">
+        @if (heroPhoto(venue); as photo) {
+          <img [src]="photo.url" [alt]="venue.name" />
+        } @else {
+          <span class="media-label">{{ venue.nearbyCategory.replace('_', ' ') }}</span>
+        }
+        @if (distanceLabel(venue)) {
+          <span class="distance-pill">{{ distanceLabel(venue) }}</span>
+        }
+      </div>
+      @if (heroPhoto(venue); as photo) {
+        <p class="photo-credit">{{ photo.attribution }} · {{ photo.license }}</p>
+      }
+      <div class="place-body">
+        <div class="place-head">
+          <h1>{{ venue.name }}</h1>
+          @if (venue.halal) {
+            <span class="chip chip-gold">Halal</span>
+          }
+        </div>
+        @if (openingLabel(venue); as hours) {
+          <p class="hours" [class.closed]="venue.openNow === false">{{ hours }}</p>
+        }
+        @if (venue.badges.length) {
+          <div class="badge-row">
+            @for (badge of venue.badges; track badge) {
+              <span class="chip">{{ badge }}</span>
+            }
+          </div>
+        }
+        @if (venue.description) {
+          <p class="lede">{{ venue.description }}</p>
+        }
+        @if (venue.priceBandMyr) {
+          <p class="price">{{ venue.priceBandMyr }}</p>
+        }
+        <div class="place-actions">
+          @for (action of venue.actions; track action.kind + action.href) {
+            <a
+              [class]="actionClass(action)"
+              [attr.data-action]="action.kind"
+              [href]="action.href"
+              target="_blank"
+              rel="noreferrer"
+            >
+              {{ action.label }}
+            </a>
+          }
+          <a class="btn btn-secondary" routerLink="/concierge">Ask concierge</a>
+        </div>
+      </div>
+    </article>
+
+    @if (venue.address) {
+      <section class="info-card">
+        <h2>Address</h2>
+        <p>{{ venue.address }}</p>
+        @if (venue.area || venue.city) {
+          <p class="meta">{{ venue.area || venue.city }}</p>
+        }
+      </section>
+    }
+
+    @if (venue.phone || venue.website) {
+      <section class="info-card">
+        <h2>Contact</h2>
+        @if (venue.phone) {
+          <p>
+            <a [href]="'tel:' + venue.phone">{{ venue.phone }}</a>
+          </p>
+        }
+        @if (venue.website) {
+          <p>
+            <a [href]="venue.website" target="_blank" rel="noreferrer">{{ venue.website }}</a>
+          </p>
+        }
+      </section>
+    }
+
+    @if (venue.hoursLines.length) {
+      <section class="info-card">
+        <h2>Hours</h2>
+        <ul class="hours-list">
+          @for (line of venue.hoursLines; track line) {
+            <li>{{ line }}</li>
+          }
+        </ul>
+      </section>
+    }
+
+    @if (extraPhotos(venue).length) {
+      <section class="info-card">
+        <h2>Photos</h2>
+        <div class="gallery">
+          @for (photo of extraPhotos(venue); track photo.url) {
+            <figure>
+              <img [src]="photo.url" [alt]="venue.name" />
+              <figcaption>{{ photo.attribution }} · {{ photo.license }}</figcaption>
+            </figure>
+          }
+        </div>
+      </section>
+    }
+  }
+</section>

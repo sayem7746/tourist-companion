@@ -135,7 +135,7 @@
         </div>
         <div class="place-body">
           <div class="place-head">
-            <h2>{{ place.name }}</h2>
+            <a class="place-title" [routerLink]="['/explore', place.id]">{{ place.name }}</a>
             @if (place.halal) {
               <span class="chip chip-gold">Halal</span>
             }
@@ -164,7 +164,7 @@
           }
           <div class="place-actions">
             <a class="btn" [href]="mapsHref(place)" target="_blank" rel="noreferrer">Directions</a>
-            <a class="btn btn-secondary" routerLink="/concierge">Ask concierge</a>
+            <a class="btn btn-secondary" [routerLink]="['/explore', place.id]">Details</a>
           </div>
         </div>
       </article>
