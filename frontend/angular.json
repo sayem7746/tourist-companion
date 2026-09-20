@@ -50,6 +50,16 @@
               ],
               "outputHashing": "all"
             },
+            "staging": {
+              "optimization": true,
+              "outputHashing": "all",
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.staging.ts"
+                }
+              ]
+            },
             "development": {
               "optimization": false,
               "extractLicenses": false,
@@ -69,6 +79,9 @@
           "configurations": {
             "production": {
               "buildTarget": "tourist-companion:build:production"
+            },
+            "staging": {
+              "buildTarget": "tourist-companion:build:staging"
             },
             "development": {
               "buildTarget": "tourist-companion:build:development"

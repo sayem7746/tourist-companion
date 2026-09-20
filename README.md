@@ -26,6 +26,16 @@ npm run db:seed
 
 See `backend/README.md` for schema, migrate, and seed details.
 
+## Environments and secrets
+
+Copy example env files (placeholders only) — never commit real `.env` files:
+
+```bash
+cp backend/.env.development.example backend/.env
+```
+
+Per-environment examples: `backend/.env.{development,staging,production}.example` and `frontend/.env.{development,staging,production}.example`. GitHub Actions injects `secrets.DATABASE_URL`, `secrets.JWT_SECRET`, `secrets.FRONTEND_ORIGIN`, and `secrets.API_BASE_URL` (see `infra/SECRETS.md`).
+
 ## CI/CD
 
 Pull requests and pushes to `main` run lint, test, and build for frontend and backend (`.github/workflows/ci.yml`). Staging vs production deploy notes (no cloud credentials) are in `infra/DEPLOY.md`.

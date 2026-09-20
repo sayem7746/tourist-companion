@@ -10,10 +10,13 @@ build/
 .angular/
 coverage/
 
-# Environment and secrets
+# Environment and secrets (never commit real values)
 .env
+.env.local
+.env.*.local
 .env.*
 !.env.example
+!.env.*.example
 *.pem
 *.key
 credentials.json

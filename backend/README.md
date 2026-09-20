@@ -10,7 +10,7 @@ From the repo root:
 docker compose -f infra/docker-compose.yml up -d
 ```
 
-Copy `backend/.env.example` to `backend/.env`. Default URL:
+Copy `backend/.env.development.example` (or `.env.example`) to `backend/.env`. Staging and production placeholders: `.env.staging.example` and `.env.production.example`. Do not commit populated env files. Default URL:
 
 `postgres://tourist:tourist@127.0.0.1:5432/tourist_companion`
 

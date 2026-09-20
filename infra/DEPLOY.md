@@ -1,6 +1,6 @@
 # Deploy notes (staging vs production)
 
-CI on pull requests and pushes to `main` is defined in `.github/workflows/ci.yml` (lint, test, and build for `frontend/` and `backend/`). This file describes how **deploy** should work once a host is chosen. Do not store cloud credentials in the repo.
+CI on pull requests and pushes to `main` is defined in `.github/workflows/ci.yml` (lint, test, and build for `frontend/` and `backend/`). Deploy placeholders live in `.github/workflows/deploy.yml`. How secrets are stored and injected is documented in `infra/SECRETS.md`. Do not store cloud credentials in the repo.
 
 ## Environments
 
@@ -20,8 +20,10 @@ Create GitHub Environments named `staging` and `production` (no real secrets req
 | --- | --- | --- |
 | `API_BASE_URL` | Staging API origin | Production API origin |
 | `DATABASE_URL` | Staging Postgres | Production Postgres |
-| `JWT_SECRET` | Staging-only value | Production-only value |
+| `JWT_SECRET` | Staging-only value (≥32 chars) | Production-only value (≥32 chars) |
 | `FRONTEND_ORIGIN` | Staging web origin | Production web origin |
+
+Mapped in deploy jobs as `${{ secrets.DATABASE_URL }}`, `${{ secrets.JWT_SECRET }}`, `${{ secrets.FRONTEND_ORIGIN }}`, and `${{ secrets.API_BASE_URL }}`.
 
 Leave values empty until infrastructure is provisioned. Protection rules: **production** should require a reviewer; **staging** can auto-deploy from `main`.
 

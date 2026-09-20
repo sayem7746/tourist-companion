@@ -41,7 +41,10 @@ testem.log
 .DS_Store
 Thumbs.db
 
-# Secrets
+# Secrets (commit examples only)
 .env
+.env.local
+.env.*.local
 .env.*
 !.env.example
+!.env.*.example

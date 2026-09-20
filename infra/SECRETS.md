@@ -1,0 +1,72 @@
+# Secrets and environments
+
+Development, staging, and production must not share databases, JWT secrets, or API keys. Real secrets are never committed. Copy an `*.example` file to a gitignored `.env` on a developer machine; CI and deploy inject values from GitHub Actions.
+
+## What lives where
+
+| Kind | Frontend | Backend |
+| --- | --- | --- |
+| Public config | `NG_APP_API_BASE_URL`, Angular `src/environments/` | `HOST`, `PORT`, `LOG_LEVEL`, `FRONTEND_ORIGIN`, `APP_ENV` |
+| Secrets | None (SPA is public) | `DATABASE_URL`, `JWT_SECRET`, future third-party API keys |
+
+Angular environment files are compiled into the client. Put only public API origins there.
+
+## Example files (placeholders only)
+
+| Environment | Backend | Frontend |
+| --- | --- | --- |
+| Development | `backend/.env.development.example` | `frontend/.env.development.example` |
+| Staging | `backend/.env.staging.example` | `frontend/.env.staging.example` |
+| Production | `backend/.env.production.example` | `frontend/.env.production.example` |
+
+Local backend:
+
+```bash
+cp backend/.env.development.example backend/.env
+```
+
+`.env`, `.env.local`, and `.env.*` (except `*.example`) are gitignored.
+
+## GitHub Actions injection
+
+Workflow: `.github/workflows/deploy.yml`. Create GitHub **Environments** named `staging` and `production`. Add **secrets** and **variables** with these names (values stay in GitHub; the workflow maps them onto process env):
+
+| GitHub secret | Injected as | Used by |
+| --- | --- | --- |
+| `DATABASE_URL` | `env.DATABASE_URL` / `${{ secrets.DATABASE_URL }}` | Backend, migrations |
+| `JWT_SECRET` | `env.JWT_SECRET` | Backend tokens |
+| `JWT_EXPIRES_IN` | `env.JWT_EXPIRES_IN` | Backend tokens (optional; default `7d`) |
+| `FRONTEND_ORIGIN` | `env.FRONTEND_ORIGIN` | Backend CORS |
+| `API_BASE_URL` | `NG_APP_API_BASE_URL` on the frontend build step | SPA API origin |
+
+| GitHub variable | Injected as | Used by |
+| --- | --- | --- |
+| `HOST` / `PORT` (optional) | Override in the deploy workflow if the bind address is not `0.0.0.0:3000` | API process |
+
+Example (do not log secret values):
+
+```yaml
+env:
+  APP_ENV: staging
+  NODE_ENV: production
+  DATABASE_URL: ${{ secrets.DATABASE_URL }}
+  JWT_SECRET: ${{ secrets.JWT_SECRET }}
+  FRONTEND_ORIGIN: ${{ secrets.FRONTEND_ORIGIN }}
+```
+
+```yaml
+- name: Build frontend
+  working-directory: frontend
+  env:
+    NG_APP_API_BASE_URL: ${{ secrets.API_BASE_URL }}
+  run: npm ci && npm run build:staging
+```
+
+Production deploys should use the `production` environment with a required reviewer. Staging can deploy from `main`. Until a host exists, the deploy job only builds, migrates, and checks that placeholders are set.
+
+## Rules
+
+- Do not commit `.env` files that contain real credentials.
+- Do not echo `secrets.*` in logs.
+- Do not run `npm run db:seed` in production.
+- Future keys (maps, LLM, partner APIs) follow the same pattern: example files with `CHANGE_ME_*`, GitHub secret names, backend-only unless the value is public.
