@@ -57,3 +57,23 @@ interface ArrivalConnectivityOption {
   sortOrder: number;
 }
 ```
+
+## Currency and payment guide
+
+Public `GET /arrival-currency?airport=` for first-time visitor ringgit, ATM, card, cash, and common payment situations. Default airport `KUL`. Options are CMS-ready TypeScript seed (`ringgit`, `atm`, `card`, `cash`, `situation`) plus emerald-stripe tips. Currency ticker labels are uppercase `MYR`.
+
+```ts
+interface ArrivalPaymentOption {
+  id: string;
+  airportCode: string;
+  kind: 'ringgit' | 'atm' | 'card' | 'cash' | 'situation';
+  name: string;
+  badge: string;
+  summary: string;
+  location?: string;
+  currencyCode: 'MYR';
+  howTo: string;
+  whenToUse: string;
+  sortOrder: number;
+}
+```

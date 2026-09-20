@@ -5,6 +5,7 @@ import { ServiceUnavailableError } from '../errors.js';
 import { validateRequest } from '../validate.js';
 import { recommendHotelTransfers } from './hotel-transfer.js';
 import { ARRIVAL_CONNECTIVITY_OPTIONS, ARRIVAL_CONNECTIVITY_TIPS } from './connectivity-content.js';
+import { ARRIVAL_PAYMENT_OPTIONS, ARRIVAL_PAYMENT_TIPS } from './payment-content.js';
 import { ARRIVAL_TRANSPORT_SEED } from './transport-content.js';
 import {
   ARRIVAL_AIRPORTS,
@@ -67,6 +68,21 @@ export async function registerArrivalRoutes(
       (a, b) => a.sortOrder - b.sortOrder || a.id.localeCompare(b.id),
     );
     const tips = ARRIVAL_CONNECTIVITY_TIPS.filter((tip) => tip.airportCode === query.airport).sort(
+      (a, b) => a.sortOrder - b.sortOrder || a.id.localeCompare(b.id),
+    );
+    return {
+      airportCode: query.airport,
+      options,
+      tips,
+    };
+  });
+
+  app.get('/arrival-currency', async (request) => {
+    const { query } = validateRequest(request, { query: transportQuerySchema });
+    const options = ARRIVAL_PAYMENT_OPTIONS.filter((option) => option.airportCode === query.airport).sort(
+      (a, b) => a.sortOrder - b.sortOrder || a.id.localeCompare(b.id),
+    );
+    const tips = ARRIVAL_PAYMENT_TIPS.filter((tip) => tip.airportCode === query.airport).sort(
       (a, b) => a.sortOrder - b.sortOrder || a.id.localeCompare(b.id),
     );
     return {

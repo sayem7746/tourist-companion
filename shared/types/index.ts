@@ -192,6 +192,30 @@ export interface ArrivalConnectivityTip {
   sortOrder: number;
 }
 
+export type PaymentKind = 'ringgit' | 'atm' | 'card' | 'cash' | 'situation';
+
+export interface ArrivalPaymentOption {
+  id: string;
+  airportCode: ArrivalAirportCode;
+  kind: PaymentKind;
+  name: string;
+  badge: string;
+  summary: string;
+  location?: string;
+  currencyCode: 'MYR';
+  howTo: string;
+  whenToUse: string;
+  sortOrder: number;
+}
+
+export interface ArrivalPaymentTip {
+  id: string;
+  airportCode: ArrivalAirportCode;
+  title: string;
+  body: string;
+  sortOrder: number;
+}
+
 export type ReferralStatus = 'pending' | 'clicked' | 'converted' | 'expired';
 
 export interface Referral {

@@ -5,7 +5,7 @@ import { provideRouter } from '@angular/router';
 import { environment } from '../../environments/environment';
 import { ArrivalChecklist } from './arrival-checklist';
 import { progressPercent, progressStorageKey } from './arrival-progress';
-import type { ArrivalChecklistItem, ArrivalChecklistResponse, ArrivalConnectivityResponse, ArrivalTransportResponse } from './arrival.service';
+import type { ArrivalChecklistItem, ArrivalChecklistResponse, ArrivalConnectivityResponse, ArrivalCurrencyResponse, ArrivalTransportResponse } from './arrival.service';
 
 function item(partial: Partial<ArrivalChecklistItem> & Pick<ArrivalChecklistItem, 'id' | 'title'>): ArrivalChecklistItem {
   return {
@@ -23,6 +23,10 @@ function emptyTransport(airportCode: ArrivalChecklistResponse['airportCode'] = '
 }
 
 function emptyConnectivity(airportCode: ArrivalChecklistResponse['airportCode'] = 'KUL'): ArrivalConnectivityResponse {
+  return { airportCode, options: [], tips: [] };
+}
+
+function emptyCurrency(airportCode: ArrivalChecklistResponse['airportCode'] = 'KUL'): ArrivalCurrencyResponse {
   return { airportCode, options: [], tips: [] };
 }
 
@@ -45,6 +49,9 @@ function flushChecklist(
   http
     .expectOne((request) => request.url === `${environment.apiBaseUrl}/arrival-connectivity`)
     .flush(emptyConnectivity(nestedAirport));
+  http
+    .expectOne((request) => request.url === `${environment.apiBaseUrl}/arrival-currency`)
+    .flush(emptyCurrency(nestedAirport));
   http
     .expectOne((request) => request.url === `${environment.apiBaseUrl}/arrival-transport`)
     .flush(emptyTransport(nestedAirport));
@@ -91,12 +98,14 @@ describe('ArrivalChecklist', () => {
       ]),
     );
     http.expectOne((request) => request.url === `${environment.apiBaseUrl}/arrival-connectivity`).flush(emptyConnectivity());
+    http.expectOne((request) => request.url === `${environment.apiBaseUrl}/arrival-currency`).flush(emptyCurrency());
     http.expectOne((request) => request.url === `${environment.apiBaseUrl}/arrival-transport`).flush(emptyTransport());
     fixture.detectChanges();
 
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('h1')?.textContent).toContain('Arrival checklist');
     expect(compiled.querySelector('a[href="/arrival/sim"]')?.textContent).toContain('SIM & connectivity');
+    expect(compiled.querySelector('a[href="/arrival/money"]')?.textContent).toContain('Currency & payments');
     expect(compiled.querySelector('a[href="/arrival/transport"]')?.textContent).toContain('Airport transport guide');
     expect(compiled.textContent).toContain('Complete MDAC before passport control');
     expect(compiled.textContent).toContain('Collect bags at the KLIA carousel');
@@ -122,6 +131,9 @@ describe('ArrivalChecklist', () => {
     http
       .expectOne((request) => request.url === `${environment.apiBaseUrl}/arrival-connectivity`)
       .flush(emptyConnectivity('KLIA2'));
+    http
+      .expectOne((request) => request.url === `${environment.apiBaseUrl}/arrival-currency`)
+      .flush(emptyCurrency('KLIA2'));
     http
       .expectOne((request) => request.url === `${environment.apiBaseUrl}/arrival-transport`)
       .flush(emptyTransport('KLIA2'));
@@ -162,6 +174,7 @@ describe('ArrivalChecklist', () => {
       .expectOne((request) => request.url === `${environment.apiBaseUrl}/arrival-checklist`)
       .flush({ error: 'nope' }, { status: 500, statusText: 'Server Error' });
     http.expectOne((request) => request.url === `${environment.apiBaseUrl}/arrival-connectivity`).flush(emptyConnectivity());
+    http.expectOne((request) => request.url === `${environment.apiBaseUrl}/arrival-currency`).flush(emptyCurrency());
     http.expectOne((request) => request.url === `${environment.apiBaseUrl}/arrival-transport`).flush(emptyTransport());
     fixture.detectChanges();
 

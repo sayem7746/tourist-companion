@@ -1,0 +1,86 @@
+<section class="currency-guide" [class.embedded]="embedded">
+  @if (!embedded) {
+    <h1>Currency &amp; payments</h1>
+    <p class="lede">
+      First-time visitor guide to the Malaysian Ringgit, airport ATMs, cards, cash, and everyday payment situations at
+      KLIA (main) and KLIA2.
+    </p>
+    <label class="airport-field">
+      Airport
+      <select name="airport" [ngModel]="airport" (ngModelChange)="onAirportChange($event)" [disabled]="pending()">
+        @for (code of airports; track code) {
+          <option [value]="code">{{ airportLabels[code] }}</option>
+        }
+      </select>
+    </label>
+  } @else {
+    <h2>Ringgit, ATMs &amp; cards</h2>
+    <p class="lede">Withdraw a little MYR after customs. Open the full guide for DCC, hawkers, and Grab.</p>
+  }
+
+  @if (pending()) {
+    <p class="meta" aria-live="polite">Loading currency and payment guide…</p>
+  }
+
+  @if (loadError()) {
+    <p class="error" role="alert">{{ loadError() }}</p>
+    <button type="button" class="btn" (click)="load()">Retry</button>
+  }
+
+  @if (!pending() && !loadError()) {
+    @if (tips().length) {
+      <div class="tip-list">
+        @for (tip of tips(); track tip.id) {
+          <article class="card tip-card">
+            <h3>{{ tip.title }}</h3>
+            <p>{{ tip.body }}</p>
+          </article>
+        }
+      </div>
+    }
+
+    <div class="option-list">
+      @for (option of options(); track option.id) {
+        <article class="card option">
+          <div class="option-head">
+            <h3>{{ option.name }}</h3>
+            <span [class]="chipClass(option.badge)">{{ option.badge }}</span>
+          </div>
+          <p class="summary">{{ option.summary }}</p>
+          <dl class="facts">
+            <div>
+              <dt>MYR</dt>
+              <dd>{{ option.currencyCode }}</dd>
+            </div>
+            @if (option.kind === 'atm' && option.location) {
+              <div>
+                <dt>ATM</dt>
+                <dd>{{ option.location }}</dd>
+              </div>
+            }
+            @if (option.kind === 'card') {
+              <div>
+                <dt>CARDS</dt>
+                <dd>Visa / Mastercard in MYR</dd>
+              </div>
+            }
+            @if (option.kind === 'cash') {
+              <div>
+                <dt>CASH</dt>
+                <dd>Hawkers, markets, some taxis</dd>
+              </div>
+            }
+          </dl>
+          <p><strong>How to:</strong> {{ option.howTo }}</p>
+          <p class="when"><strong>When to use:</strong> {{ option.whenToUse }}</p>
+        </article>
+      }
+    </div>
+  }
+
+  @if (!embedded) {
+    <p class="meta"><a routerLink="/arrival">Back to arrival checklist</a></p>
+  } @else {
+    <p><a routerLink="/arrival/money" class="btn">Full currency &amp; payment guide</a></p>
+  }
+</section>

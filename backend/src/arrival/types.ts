@@ -98,3 +98,28 @@ export interface ArrivalConnectivityTip {
   body: string;
   sortOrder: number;
 }
+
+export const PAYMENT_KINDS = ['ringgit', 'atm', 'card', 'cash', 'situation'] as const;
+export type PaymentKind = (typeof PAYMENT_KINDS)[number];
+
+export interface ArrivalPaymentOption {
+  id: string;
+  airportCode: ArrivalAirportCode;
+  kind: PaymentKind;
+  name: string;
+  badge: string;
+  summary: string;
+  location?: string;
+  currencyCode: 'MYR';
+  howTo: string;
+  whenToUse: string;
+  sortOrder: number;
+}
+
+export interface ArrivalPaymentTip {
+  id: string;
+  airportCode: ArrivalAirportCode;
+  title: string;
+  body: string;
+  sortOrder: number;
+}

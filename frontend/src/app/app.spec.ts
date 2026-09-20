@@ -54,6 +54,12 @@ describe('App', () => {
     expect(sim?.canActivate).toBeUndefined();
   });
 
+  it('should expose a public currency and payment guide route', () => {
+    const money = routes.find((route) => route.path === 'arrival/money');
+    expect(money?.component).toBeTruthy();
+    expect(money?.canActivate).toBeUndefined();
+  });
+
   it('should render Tropical Sanctuary bottom tabs', () => {
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();

@@ -132,6 +132,37 @@ export interface ArrivalConnectivityResponse {
   tips: ArrivalConnectivityTip[];
 }
 
+export const PAYMENT_KINDS = ['ringgit', 'atm', 'card', 'cash', 'situation'] as const;
+export type PaymentKind = (typeof PAYMENT_KINDS)[number];
+
+export interface ArrivalPaymentOption {
+  id: string;
+  airportCode: ArrivalAirportCode;
+  kind: PaymentKind;
+  name: string;
+  badge: string;
+  summary: string;
+  location?: string;
+  currencyCode: 'MYR';
+  howTo: string;
+  whenToUse: string;
+  sortOrder: number;
+}
+
+export interface ArrivalPaymentTip {
+  id: string;
+  airportCode: ArrivalAirportCode;
+  title: string;
+  body: string;
+  sortOrder: number;
+}
+
+export interface ArrivalCurrencyResponse {
+  airportCode: ArrivalAirportCode;
+  options: ArrivalPaymentOption[];
+  tips: ArrivalPaymentTip[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class ArrivalService {
   private readonly base = `${environment.apiBaseUrl}/arrival-checklist`;
@@ -154,6 +185,11 @@ export class ArrivalService {
   listConnectivity(airport: ArrivalAirportCode = DEFAULT_ARRIVAL_AIRPORT): Observable<ArrivalConnectivityResponse> {
     const params = new HttpParams().set('airport', airport);
     return this.http.get<ArrivalConnectivityResponse>(`${environment.apiBaseUrl}/arrival-connectivity`, { params });
+  }
+
+  listCurrency(airport: ArrivalAirportCode = DEFAULT_ARRIVAL_AIRPORT): Observable<ArrivalCurrencyResponse> {
+    const params = new HttpParams().set('airport', airport);
+    return this.http.get<ArrivalCurrencyResponse>(`${environment.apiBaseUrl}/arrival-currency`, { params });
   }
 
   recommendTransfer(

@@ -26,5 +26,6 @@ describe('Home', () => {
     expect(compiled.querySelector('h1')?.textContent).toContain('Tourist Companion');
     expect(compiled.querySelector('a[href="/arrival"]')?.textContent).toContain('Arrival checklist');
     expect(compiled.querySelector('a[href="/arrival/sim"]')?.textContent).toContain('SIM');
+    expect(compiled.querySelector('a[href="/arrival/money"]')?.textContent).toContain('Currency');
   });
 });

@@ -21,6 +21,7 @@ Source: https://stitch.withgoogle.com/projects/10046914594084234943
 
 - Home — Tourist Dashboard
 - KLIA Arrival & Transportation Guide
+- KLIA Currency & Payment Guide (`screens/a6b6ac0f2aed4cbdb5a9cd9cf428c6d1`)
 - AI Malaysia Concierge
 - Explore & Nearby Helper
 - Logo

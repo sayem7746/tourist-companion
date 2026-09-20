@@ -14,11 +14,12 @@ import {
 } from './arrival.service';
 import { loadDoneIds, progressPercent, saveDoneIds } from './arrival-progress';
 import { ArrivalConnectivity } from './arrival-connectivity';
+import { ArrivalCurrency } from './arrival-currency';
 import { ArrivalTransport } from './arrival-transport';
 
 @Component({
   selector: 'app-arrival-checklist',
-  imports: [FormsModule, RouterLink, ArrivalConnectivity, ArrivalTransport],
+  imports: [FormsModule, RouterLink, ArrivalConnectivity, ArrivalCurrency, ArrivalTransport],
   templateUrl: './arrival-checklist.html',
   styleUrl: './arrival-checklist.css',
 })

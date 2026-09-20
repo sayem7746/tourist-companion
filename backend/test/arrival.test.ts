@@ -151,6 +151,41 @@ describe('arrival checklist endpoint', () => {
     expect(unknown.statusCode).toBe(400);
   });
 
+  it('returns ringgit, ATM, cards, cash, and payment situations with first-timer tips', async () => {
+    const response = await app.inject({ method: 'GET', url: '/arrival-currency' });
+    expect(response.statusCode).toBe(200);
+    const body = response.json() as {
+      airportCode: string;
+      options: Array<{ kind: string; name: string; badge: string; currencyCode: string; howTo: string; whenToUse: string }>;
+      tips: Array<{ title: string; body: string }>;
+    };
+    expect(body.airportCode).toBe('KUL');
+    expect(body.options.map((option) => option.kind)).toEqual(['ringgit', 'atm', 'card', 'cash', 'situation']);
+    expect(body.options[0]).toMatchObject({ name: 'Malaysian Ringgit', badge: 'MYR', currencyCode: 'MYR' });
+    expect(body.options.every((option) => option.currencyCode === 'MYR')).toBe(true);
+    expect(body.options.every((option) => option.howTo.length > 20 && option.whenToUse.length > 20)).toBe(true);
+    expect(body.options.some((option) => option.kind === 'atm' && option.name.includes('ATM'))).toBe(true);
+    expect(body.tips.length).toBeGreaterThan(0);
+    expect(body.tips[0].title).toContain('MYR');
+    expect(body.tips.some((tip) => /DCC|conversion/i.test(tip.body))).toBe(true);
+  });
+
+  it('filters currency guide by airport and rejects unknown codes', async () => {
+    const klia2 = await app.inject({ method: 'GET', url: '/arrival-currency?airport=KLIA2' });
+    expect(klia2.statusCode).toBe(200);
+    const body = klia2.json() as {
+      airportCode: string;
+      options: Array<{ location?: string; kind: string }>;
+      tips: Array<{ body: string }>;
+    };
+    expect(body.airportCode).toBe('KLIA2');
+    expect(body.options.find((option) => option.kind === 'atm')?.location).toContain('Gateway@klia2');
+    expect(body.tips.some((tip) => tip.body.includes('Gateway'))).toBe(true);
+
+    const unknown = await app.inject({ method: 'GET', url: '/arrival-currency?airport=PEN' });
+    expect(unknown.statusCode).toBe(400);
+  });
+
   it('filters transport by airport and rejects unknown codes', async () => {
     const klia2 = await app.inject({ method: 'GET', url: '/arrival-transport?airport=KLIA2' });
     expect(klia2.statusCode).toBe(200);
