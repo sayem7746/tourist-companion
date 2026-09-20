@@ -3,6 +3,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 import { App } from './app';
 import { routes } from './app.routes';
+import { authGuard } from './auth/auth.guard';
 
 describe('App', () => {
   beforeEach(async () => {
@@ -23,5 +24,10 @@ describe('App', () => {
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('.brand')?.textContent).toContain('Tourist Companion');
+  });
+
+  it('should guard the trip dashboard', () => {
+    const dashboard = routes.find((route) => route.path === 'trips');
+    expect(dashboard?.canActivate).toEqual([authGuard]);
   });
 });

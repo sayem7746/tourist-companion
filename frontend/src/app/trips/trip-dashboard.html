@@ -1,0 +1,48 @@
+<section>
+  <h1>Trip dashboard</h1>
+  <p class="lede">Your current or next Malaysia trip, with space for itinerary, saved places, and referrals.</p>
+
+  @if (pending()) {
+    <p class="meta" aria-live="polite">Loading trips…</p>
+  }
+
+  @if (loadError()) {
+    <p class="error" role="alert">{{ loadError() }}</p>
+    <button type="button" (click)="load()">Retry</button>
+  }
+
+  @if (!pending() && !loadError() && featuredKind() === 'none') {
+    <p>No current or upcoming trip yet.</p>
+    <p class="meta"><a routerLink="/trips/new">Plan a trip</a> to get started.</p>
+  }
+
+  @if (featured(); as trip) {
+    <article class="card">
+      <p class="eyebrow">{{ featuredKind() === 'current' ? 'Current trip' : 'Upcoming trip' }}</p>
+      <h2>{{ trip.destination }}</h2>
+      <p class="meta">{{ trip.startDate }} → {{ trip.endDate }} · {{ dayCount() }} day{{ dayCount() === 1 ? '' : 's' }}</p>
+      <p class="meta">
+        {{ trip.adultCount }} adult{{ trip.adultCount === 1 ? '' : 's' }},
+        {{ trip.childCount }} child{{ trip.childCount === 1 ? '' : 'ren' }}
+      </p>
+      @if (trip.interests.length) {
+        <p class="meta">Interests: {{ trip.interests.join(', ') }}</p>
+      }
+    </article>
+  }
+
+  <h2>Itinerary</h2>
+  <p class="placeholder">Itinerary summary will appear here once daily plans are available.</p>
+
+  <h2>Saved places</h2>
+  <p class="placeholder">Saved places will appear here once that API is ready.</p>
+
+  <h2>Referrals</h2>
+  <p class="placeholder">Partner referrals will appear here once that API is ready.</p>
+
+  <h2>Quick actions</h2>
+  <div class="actions">
+    <a routerLink="/trips/new">Plan a trip</a>
+    <button type="button" class="secondary" (click)="load()">Refresh trips</button>
+  </div>
+</section>

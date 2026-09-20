@@ -151,7 +151,7 @@ export class TripOnboarding {
         next: ({ trip }) => {
           this.pending.set(false);
           this.createdTripId.set(trip.id);
-          void this.router.navigateByUrl('/');
+          void this.router.navigateByUrl('/trips');
         },
         error: () => {
           this.pending.set(false);

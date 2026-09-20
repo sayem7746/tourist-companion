@@ -4,11 +4,18 @@ import { Login } from './auth/login';
 import { Signup } from './auth/signup';
 import { authGuard } from './auth/auth.guard';
 import { TripOnboarding } from './trips/trip-onboarding';
+import { TripDashboard } from './trips/trip-dashboard';
 
 export const routes: Routes = [
   { path: '', component: Home, title: 'Tourist Companion' },
   { path: 'login', component: Login, title: 'Sign in' },
   { path: 'signup', component: Signup, title: 'Create account' },
+  {
+    path: 'trips',
+    component: TripDashboard,
+    canActivate: [authGuard],
+    title: 'Trip dashboard',
+  },
   {
     path: 'trips/new',
     component: TripOnboarding,

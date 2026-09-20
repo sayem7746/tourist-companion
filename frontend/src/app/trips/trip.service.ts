@@ -45,6 +45,10 @@ export class TripService {
 
   constructor(private readonly http: HttpClient) {}
 
+  list(): Observable<{ trips: Trip[] }> {
+    return this.http.get<{ trips: Trip[] }>(this.base, { withCredentials: true });
+  }
+
   create(body: CreateTripRequest): Observable<{ trip: Trip }> {
     return this.http.post<{ trip: Trip }>(this.base, body, { withCredentials: true });
   }
