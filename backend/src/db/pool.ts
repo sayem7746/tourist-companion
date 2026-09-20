@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
 import type { AppConfig } from '../config.js';
+import { registerPgDateParsers } from './pg-date.js';
 
 const { Pool } = pg;
 
@@ -19,6 +20,7 @@ export async function registerDb(
     return;
   }
 
+  registerPgDateParsers();
   const pool = new Pool({
     connectionString: config.DATABASE_URL,
     max: 10,

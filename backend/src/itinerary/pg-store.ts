@@ -1,6 +1,8 @@
 import type pg from 'pg';
+import { toIsoDate, toIsoDateTime } from '../db/pg-date.js';
 import { ValidationError } from '../errors.js';
 import type { TripStore } from '../trips/types.js';
+import { alignStoredDays } from './align-days.js';
 import {
   assertNoOverlaps,
   clipDayCount,
@@ -72,7 +74,7 @@ const SELECT_DAYS = `
     id,
     itinerary_id AS "itineraryId",
     day_number AS "dayNumber",
-    date
+    date::text AS date
   FROM itinerary_days
   WHERE itinerary_id = $1
   ORDER BY day_number ASC
@@ -97,17 +99,6 @@ const SELECT_ITEMS = `
   WHERE day_id = ANY($1::uuid[])
   ORDER BY start_time ASC, sort_order ASC, id ASC
 `;
-
-function toIsoDate(value: Date | string): string {
-  if (typeof value === 'string') return value.slice(0, 10);
-  return value.toISOString().slice(0, 10);
-}
-
-function toIsoDateTime(value: Date | string | null): string | null {
-  if (value == null) return null;
-  if (typeof value === 'string') return new Date(value).toISOString();
-  return value.toISOString();
-}
 
 function mapItem(row: ItemRow): ItineraryItem {
   return {
@@ -190,31 +181,7 @@ async function alignDays(
   startDate: string,
   endDate: string,
 ): Promise<Itinerary> {
-  const dates = skeletonDates(startDate, endDate);
-  const dayCount = dates.length;
-  if (itinerary.dayCount !== dayCount || itinerary.days.some((day, index) => day.date !== dates[index])) {
-    await client.query(`UPDATE itineraries SET day_count = $2 WHERE id = $1`, [itinerary.id, dayCount]);
-    const keepDates = new Set(dates);
-    await client.query(`DELETE FROM itinerary_days WHERE itinerary_id = $1 AND date <> ALL($2::date[])`, [
-      itinerary.id,
-      dates,
-    ]);
-    const existing = new Map(itinerary.days.filter((day) => keepDates.has(day.date)).map((day) => [day.date, day]));
-    for (const [index, date] of dates.entries()) {
-      const current = existing.get(date);
-      if (current) {
-        await client.query(`UPDATE itinerary_days SET day_number = $2 WHERE id = $1`, [
-          current.id,
-          index + 1,
-        ]);
-      } else {
-        await client.query(
-          `INSERT INTO itinerary_days (itinerary_id, day_number, date) VALUES ($1, $2, $3)`,
-          [itinerary.id, index + 1, date],
-        );
-      }
-    }
-  }
+  await alignStoredDays(client, itinerary.id, startDate, endDate, itinerary.dayCount);
   const loaded = await loadItinerary(client, itinerary.tripId);
   return loaded!;
 }

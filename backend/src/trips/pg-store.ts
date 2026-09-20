@@ -1,4 +1,5 @@
 import type pg from 'pg';
+import { toIsoDate, toIsoDateTime } from '../db/pg-date.js';
 import type {
   CreateTripInput,
   DailyBudget,
@@ -36,8 +37,8 @@ const SELECT_TRIP = `
     id,
     user_id AS "userId",
     destination,
-    start_date AS "startDate",
-    end_date AS "endDate",
+    start_date::text AS "startDate",
+    end_date::text AS "endDate",
     adult_count AS "adultCount",
     child_count AS "childCount",
     interests,
@@ -50,19 +51,6 @@ const SELECT_TRIP = `
     status
   FROM trips
 `;
-
-function toIsoDate(value: Date | string): string {
-  if (typeof value === 'string') {
-    return value.slice(0, 10);
-  }
-  return value.toISOString().slice(0, 10);
-}
-
-function toIsoDateTime(value: Date | string | null): string | null {
-  if (value == null) return null;
-  if (typeof value === 'string') return new Date(value).toISOString();
-  return value.toISOString();
-}
 
 function mapTrip(row: TripRow): Trip {
   return {
@@ -172,8 +160,8 @@ export function createPgTripStore(pool: pg.Pool): TripStore {
           id,
           user_id AS "userId",
           destination,
-          start_date AS "startDate",
-          end_date AS "endDate",
+          start_date::text AS "startDate",
+          end_date::text AS "endDate",
           adult_count AS "adultCount",
           child_count AS "childCount",
           interests,
@@ -244,8 +232,8 @@ export function createPgTripStore(pool: pg.Pool): TripStore {
           id,
           user_id AS "userId",
           destination,
-          start_date AS "startDate",
-          end_date AS "endDate",
+          start_date::text AS "startDate",
+          end_date::text AS "endDate",
           adult_count AS "adultCount",
           child_count AS "childCount",
           interests,
