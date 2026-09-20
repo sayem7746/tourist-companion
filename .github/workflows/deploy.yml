@@ -4,6 +4,7 @@
 
 name: Deploy
 
+# Manual only. Do not run on push — Railway deploy comes later.
 on:
   workflow_dispatch:
     inputs:
@@ -14,10 +15,6 @@ on:
         options:
           - staging
           - production
-  push:
-    branches: [main]
-    tags:
-      - 'v*'
 
 concurrency:
   group: deploy-${{ github.event.inputs.target || github.ref }}
@@ -25,9 +22,7 @@ concurrency:
 
 jobs:
   deploy-staging:
-    if: >-
-      (github.event_name == 'workflow_dispatch' && github.event.inputs.target == 'staging') ||
-      (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    if: github.event.inputs.target == 'staging'
     name: Deploy staging
     runs-on: ubuntu-latest
     environment: staging
@@ -72,9 +67,7 @@ jobs:
           test -n "$API_BASE_URL"
 
   deploy-production:
-    if: >-
-      (github.event_name == 'workflow_dispatch' && github.event.inputs.target == 'production') ||
-      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v'))
+    if: github.event.inputs.target == 'production'
     name: Deploy production
     runs-on: ubuntu-latest
     environment: production
