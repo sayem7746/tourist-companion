@@ -25,6 +25,20 @@ describe('loadConfig', () => {
     ).toThrow(/JWT_SECRET/);
   });
 
+  it('rejects staging without a strong ADMIN_TOKEN', () => {
+    expect(() =>
+      loadConfig({
+        NODE_ENV: 'production',
+        APP_ENV: 'staging',
+        HOST: '0.0.0.0',
+        PORT: '3000',
+        DATABASE_URL: 'postgres://user:pass@db:5432/tourist_companion',
+        JWT_SECRET: 'production-grade-secret-value-32chars',
+        ADMIN_TOKEN: 'dev-only-insecure-admin-token',
+      }),
+    ).toThrow(/ADMIN_TOKEN/);
+  });
+
   it('accepts production when secrets are set', () => {
     const cfg = loadConfig({
       NODE_ENV: 'production',
@@ -33,6 +47,7 @@ describe('loadConfig', () => {
       PORT: '3000',
       DATABASE_URL: 'postgres://user:pass@db:5432/tourist_companion',
       JWT_SECRET: 'production-grade-secret-value-32chars',
+      ADMIN_TOKEN: 'production-grade-admin-token-32char',
       FRONTEND_ORIGIN: 'https://app.example.com',
       LLM_API_KEY: 'sk-test-not-used-in-this-assertion',
     });

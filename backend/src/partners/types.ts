@@ -122,3 +122,38 @@ export interface ReferralRow {
   channel: ReferralChannel | null;
   itineraryItemId: string | null;
 }
+
+export interface PartnerListFilters {
+  category?: PartnerCategory;
+  isActive?: boolean;
+}
+
+export interface CreatePartnerInput {
+  name: string;
+  slug: string;
+  category: PartnerCategory;
+  isActive?: boolean;
+  website?: string | null;
+  contactEmail?: string | null;
+  listing: PartnerListing;
+  commission?: PartnerCommission;
+}
+
+export interface UpdatePartnerInput {
+  name?: string;
+  slug?: string;
+  category?: PartnerCategory;
+  website?: string | null;
+  contactEmail?: string | null;
+  listing?: Partial<PartnerListing>;
+  commission?: Partial<Pick<PartnerCommission, 'rate' | 'basis'>>;
+}
+
+export interface PartnerStore {
+  list(filters?: PartnerListFilters): Promise<Provider[]>;
+  get(id: string): Promise<Provider | undefined>;
+  create(input: CreatePartnerInput): Promise<Provider>;
+  update(id: string, patch: UpdatePartnerInput): Promise<Provider | undefined>;
+  setActive(id: string, isActive: boolean): Promise<Provider | undefined>;
+  delete(id: string): Promise<boolean>;
+}

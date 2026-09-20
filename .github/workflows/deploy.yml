@@ -38,6 +38,7 @@ jobs:
       PORT: '3000'
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
       FRONTEND_ORIGIN: ${{ secrets.FRONTEND_ORIGIN }}
       API_BASE_URL: ${{ secrets.API_BASE_URL }}
     steps:
@@ -66,6 +67,7 @@ jobs:
           echo "Wire this step to the chosen host when infrastructure exists."
           test -n "$DATABASE_URL"
           test -n "$JWT_SECRET"
+          test -n "$ADMIN_TOKEN"
           test -n "$FRONTEND_ORIGIN"
           test -n "$API_BASE_URL"
 
@@ -83,6 +85,7 @@ jobs:
       PORT: '3000'
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
       FRONTEND_ORIGIN: ${{ secrets.FRONTEND_ORIGIN }}
       API_BASE_URL: ${{ secrets.API_BASE_URL }}
     steps:
@@ -111,5 +114,6 @@ jobs:
           echo "Require a reviewer on this environment. Do not run db:seed."
           test -n "$DATABASE_URL"
           test -n "$JWT_SECRET"
+          test -n "$ADMIN_TOKEN"
           test -n "$FRONTEND_ORIGIN"
           test -n "$API_BASE_URL"

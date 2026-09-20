@@ -92,6 +92,7 @@ describe('serializeErrorForLog', () => {
         PORT: '3000',
         LOG_LEVEL: 'silent',
         JWT_SECRET: 'a'.repeat(32),
+        ADMIN_TOKEN: 'b'.repeat(32),
         DATABASE_URL: 'postgres://tourist:tourist@127.0.0.1:5432/tourist_companion',
       }),
     );

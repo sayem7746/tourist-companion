@@ -1,7 +1,11 @@
+export type AuthRole = 'tourist' | 'admin';
+
 export interface AuthUser {
   id: string;
   email: string;
   displayName: string;
+  /** Present when the access token (or user record) carries a role. */
+  role?: AuthRole;
 }
 
 export interface UserRecord extends AuthUser {

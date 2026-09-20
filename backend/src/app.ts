@@ -31,6 +31,10 @@ import { createMemoryConciergeHistoryStore } from './concierge/memory-store.js';
 import { createPgConciergeHistoryStore } from './concierge/pg-store.js';
 import type { ConciergeHistoryStore } from './concierge/history-types.js';
 import { registerKnowledgeRoutes } from './knowledge/routes.js';
+import { registerPartnerAdminRoutes } from './partners/routes.js';
+import { createMemoryPartnerStore } from './partners/memory-store.js';
+import { createPgPartnerStore } from './partners/pg-store.js';
+import type { PartnerStore } from './partners/types.js';
 import { registerPlacesRoutes } from './places/routes.js';
 import { registerHealthRoutes } from './routes/health.js';
 import { registerMetricsRoutes } from './routes/metrics.js';
@@ -70,7 +74,7 @@ export function buildApp(config: AppConfig): FastifyInstance {
       reply.header('Access-Control-Allow-Credentials', 'true');
       reply.header(
         'Access-Control-Allow-Headers',
-        'Content-Type, Authorization, X-Request-Id',
+        'Content-Type, Authorization, X-Request-Id, X-Admin-Token',
       );
       reply.header(
         'Access-Control-Allow-Methods',
@@ -179,6 +183,7 @@ export function buildApp(config: AppConfig): FastifyInstance {
   let memoryItineraryStore: ItineraryStore | undefined;
   let memoryArrivalStore: ArrivalChecklistStore | undefined;
   let memoryHistoryStore: ConciergeHistoryStore | undefined;
+  let memoryPartnerStore: PartnerStore | undefined;
 
   const resolveAuthStore = (): AuthStore | undefined => {
     if (app.db) {
@@ -239,6 +244,17 @@ export function buildApp(config: AppConfig): FastifyInstance {
     return undefined;
   };
 
+  const resolvePartnerStore = (): PartnerStore | undefined => {
+    if (app.db) {
+      return createPgPartnerStore(app.db);
+    }
+    if (config.NODE_ENV === 'test') {
+      memoryPartnerStore ??= createMemoryPartnerStore();
+      return memoryPartnerStore;
+    }
+    return undefined;
+  };
+
   void registerAuthRoutes(app, config, resolveAuthStore);
   void registerProfileRoutes(app, config, resolveProfileStore);
   void registerTripRoutes(app, config, resolveTripStore);
@@ -259,6 +275,8 @@ export function buildApp(config: AppConfig): FastifyInstance {
     }
     return undefined;
   });
+
+  void registerPartnerAdminRoutes(app, config, resolvePartnerStore);
 
   return app;
 }

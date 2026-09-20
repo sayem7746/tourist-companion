@@ -1,0 +1,11 @@
+/** Licensed Stitch (TripCompanion) brand assets from Tropical Sanctuary. */
+export const STITCH_LOGO_URL =
+  'https://lh3.googleusercontent.com/aida/AEtjO1Vp09PcxL0OHISI0xDCwQ2muS2_u0T3v9UiH5abV7x6wfKxRxb7ueE8kHYTJnyMmWQsbwJt_H6bIsznJABiB4z3GwM-MSNsTS7EYw_s5H6jTkX4cvmunqQFhMPiiP0LS9RGli8GO6W7JmN_UxnubYHuEy077bKaga7mjsdu0sh90Liy3-7uv0SBX-2LdEEDtZRUCjNYF514CSWEXa-h-dT1xi5CMxOBTMlGqz3QOdDNw6NaPwuDDmywWDg';
+
+export const STITCH_AVATAR_URL =
+  'https://lh3.googleusercontent.com/aida-public/AB6AXuDmjz6jCmZi1S3x9gCxSf9ehJWHi1ZegOkSaiWJsuJr2KnFBZmOFXcNntE1sxi3knF0cRIFXVbjNvh38ptk22fAN5rEgMryPQWuphqAiTlDwIcvyGV_dAKWmw3o390Nk5RW6y56DXNsGE_VWdI182MRYfJzDo0s_5J6a7Lyn3jXDfflsMWsymrho24HgH8RgwIi7fwK8ZNG9l8NyklIsMTb237y_Hh_v0BqK19E4X8dO8S0VLuJkwHFhQ';
+
+export const STITCH_EXPLORE_MAP_URL =
+  'https://lh3.googleusercontent.com/aida-public/AB6AXuAXJ_I_MmkDo-mpxv_V_-JcDXgDka_pKCun6FL2xKJMbWllTullu7KJUm88UDQlpsmI--zvby4BR5k8GUvbzdkpdKxYYMZ0iHfq8PrV0gFGvzKG57Fj4XWewoA_rQfsAj_TM5vQhe3PpxmgGTQA9sxYYxPX7iRuly_yQVMamLvUM7Ed2nOpgrGcplcwMjlNVuNyADn_T44nXPDIEtLVXC7e6A7sxViwGreJQoSMG0F4cVyGRimDIiipuQ';
+
+export const STITCH_HEADER_WEATHER = 'Kuala Lumpur • 31°C ⛅';

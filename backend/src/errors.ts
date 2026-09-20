@@ -33,6 +33,13 @@ export class UnauthorizedError extends AppError {
   }
 }
 
+export class ForbiddenError extends AppError {
+  constructor(message = 'Forbidden') {
+    super(403, 'FORBIDDEN', message);
+    this.name = 'ForbiddenError';
+  }
+}
+
 export class ConflictError extends AppError {
   constructor(message = 'Resource already exists') {
     super(409, 'CONFLICT', message);

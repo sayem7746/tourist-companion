@@ -10,14 +10,21 @@ interface AccessPayload {
   sub: string;
   email: string;
   displayName: string;
+  role?: AuthUser['role'];
 }
 
 export function signAccessToken(user: AuthUser, config: AppConfig): string {
-  return jwt.sign(
-    { sub: user.id, email: user.email, displayName: user.displayName },
-    config.JWT_SECRET,
-    { expiresIn: config.JWT_EXPIRES_IN as jwt.SignOptions['expiresIn'] },
-  );
+  const payload: AccessPayload = {
+    sub: user.id,
+    email: user.email,
+    displayName: user.displayName,
+  };
+  if (user.role) {
+    payload.role = user.role;
+  }
+  return jwt.sign(payload, config.JWT_SECRET, {
+    expiresIn: config.JWT_EXPIRES_IN as jwt.SignOptions['expiresIn'],
+  });
 }
 
 export function verifyAccessToken(token: string, config: AppConfig): AuthUser {
@@ -30,8 +37,10 @@ export function verifyAccessToken(token: string, config: AppConfig): AuthUser {
       id: payload.sub,
       email: payload.email,
       displayName: payload.displayName ?? '',
+      role: payload.role === 'admin' || payload.role === 'tourist' ? payload.role : undefined,
     };
-  } catch {
+  } catch (error) {
+    if (error instanceof UnauthorizedError) throw error;
     throw new UnauthorizedError('Invalid or expired session');
   }
 }

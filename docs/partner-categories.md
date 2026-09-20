@@ -6,7 +6,7 @@ Asana: [Define partner categories](https://app.asana.com/1/1218080418840809/proj
 
 Shared contract: `PARTNER_CATEGORIES`, `PARTNER_CATEGORY_CHIPS`, `Provider`, `PartnerListing`, `PartnerCommission`, `Referral`, and `REFERRAL_DISCLOSURE` in `shared/types/index.ts`.
 
-This document is the category and compliance model. Listing CRUD, click APIs, and partner admin are later EPIC 07 tasks.
+This document is the category and compliance model. Partner admin listing CRUD lives at `/admin/partners`. Click-tracking APIs are a later EPIC 07 task.
 
 ## Screen contract
 
@@ -241,8 +241,10 @@ Core tables (`backend/migrations/1730000000000_init-core-schema.cjs`) plus marke
 - commission — `commission_rate`, `commission_basis`, `commission_currency` (`MYR`)
 - `referrals` (tracking) — `user_id`, `trip_id`, `provider_id`, `place_id`, `referral_code`, `status`, `channel`, `itinerary_item_id`, `metadata`, `converted_at`
 
+Admin API (`ADMIN_TOKEN` or JWT `role: admin`): `GET`/`POST /admin/partners`, `GET`/`PATCH`/`DELETE /admin/partners/:id`, `POST /admin/partners/:id/approve` (sets `is_active`), `POST /admin/partners/:id/pause`. Responses use the ops `Provider` view (contact + commission). Delete fails with 409 when referrals still point at the row — pause instead.
+
 Legacy `transport` / `lodging` / `activity` rows remap to `transfers` / `hotels` / `tours`. `insurance` / `other` are deactivated and parked as `tourist_services` (off-marketplace).
 
 ## Out of scope
 
-Partner admin UI, click tracking API, payout reports, insurance products, in-app checkout, ranking ads in Explore organic results without a Sponsored badge, and destinations outside Malaysia.
+Partner admin **UI**, click tracking API, payout reports, insurance products, in-app checkout, ranking ads in Explore organic results without a Sponsored badge, and destinations outside Malaysia.

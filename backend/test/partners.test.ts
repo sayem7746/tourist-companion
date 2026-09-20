@@ -1,10 +1,16 @@
-import { describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { buildApp } from '../src/app.js';
+import { loadConfig } from '../src/config.js';
+import { signAccessToken } from '../src/auth/tokens.js';
 import {
+  applyPartnerPatch,
+  defaultCommissionBasis,
   isCommissionBasis,
   isPartnerCategory,
   isReferralChannel,
   isReferralStatus,
   parseCommissionRate,
+  slugifyPartnerName,
   toOpsProvider,
   toReferral,
   toTouristProvider,
@@ -112,4 +118,174 @@ describe('partner marketplace model', () => {
     expect(isReferralChannel('dashboard')).toBe(true);
     expect(isReferralChannel('seed')).toBe(false);
   });
+
+  it('slugifies names and defaults SIM commission basis', () => {
+    expect(slugifyPartnerName('AirAsia Move KL')).toBe('airasia-move-kl');
+    expect(defaultCommissionBasis('sim')).toBe('activation');
+    expect(defaultCommissionBasis('hotels')).toBe('booking');
+    const recategorized = applyPartnerPatch(grabRow, { category: 'tours' });
+    expect(recategorized.category).toBe('tours');
+  });
 });
+
+const ADMIN_TOKEN = 'test-only-admin-token';
+const config = loadConfig({
+  NODE_ENV: 'test',
+  HOST: '127.0.0.1',
+  PORT: '3000',
+  LOG_LEVEL: 'silent',
+  JWT_SECRET: 'test-only-insecure-jwt-secret',
+  ADMIN_TOKEN,
+});
+const app = buildApp(config);
+
+describe('partner admin CRUD', () => {
+  beforeAll(async () => {
+    await app.ready();
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  const adminHeaders = { 'x-admin-token': ADMIN_TOKEN };
+
+  it('rejects anonymous and tourist sessions', async () => {
+    const missing = await app.inject({ method: 'GET', url: '/admin/partners' });
+    expect(missing.statusCode).toBe(401);
+
+    const tourist = signAccessToken(
+      { id: '00000000-0000-4000-8000-000000000001', email: 'ada@example.com', displayName: 'Ada' },
+      config,
+    );
+    const forbidden = await app.inject({
+      method: 'GET',
+      url: '/admin/partners',
+      headers: { authorization: `Bearer ${tourist}` },
+    });
+    expect(forbidden.statusCode).toBe(403);
+  });
+
+  it('creates, edits, categorizes, approves, pauses, and lists partners', async () => {
+    const created = await app.inject({
+      method: 'POST',
+      url: '/admin/partners',
+      headers: adminHeaders,
+      payload: {
+        name: 'CelcomDigi eSIM',
+        category: 'tourist_services',
+        website: 'https://www.celcomdigi.com/',
+        contactEmail: 'partners@celcomdigi.example',
+        listing: {
+          summary: 'Airport prepaid SIM and eSIM packs after KLIA customs.',
+          city: 'Sepang',
+          connectivityKind: 'esim',
+          passportRequired: true,
+        },
+        commission: { rate: 0.08 },
+      },
+    });
+    expect(created.statusCode).toBe(201);
+    const body = created.json() as {
+      partner: {
+        id: string;
+        slug: string;
+        category: string;
+        isActive: boolean;
+        contactEmail?: string;
+        commission?: { rate: number; basis: string; currency: string };
+        listing?: { summary: string; connectivityKind?: string };
+      };
+    };
+    expect(body.partner.slug).toBe('celcomdigi-esim');
+    expect(body.partner.isActive).toBe(false);
+    expect(body.partner.contactEmail).toBe('partners@celcomdigi.example');
+    expect(body.partner.commission).toEqual({ rate: 0.08, basis: 'booking', currency: 'MYR' });
+    expect(body.partner.listing?.connectivityKind).toBe('esim');
+
+    const categorized = await app.inject({
+      method: 'PATCH',
+      url: `/admin/partners/${body.partner.id}`,
+      headers: adminHeaders,
+      payload: {
+        category: 'sim',
+        listing: { dataAllowance: '10 GB', validity: '10 days' },
+        commission: { rate: 0.08, basis: 'activation' },
+      },
+    });
+    expect(categorized.statusCode).toBe(200);
+    expect(categorized.json()).toMatchObject({
+      partner: {
+        category: 'sim',
+        commission: { basis: 'activation', rate: 0.08 },
+        listing: { dataAllowance: '10 GB', connectivityKind: 'esim' },
+      },
+    });
+
+    const approved = await app.inject({
+      method: 'POST',
+      url: `/admin/partners/${body.partner.id}/approve`,
+      headers: adminHeaders,
+    });
+    expect(approved.statusCode).toBe(200);
+    expect(approved.json()).toMatchObject({ partner: { isActive: true } });
+
+    const listed = await app.inject({
+      method: 'GET',
+      url: '/admin/partners?category=sim&isActive=true',
+      headers: { authorization: `Bearer ${ADMIN_TOKEN}` },
+    });
+    expect(listed.statusCode).toBe(200);
+    const listedBody = listed.json() as { partners: Array<{ id: string }> };
+    expect(listedBody.partners.some((partner) => partner.id === body.partner.id)).toBe(true);
+
+    const paused = await app.inject({
+      method: 'POST',
+      url: `/admin/partners/${body.partner.id}/pause`,
+      headers: adminHeaders,
+    });
+    expect(paused.statusCode).toBe(200);
+    expect(paused.json()).toMatchObject({ partner: { isActive: false } });
+
+    const adminJwt = signAccessToken(
+      {
+        id: '00000000-0000-4000-8000-000000000099',
+        email: 'ops@example.com',
+        displayName: 'Ops',
+        role: 'admin',
+      },
+      config,
+    );
+    const fetched = await app.inject({
+      method: 'GET',
+      url: `/admin/partners/${body.partner.id}`,
+      headers: { authorization: `Bearer ${adminJwt}` },
+    });
+    expect(fetched.statusCode).toBe(200);
+    expect(fetched.json()).toMatchObject({ partner: { id: body.partner.id, isActive: false } });
+
+    const duplicate = await app.inject({
+      method: 'POST',
+      url: '/admin/partners',
+      headers: adminHeaders,
+      payload: { name: 'Other', slug: 'celcomdigi-esim', category: 'sim' },
+    });
+    expect(duplicate.statusCode).toBe(409);
+
+    const httpUrl = await app.inject({
+      method: 'POST',
+      url: '/admin/partners',
+      headers: adminHeaders,
+      payload: { name: 'Bad Link', category: 'tours', website: 'http://example.com' },
+    });
+    expect(httpUrl.statusCode).toBe(400);
+
+    const removed = await app.inject({
+      method: 'DELETE',
+      url: `/admin/partners/${body.partner.id}`,
+      headers: adminHeaders,
+    });
+    expect(removed.statusCode).toBe(204);
+  });
+});
+

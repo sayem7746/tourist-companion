@@ -7,7 +7,7 @@ Development, staging, and production must not share databases, JWT secrets, or A
 | Kind | Frontend | Backend |
 | --- | --- | --- |
 | Public config | `NG_APP_API_BASE_URL`, Angular `src/environments/` | `HOST`, `PORT`, `LOG_LEVEL`, `FRONTEND_ORIGIN`, `APP_ENV` |
-| Secrets | None (SPA is public) | `DATABASE_URL`, `JWT_SECRET`, future third-party API keys |
+| Secrets | None (SPA is public) | `DATABASE_URL`, `JWT_SECRET`, `ADMIN_TOKEN`, future third-party API keys |
 
 Open-Meteo weather hints use a public forecast API (no key). Set `WEATHER_PROVIDER=seed` to skip live fetch.
 
@@ -37,6 +37,7 @@ Workflow: `.github/workflows/deploy.yml`. Create GitHub **Environments** named `
 | --- | --- | --- |
 | `DATABASE_URL` | `env.DATABASE_URL` / `${{ secrets.DATABASE_URL }}` | Backend, migrations |
 | `JWT_SECRET` | `env.JWT_SECRET` | Backend tokens |
+| `ADMIN_TOKEN` | `env.ADMIN_TOKEN` | Partner admin (`X-Admin-Token` or Bearer) |
 | `JWT_EXPIRES_IN` | `env.JWT_EXPIRES_IN` | Backend tokens (optional; default `7d`) |
 | `LLM_API_KEY` | `env.LLM_API_KEY` | Optional concierge LLM; omit to retrieve-and-rank the knowledge seed |
 | `GOOGLE_PLACES_API_KEY` | `env.GOOGLE_PLACES_API_KEY` | Optional Explore nearby (Google Places). Omit or `CHANGE_ME_*` to use the Malaysia seed |
@@ -55,6 +56,7 @@ env:
   NODE_ENV: production
   DATABASE_URL: ${{ secrets.DATABASE_URL }}
   JWT_SECRET: ${{ secrets.JWT_SECRET }}
+  ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
   FRONTEND_ORIGIN: ${{ secrets.FRONTEND_ORIGIN }}
 ```
 

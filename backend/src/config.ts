@@ -7,6 +7,7 @@ if (process.env.APP_ENV) {
 }
 
 const INSECURE_DEV_JWT = 'dev-only-insecure-jwt-secret';
+const INSECURE_DEV_ADMIN = 'dev-only-insecure-admin-token';
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
@@ -19,6 +20,7 @@ const envSchema = z.object({
   DATABASE_URL: z.string().min(1).optional(),
   JWT_SECRET: z.string().min(16).default(INSECURE_DEV_JWT),
   JWT_EXPIRES_IN: z.string().min(1).default('7d'),
+  ADMIN_TOKEN: z.string().min(16).default(INSECURE_DEV_ADMIN),
   FRONTEND_ORIGIN: z.string().url().default('http://localhost:4200'),
   LLM_API_KEY: z.string().min(1).optional(),
   LLM_BASE_URL: z.string().url().default('https://api.openai.com/v1'),
@@ -65,6 +67,11 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     if (cfg.JWT_SECRET === INSECURE_DEV_JWT || cfg.JWT_SECRET.length < 32) {
       throw new Error(
         'Invalid environment configuration: staging/production require JWT_SECRET of at least 32 characters (not the development placeholder)',
+      );
+    }
+    if (cfg.ADMIN_TOKEN === INSECURE_DEV_ADMIN || cfg.ADMIN_TOKEN.length < 32) {
+      throw new Error(
+        'Invalid environment configuration: staging/production require ADMIN_TOKEN of at least 32 characters (not the development placeholder)',
       );
     }
     if (!cfg.DATABASE_URL) {
