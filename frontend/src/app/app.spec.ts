@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { App, isAdminPath } from './app';
 import { routes } from './app.routes';
 import { adminGuard } from './admin/admin.guard';
@@ -156,6 +156,29 @@ describe('App', () => {
     expect(safety?.title).toBe('Safety tips');
   });
 
+  it('should expose public privacy and terms routes', () => {
+    const privacy = routes.find((route) => route.path === 'privacy');
+    expect(privacy?.component).toBeTruthy();
+    expect(privacy?.canActivate).toBeUndefined();
+    expect(privacy?.title).toBe('Privacy notice');
+    const terms = routes.find((route) => route.path === 'terms');
+    expect(terms?.component).toBeTruthy();
+    expect(terms?.canActivate).toBeUndefined();
+    expect(terms?.title).toBe('Terms of use');
+  });
+
+  it('should render footer links to privacy and terms', () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('.legal-footer a[href="/privacy"]')?.textContent).toContain(
+      'Privacy',
+    );
+    expect(compiled.querySelector('.legal-footer a[href="/terms"]')?.textContent).toContain(
+      'Terms',
+    );
+  });
+
   it('should expose a public Malaysia AI Concierge route', () => {
     const concierge = routes.find((route) => route.path === 'concierge');
     expect(concierge?.component).toBeTruthy();
@@ -191,5 +214,16 @@ describe('App', () => {
       el.textContent?.replace(/\s+/g, ' ').trim(),
     );
     expect(labels).toEqual(['Home', 'Explore', 'Plan', 'Concierge', 'Profile']);
+  });
+
+  it('should hide tourist footer and tabs on admin screens', async () => {
+    const fixture = TestBed.createComponent(App);
+    const router = TestBed.inject(Router);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.legal-footer')).toBeTruthy();
+    await router.navigateByUrl('/admin/login');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.legal-footer')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.tab-bar')).toBeNull();
   });
 });

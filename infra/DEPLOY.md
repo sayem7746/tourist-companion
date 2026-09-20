@@ -2,6 +2,8 @@
 
 CI on pull requests and pushes to `main` is defined in `.github/workflows/ci.yml` (lint, test, and build for `frontend/` and `backend/`). Deploy placeholders live in `.github/workflows/deploy.yml`. How secrets are stored and injected is documented in `infra/SECRETS.md`. Do not store cloud credentials in the repo.
 
+Production host (when you are ready): Railway. Step-by-step services, env vars, Postgres, TLS, and healthchecks are in `infra/RAILWAY.md`. Do not provision Railway or enable GitHub Actions deploys until then. Local Postgres remains `infra/docker-compose.yml`.
+
 ## Environments
 
 | Environment | Purpose | Typical trigger | Data |
@@ -37,7 +39,7 @@ PR / push → CI (lint, test, build)
 
 1. **Build** artifacts in CI (Angular production build, `backend` `tsc` output).
 2. **Migrate** with `npm run db:migrate` against that environment’s `DATABASE_URL` only.
-3. **Deploy** the API process (`node dist/index.js`) and static frontend to the chosen host (container registry + app platform, or object storage + CDN for the SPA). Exact vendor is TBD.
+3. **Deploy** the API process (`node dist/index.js`) and static frontend. On Railway that is two services plus a Postgres plugin (`infra/RAILWAY.md`). GitHub Actions must not deploy there until you turn it on.
 4. **Health check** `GET /health` (and `?verbose=true` on staging) before calling the release successful.
 
 ## Cursor Origin vs GitHub Actions
@@ -51,6 +53,7 @@ cd backend && npm ci && npm run lint && npm test && npm run build
 
 ## Out of scope until credentials exist
 
+- Creating the Railway project or attaching GitHub (see `infra/RAILWAY.md`)
 - Cloud project IDs, kube contexts, Terraform backends
 - Real GitHub `secrets.*` values
 - Automatic production deploys without a human gate

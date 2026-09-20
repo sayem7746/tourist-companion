@@ -1,0 +1,33 @@
+<section class="legal">
+  <h1>{{ title }}</h1>
+  <p class="lede">{{ lede }}</p>
+  <p class="updated">Last updated {{ updated }}</p>
+
+  @for (section of sections; track section.id) {
+    <article
+      class="card legal-card"
+      [attr.data-section]="section.id"
+      [attr.data-tone]="section.tone"
+    >
+      <div class="card-head">
+        <span class="material-symbols-outlined" aria-hidden="true">{{ section.icon }}</span>
+        <h2>{{ section.title }}</h2>
+      </div>
+      @for (paragraph of section.paragraphs; track $index) {
+        <p class="legal-body">{{ paragraph }}</p>
+      }
+      @if (section.bullets?.length) {
+        <ul class="legal-list">
+          @for (item of section.bullets; track item) {
+            <li>{{ item }}</li>
+          }
+        </ul>
+      }
+    </article>
+  }
+
+  <div class="cross-links">
+    <a routerLink="/privacy" class="btn">Read privacy notice</a>
+    <a routerLink="/emergency" class="btn btn-sos">Emergency help</a>
+  </div>
+</section>

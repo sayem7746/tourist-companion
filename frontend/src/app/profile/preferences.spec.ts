@@ -60,6 +60,8 @@ describe('Preferences', () => {
     expect(component.dietaryPreferences).toEqual(['halal']);
     expect(component.selectedTripId).toBe('trip-1');
     expect(component.interests).toEqual(['food']);
+    expect(compiled.querySelector('a[href="/privacy"]')?.textContent).toContain('Privacy');
+    expect(compiled.querySelector('a[href="/terms"]')?.textContent).toContain('Terms');
   });
 
   it('should PATCH profile and trip interests', () => {

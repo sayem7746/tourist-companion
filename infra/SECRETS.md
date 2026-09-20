@@ -68,7 +68,7 @@ env:
   run: npm ci && npm run build:staging
 ```
 
-Production deploys should use the `production` environment with a required reviewer. Staging can deploy from `main`. Until a host exists, the deploy job only builds, migrates, and checks that placeholders are set.
+Production deploys should use the `production` environment with a required reviewer. Staging can deploy from `main`. Until a host exists, the deploy job only builds, migrates, and checks that placeholders are set. When you create Railway, set the same names on the API service (`infra/RAILWAY.md`); do not copy values into git or into a GitHub deploy job until you want Actions to ship.
 
 ## Rules
 

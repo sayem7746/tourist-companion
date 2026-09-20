@@ -34,7 +34,7 @@ Copy example env files (placeholders only) — never commit real `.env` files:
 cp backend/.env.development.example backend/.env
 ```
 
-Per-environment examples: `backend/.env.{development,staging,production}.example` and `frontend/.env.{development,staging,production}.example`. GitHub Actions injects `secrets.DATABASE_URL`, `secrets.JWT_SECRET`, `secrets.FRONTEND_ORIGIN`, and `secrets.API_BASE_URL` (see `infra/SECRETS.md`).
+Per-environment examples: `backend/.env.{development,staging,production}.example` and `frontend/.env.{development,staging,production}.example`. GitHub Actions injects `secrets.DATABASE_URL`, `secrets.JWT_SECRET`, `secrets.FRONTEND_ORIGIN`, and `secrets.API_BASE_URL` (see `infra/SECRETS.md`). Railway production (when you deploy later): `infra/RAILWAY.md`.
 
 ## Local run
 
@@ -49,7 +49,7 @@ API: http://localhost:3000/health · App: http://localhost:4200
 
 ## CI/CD
 
-GitHub Actions CI and Deploy are **manual** (`workflow_dispatch`) so pushes to `main` do not fail or email. Railway deploy can be wired later. Notes: `infra/DEPLOY.md`.
+GitHub Actions CI and Deploy are **manual** (`workflow_dispatch`) so pushes to `main` do not fail or email. Railway is the intended production host; deploy it later using `infra/RAILWAY.md`. Pipeline notes: `infra/DEPLOY.md`.
 
 ## Status
 

@@ -63,11 +63,11 @@ Twenty-four files under `backend/test/`. Most files mix **unit** (pure helpers) 
 
 ## Coverage map — frontend (Karma / Jasmine)
 
-Thirty `*.spec.ts` files. Typical pattern: TestBed + `HttpTestingController` (HTTP mocked) plus small helper `describe` blocks. These are **UI/component** tests, not browser E2E.
+Thirty-three `*.spec.ts` files. Typical pattern: TestBed + `HttpTestingController` (HTTP mocked) plus small helper `describe` blocks. These are **UI/component** tests, not browser E2E.
 
 | Screen / area | Spec | What it covers | Gaps |
 | --- | --- | --- | --- |
-| Shell / routes | `app.spec.ts` | Brand, SOS, tab bar, public vs `authGuard` / `adminGuard` route wiring (including `/trips/new` and tourist login/signup) | Guard *execution* lives in dedicated specs. |
+| Shell / routes | `app.spec.ts` | Brand, SOS, tab bar, public vs `authGuard` / `adminGuard` route wiring (including `/trips/new`, tourist login/signup, `/privacy`, `/terms`, footer links) | Guard *execution* lives in dedicated specs. |
 | Home | `home.spec.ts` | Malay greeting helpers; Tropical Sanctuary chrome; signed-in trip/itinerary/nearby cards | — |
 | Tourist login | `auth/login.spec.ts` | Form; `POST /auth/login` with credentials; errors; `returnUrl`; open-redirect rejection | — |
 | Signup | `auth/signup.spec.ts` | Form; `POST /auth/signup` with credentials; errors; `returnUrl` | — |
@@ -80,6 +80,7 @@ Thirty `*.spec.ts` files. Typical pattern: TestBed + `HttpTestingController` (HT
 | Concierge | `concierge.spec.ts` | Chips, SOS styling, retry, signed-in history restore/delete | Camera/mic composer is out of MVP (`docs/concierge-use-cases.md`). |
 | Partners (traveler) | `partners/partner-listings.spec.ts` | Sponsored ranking, disclosure, click then outbound URL | Lead capture UI if any is not covered here. |
 | Emergency / embassy / safety | `emergency.spec.ts`, `embassies.spec.ts`, `safety.spec.ts` | Directories, filters, `tel:` / https-only links, errors | — |
+| Privacy / terms | `legal/privacy.spec.ts`, `legal/terms.spec.ts`, `legal/legal-copy.spec.ts` | Public `/privacy` and `/terms`, referral disclosure, AI/medical copy, footer + signup links | Counsel-reviewed PDPA wording is out of MVP. |
 | Ops login / guard | `admin-login.spec.ts`, `admin.guard.spec.ts` | Admin login POST, tourist rejected, guard redirect | — |
 | Ops home / CMS / FAQ / partners / audit | `admin.spec.ts`, `admin-content*.spec.ts`, `admin-faq*.spec.ts`, `admin-partners*.spec.ts`, `admin-partner-editor.spec.ts`, `admin-audit.spec.ts` | Counts, CRUD, publish, approve/pause gates, audit filters | Referral analytics chart is not a dedicated Angular spec (API covered in Vitest). |
 

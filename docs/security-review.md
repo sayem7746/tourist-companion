@@ -147,7 +147,7 @@ No runtime dependency in the API graph (`fastify`, `jsonwebtoken`, `bcrypt`, `pg
 
 **Findings**
 
-1. **Third-party disclosure (high when the LLM is enabled).** `contextBlock` sends first name, area, dates, itinerary, accommodation, diet, and mobility needs to `LLM_BASE_URL` (default OpenAI). There is no retention agreement, regional pinning, or zero-data-retention flag in code. Document this in the privacy notice and consider stripping mobility/diet or requiring auth + explicit consent.
+1. **Third-party disclosure (high when the LLM is enabled).** `contextBlock` sends first name, area, dates, itinerary, accommodation, diet, and mobility needs to `LLM_BASE_URL` (default OpenAI). There is no retention agreement, regional pinning, or zero-data-retention flag in code. Traveler copy now lives on `/privacy` and `/terms`; still consider stripping mobility/diet or requiring auth + explicit consent before a commercial launch.
 2. **Client-controlled `history` (medium).** If the client sends `history`, it replaces stored turns for that request. A caller can inject fake assistant messages into the model context (prompt injection). Prefer server-side history only for signed-in users.
 3. **Anonymous chat still bills and rate-limits by IP.** Cost and abuse risk if the LLM key is live. Require auth for LLM mode, or keep retrieve-and-rank for anonymous.
 4. **Classifier is regex, not a safety model.** Jailbreaks that avoid the listed patterns can still reach the LLM; grounding and JSON parsing reduce but do not eliminate instruction-override risk.

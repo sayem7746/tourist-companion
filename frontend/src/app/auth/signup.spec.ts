@@ -47,6 +47,8 @@ describe('Signup', () => {
     expect(compiled.querySelector('h1')?.textContent).toContain('Create account');
     expect(compiled.querySelector('button')?.textContent).toContain('Sign up');
     expect(compiled.querySelector('a[href="/login"]')?.textContent).toContain('Sign in');
+    expect(compiled.querySelector('a[href="/terms"]')?.textContent).toContain('Terms');
+    expect(compiled.querySelector('a[href="/privacy"]')?.textContent).toContain('Privacy');
   });
 
   it('should post credentials to /auth/signup', async () => {

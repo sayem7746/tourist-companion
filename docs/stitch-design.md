@@ -28,4 +28,6 @@ Source: https://stitch.withgoogle.com/projects/10046914594084234943
 - Emergency & SOS Help (`screens/290e8555c0384578ae2a8f06dfe76496`) — route `/emergency`, SOS `#E11D48`, `data-path="emergency-help"`, `tel:` dialers
 - Embassies and consulates — route `/embassies`, searchable KL missions, official websites only
 - Tourist safety guide — route `/safety`, emerald (`#0D7652`) tip cards for lost items, scams, transport disputes, and document loss; links to `/emergency` and `/embassies`
+- Privacy notice — route `/privacy`, emerald/gold/rose section cards for data, referral disclosure, AI processing, and medical disclaimer
+- Terms of use — route `/terms`, same tokens; referral disclosure, AI limitations, medical disclaimer; footer links on the tourist shell
 - Logo

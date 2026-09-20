@@ -16,6 +16,8 @@ import { Concierge } from './concierge/concierge';
 import { Emergency } from './emergency/emergency';
 import { Embassies } from './embassies/embassies';
 import { Safety } from './safety/safety';
+import { Privacy } from './legal/privacy';
+import { Terms } from './legal/terms';
 import { AdminHome } from './admin/admin';
 import { AdminLogin } from './admin/admin-login';
 import { AdminContent } from './admin/admin-content';
@@ -41,6 +43,8 @@ export const routes: Routes = [
   { path: 'emergency', component: Emergency, title: 'Emergency help' },
   { path: 'embassies', component: Embassies, title: 'Embassies and consulates' },
   { path: 'safety', component: Safety, title: 'Safety tips' },
+  { path: 'privacy', component: Privacy, title: 'Privacy notice' },
+  { path: 'terms', component: Terms, title: 'Terms of use' },
   {
     path: 'trips',
     component: TripDashboard,
