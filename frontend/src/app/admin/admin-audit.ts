@@ -4,7 +4,6 @@ import {
   AUDIT_ENTITY_CHIPS,
   AUDIT_ENTITY_LABELS,
   AuditService,
-  auditActionLabel,
   auditActorLabel,
   formatAuditTime,
   type AuditEntityFilter,
@@ -52,10 +51,6 @@ export class AdminAudit implements OnInit {
   filterEntity(entityType: AuditEntityFilter): void {
     this.entityType = entityType;
     this.load();
-  }
-
-  actionLabel(event: AuditEvent): string {
-    return auditActionLabel(event.action);
   }
 
   actorLabel(event: AuditEvent): string {
