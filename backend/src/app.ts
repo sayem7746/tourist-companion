@@ -1,5 +1,9 @@
 import Fastify, { type FastifyInstance } from 'fastify';
 import { ZodError } from 'zod';
+import { createMemoryAuthStore } from './auth/memory-store.js';
+import { createPgAuthStore } from './auth/pg-store.js';
+import { registerAuthRoutes } from './auth/routes.js';
+import type { AuthStore } from './auth/types.js';
 import type { AppConfig } from './config.js';
 import { registerDb } from './db/pool.js';
 import { AppError, NotFoundError } from './errors.js';
@@ -13,6 +17,26 @@ export function buildApp(config: AppConfig): FastifyInstance {
   });
 
   void registerDb(app, config);
+
+  app.addHook('onRequest', async (request, reply) => {
+    const origin = request.headers.origin;
+    if (origin === config.FRONTEND_ORIGIN) {
+      reply.header('Access-Control-Allow-Origin', origin);
+      reply.header('Access-Control-Allow-Credentials', 'true');
+      reply.header(
+        'Access-Control-Allow-Headers',
+        'Content-Type, Authorization',
+      );
+      reply.header(
+        'Access-Control-Allow-Methods',
+        'GET,POST,PUT,PATCH,DELETE,OPTIONS',
+      );
+    }
+
+    if (request.method === 'OPTIONS') {
+      return reply.code(204).send();
+    }
+  });
 
   app.setNotFoundHandler((request) => {
     throw new NotFoundError(`Route ${request.method} ${request.url} not found`);
@@ -74,6 +98,18 @@ export function buildApp(config: AppConfig): FastifyInstance {
   });
 
   void registerHealthRoutes(app);
+
+  let memoryStore: AuthStore | undefined;
+  void registerAuthRoutes(app, config, () => {
+    if (app.db) {
+      return createPgAuthStore(app.db);
+    }
+    if (config.NODE_ENV === 'test') {
+      memoryStore ??= createMemoryAuthStore();
+      return memoryStore;
+    }
+    return undefined;
+  });
 
   return app;
 }

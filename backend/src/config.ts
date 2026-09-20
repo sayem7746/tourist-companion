@@ -11,6 +11,9 @@ const envSchema = z.object({
     .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])
     .default('info'),
   DATABASE_URL: z.string().min(1).optional(),
+  JWT_SECRET: z.string().min(16).default('dev-only-insecure-jwt-secret'),
+  JWT_EXPIRES_IN: z.string().min(1).default('7d'),
+  FRONTEND_ORIGIN: z.string().url().default('http://localhost:4200'),
 });
 
 export type AppConfig = z.infer<typeof envSchema>;

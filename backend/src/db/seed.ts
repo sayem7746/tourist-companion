@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
+import bcrypt from 'bcrypt';
 import { config as loadEnv } from 'dotenv';
 import pg from 'pg';
 
@@ -20,6 +21,14 @@ async function seed(): Promise<void> {
   try {
     await pool.query('BEGIN');
     await pool.query(seedSql);
+    const demoHash = await bcrypt.hash('demo-password', 10);
+    await pool.query(
+      `UPDATE users
+       SET password_hash = $1
+       WHERE email = 'demo@tourist-companion.local'
+         AND (password_hash IS NULL OR password_hash = '')`,
+      [demoHash],
+    );
     await pool.query('COMMIT');
     console.log('Seed complete (idempotent).');
   } catch (error) {

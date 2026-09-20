@@ -17,15 +17,19 @@
     "node": ">=20"
   },
   "dependencies": {
+    "bcrypt": "^6.0.0",
     "dotenv": "^16.4.7",
     "fastify": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
     "node-pg-migrate": "^7.9.1",
     "pg": "^8.13.3",
     "zod": "^3.24.2"
   },
   "devDependencies": {
-    "@types/pg": "^8.11.11",
+    "@types/bcrypt": "^6.0.0",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^22.13.10",
+    "@types/pg": "^8.11.11",
     "tsx": "^4.19.3",
     "typescript": "~5.9.2",
     "vitest": "^3.0.8"

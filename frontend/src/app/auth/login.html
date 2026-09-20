@@ -1,0 +1,26 @@
+<section>
+  <h1>Sign in</h1>
+  <p>Use your tourist account to continue.</p>
+  @if (error()) {
+    <p class="error" role="alert">{{ error() }}</p>
+  }
+  <form (ngSubmit)="submit()">
+    <label>
+      Email
+      <input name="email" type="email" [(ngModel)]="email" required autocomplete="email" />
+    </label>
+    <label>
+      Password
+      <input
+        name="password"
+        type="password"
+        [(ngModel)]="password"
+        required
+        minlength="8"
+        autocomplete="current-password"
+      />
+    </label>
+    <button type="submit" [disabled]="pending()">Sign in</button>
+  </form>
+  <p class="meta">No account? <a routerLink="/signup">Create one</a></p>
+</section>

@@ -25,3 +25,24 @@ export class NotFoundError extends AppError {
     this.name = 'NotFoundError';
   }
 }
+
+export class UnauthorizedError extends AppError {
+  constructor(message = 'Authentication required') {
+    super(401, 'UNAUTHORIZED', message);
+    this.name = 'UnauthorizedError';
+  }
+}
+
+export class ConflictError extends AppError {
+  constructor(message = 'Resource already exists') {
+    super(409, 'CONFLICT', message);
+    this.name = 'ConflictError';
+  }
+}
+
+export class ServiceUnavailableError extends AppError {
+  constructor(message = 'Service unavailable') {
+    super(503, 'SERVICE_UNAVAILABLE', message);
+    this.name = 'ServiceUnavailableError';
+  }
+}

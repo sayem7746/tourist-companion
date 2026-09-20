@@ -43,11 +43,11 @@ SQL source of truth: `db/seed.sql`. Do not run seed in production.
 
 | Table | Purpose |
 | --- | --- |
-| `users` | Traveller accounts (auth comes later) |
+| `users` | Traveller accounts (email, display name, password hash) |
 | `trips` | A user's visit window and destination |
 | `places` | Airports, attractions, and other POIs |
 | `trip_places` | Itinerary links between trips and places |
 | `providers` | Partner businesses used for referrals |
 | `referrals` | Attribution codes from a user/trip to a provider |
 
-The API only opens a `pg` pool (optional `DATABASE_URL`) and reports DB status on `GET /health?verbose=true`. Full CRUD is out of scope for this schema task.
+The API opens a `pg` pool (optional `DATABASE_URL`), reports DB status on `GET /health?verbose=true`, and exposes tourist auth under `/auth/*`.
