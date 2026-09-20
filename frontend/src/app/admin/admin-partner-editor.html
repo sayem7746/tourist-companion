@@ -1,0 +1,319 @@
+<section class="admin-content">
+  <p class="crumb"><a routerLink="/admin/partners">Partners</a> / {{ isNew() ? 'New' : 'Edit' }}</p>
+  <h1>{{ isNew() ? 'New partner' : 'Edit partner' }}</h1>
+  <p class="lede">
+    Create listings inactive, finish the go-live gate, then Approve. Pause instead of delete when
+    referrals already exist.
+  </p>
+
+  @if (pending() && !isNew() && !name) {
+    <p class="meta" aria-live="polite">Loading partner…</p>
+  }
+  @if (loadError()) {
+    <p class="error" role="alert">{{ loadError() }}</p>
+  }
+  @if (saveError()) {
+    <p class="error" role="alert">{{ saveError() }}</p>
+  }
+  @if (actionError()) {
+    <p class="error" role="alert">{{ actionError() }}</p>
+  }
+
+  @if (!loadError() && !isNew()) {
+    <div class="workflow">
+      <p class="meta">
+        Status
+        <span class="status-pill" [class.active]="isActive()" [class.paused]="!isActive()">
+          {{ isActive() ? 'Active' : 'Paused' }}
+        </span>
+      </p>
+      @if (!isActive() && blockers().length) {
+        <p class="meta">Finish these before Approve:</p>
+        <ul class="blockers">
+          @for (item of blockers(); track item) {
+            <li>{{ item }}</li>
+          }
+        </ul>
+      }
+      <div class="row-actions">
+        @if (isActive()) {
+          <button type="button" class="btn btn-secondary" [disabled]="pending()" (click)="pause()">
+            Pause
+          </button>
+        } @else {
+          <button
+            type="button"
+            class="btn"
+            [disabled]="pending() || !canApprove()"
+            (click)="approve()"
+          >
+            Approve
+          </button>
+        }
+        <button type="button" class="btn btn-danger" [disabled]="pending()" (click)="remove()">
+          Delete
+        </button>
+      </div>
+    </div>
+  }
+
+  @if (!loadError()) {
+    <form (ngSubmit)="submit()">
+      <fieldset>
+        <legend>Identity</legend>
+        <label>
+          Trading name
+          <input name="name" type="text" [(ngModel)]="name" required maxlength="120" />
+        </label>
+        <div class="pair">
+          <label>
+            Slug
+            <input
+              name="slug"
+              type="text"
+              [(ngModel)]="slug"
+              maxlength="80"
+              placeholder="optional-kebab-case"
+            />
+          </label>
+          <label>
+            Category
+            <select
+              name="category"
+              [ngModel]="category"
+              (ngModelChange)="onCategoryChange($event)"
+              required
+            >
+              @for (option of categories; track option) {
+                <option [value]="option">{{ categoryLabels[option] }}</option>
+              }
+            </select>
+          </label>
+        </div>
+        <div class="pair">
+          <label>
+            Public website
+            <input
+              name="website"
+              type="url"
+              [(ngModel)]="website"
+              maxlength="500"
+              placeholder="https://"
+            />
+          </label>
+          <label>
+            Ops contact email
+            <input name="contactEmail" type="email" [(ngModel)]="contactEmail" maxlength="160" />
+          </label>
+        </div>
+        <p class="hint">Ops email never appears on traveler listings.</p>
+      </fieldset>
+
+      <fieldset>
+        <legend>Listing</legend>
+        <label>
+          Summary
+          <textarea name="summary" rows="3" [(ngModel)]="summary" maxlength="500"></textarea>
+        </label>
+        <div class="pair">
+          <label>
+            City
+            <input name="city" type="text" [(ngModel)]="city" maxlength="240" />
+          </label>
+          <label>
+            Area
+            <input name="area" type="text" [(ngModel)]="area" maxlength="240" />
+          </label>
+        </div>
+        <div class="pair">
+          <label>
+            Booking URL
+            <input
+              name="bookingUrl"
+              type="url"
+              [(ngModel)]="bookingUrl"
+              maxlength="500"
+              placeholder="https://"
+            />
+          </label>
+          <label>
+            Reservation URL
+            <input
+              name="reservationUrl"
+              type="url"
+              [(ngModel)]="reservationUrl"
+              maxlength="500"
+              placeholder="https://"
+            />
+          </label>
+        </div>
+        <label>
+          Disclosure
+          <input name="disclosure" type="text" [(ngModel)]="disclosure" maxlength="280" />
+        </label>
+        <p class="hint">{{ disclosureDefault }}</p>
+        <label class="check">
+          <input name="sponsored" type="checkbox" [(ngModel)]="sponsored" />
+          Sponsored placement (gold badge; only if paid placement is in the contract)
+        </label>
+        <div class="pair">
+          <label>
+            License name
+            <input name="licenseName" type="text" [(ngModel)]="licenseName" maxlength="240" />
+          </label>
+          <label>
+            License id
+            <input name="licenseId" type="text" [(ngModel)]="licenseId" maxlength="240" />
+          </label>
+        </div>
+        <div class="pair">
+          <label>
+            Typical MYR
+            <input name="typicalMyr" type="text" [(ngModel)]="typicalMyr" maxlength="240" />
+          </label>
+          <label>
+            Languages
+            <input name="languages" type="text" [(ngModel)]="languagesText" placeholder="en, ms" />
+            <span class="hint">Language codes only (2–8 characters).</span>
+          </label>
+        </div>
+      </fieldset>
+
+      @if (category === 'hotels') {
+        <fieldset>
+          <legend>Hotels</legend>
+          <label>
+            Class hint
+            <input name="hotelClassHint" type="text" [(ngModel)]="hotelClassHint" maxlength="240" />
+          </label>
+        </fieldset>
+      }
+      @if (category === 'transfers') {
+        <fieldset>
+          <legend>Transfers</legend>
+          <label>
+            Vehicle class
+            <input name="vehicleClass" type="text" [(ngModel)]="vehicleClass" maxlength="240" />
+          </label>
+          <div class="checks">
+            <label class="check">
+              <input name="airportKul" type="checkbox" [(ngModel)]="kul" />
+              KUL
+            </label>
+            <label class="check">
+              <input name="airportKlia2" type="checkbox" [(ngModel)]="klia2" />
+              KLIA2
+            </label>
+          </div>
+          <label>
+            Meet and greet
+            <select name="meetAndGreet" [(ngModel)]="meetAndGreet">
+              <option value="">Not set</option>
+              <option value="true">Yes</option>
+              <option value="false">No</option>
+            </select>
+          </label>
+        </fieldset>
+      }
+      @if (category === 'tours') {
+        <fieldset>
+          <legend>Tours</legend>
+          <div class="pair">
+            <label>
+              Duration hint
+              <input name="durationHint" type="text" [(ngModel)]="durationHint" maxlength="240" />
+            </label>
+            <label>
+              Meeting point
+              <input name="meetingPoint" type="text" [(ngModel)]="meetingPoint" maxlength="240" />
+            </label>
+          </div>
+        </fieldset>
+      }
+      @if (category === 'sim') {
+        <fieldset>
+          <legend>SIM / eSIM</legend>
+          <label>
+            Connectivity
+            <select name="connectivityKind" [(ngModel)]="connectivityKind">
+              <option value="">Not set</option>
+              @for (kind of connectivityKinds; track kind) {
+                <option [value]="kind">{{ kind === 'esim' ? 'eSIM' : 'Prepaid SIM' }}</option>
+              }
+            </select>
+          </label>
+          <div class="pair">
+            <label>
+              Data allowance
+              <input name="dataAllowance" type="text" [(ngModel)]="dataAllowance" maxlength="240" />
+            </label>
+            <label>
+              Validity
+              <input name="validity" type="text" [(ngModel)]="validity" maxlength="240" />
+            </label>
+          </div>
+          <label>
+            Passport required
+            <select name="passportRequired" [(ngModel)]="passportRequired">
+              <option value="">Not set</option>
+              <option value="true">Yes</option>
+              <option value="false">No</option>
+            </select>
+          </label>
+        </fieldset>
+      }
+      @if (category === 'restaurants') {
+        <fieldset>
+          <legend>Restaurants</legend>
+          <label>
+            Halal
+            <select name="halal" [(ngModel)]="halal">
+              <option value="">Not set</option>
+              <option value="true">Yes</option>
+              <option value="false">No</option>
+            </select>
+          </label>
+        </fieldset>
+      }
+      @if (category === 'tourist_services') {
+        <fieldset>
+          <legend>Tourist services</legend>
+          <label>
+            Desk hours
+            <input name="deskHours" type="text" [(ngModel)]="deskHours" maxlength="240" />
+          </label>
+        </fieldset>
+      }
+
+      <fieldset>
+        <legend>Commission</legend>
+        <div class="pair">
+          <label>
+            Rate (0–1)
+            <input
+              name="commissionRate"
+              type="number"
+              min="0"
+              max="1"
+              step="0.0001"
+              [(ngModel)]="commissionRate"
+            />
+          </label>
+          <label>
+            Basis
+            <select name="commissionBasis" [(ngModel)]="commissionBasis">
+              @for (basis of bases; track basis) {
+                <option [value]="basis">{{ basisLabels[basis] }}</option>
+              }
+            </select>
+          </label>
+        </div>
+        <p class="hint">Always MYR. Never shown to travelers. 0.05 = 5%.</p>
+      </fieldset>
+
+      <button type="submit" class="btn" [disabled]="pending()">
+        {{ isNew() ? 'Create paused listing' : 'Save' }}
+      </button>
+    </form>
+  }
+</section>

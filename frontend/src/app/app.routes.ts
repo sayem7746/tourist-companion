@@ -22,6 +22,8 @@ import { AdminContent } from './admin/admin-content';
 import { AdminContentEditor } from './admin/admin-content-editor';
 import { AdminFaqs } from './admin/admin-faqs';
 import { AdminFaqEditor } from './admin/admin-faq-editor';
+import { AdminPartners } from './admin/admin-partners';
+import { AdminPartnerEditor } from './admin/admin-partner-editor';
 import { adminGuard } from './admin/admin.guard';
 
 export const routes: Routes = [
@@ -103,6 +105,24 @@ export const routes: Routes = [
     component: AdminFaqEditor,
     canActivate: [adminGuard],
     title: 'Edit FAQ',
+  },
+  {
+    path: 'admin/partners',
+    component: AdminPartners,
+    canActivate: [adminGuard],
+    title: 'Partners',
+  },
+  {
+    path: 'admin/partners/new',
+    component: AdminPartnerEditor,
+    canActivate: [adminGuard],
+    title: 'New partner',
+  },
+  {
+    path: 'admin/partners/:id',
+    component: AdminPartnerEditor,
+    canActivate: [adminGuard],
+    title: 'Edit partner',
   },
   { path: '**', redirectTo: '' },
 ];

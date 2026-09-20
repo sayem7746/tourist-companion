@@ -1,0 +1,96 @@
+<section class="admin-content">
+  <p class="crumb"><a routerLink="/admin">Operations</a> / Partners</p>
+  <h1>Partners</h1>
+  <p class="lede">
+    Intake stays paused until ops verifies the listing, then Approve puts it on traveler surfaces.
+    Pause takes it off immediately. Contact email and commission stay on this ops view only.
+  </p>
+
+  <p class="toolbar">
+    <a routerLink="/admin/partners/new" class="btn">New partner</a>
+  </p>
+
+  <div class="chips" role="list">
+    @for (chip of chips; track chip.id) {
+      <button
+        type="button"
+        class="chip"
+        [class.selected]="category === chip.id"
+        (click)="filterCategory(chip.id)"
+      >
+        {{ chip.label }}
+      </button>
+    }
+  </div>
+
+  <form class="filters" (ngSubmit)="load()">
+    <label>
+      Status
+      <select name="active" [(ngModel)]="active" (ngModelChange)="setActive($event)">
+        <option value="all">All</option>
+        <option value="active">Active</option>
+        <option value="paused">Paused</option>
+      </select>
+    </label>
+    <label class="search">
+      Search
+      <input name="q" type="search" [(ngModel)]="q" minlength="2" maxlength="80" />
+    </label>
+    <button type="submit" class="btn btn-secondary">Search</button>
+  </form>
+
+  @if (pending()) {
+    <p class="meta" aria-live="polite">Loading partners…</p>
+  }
+  @if (loadError()) {
+    <p class="error" role="alert">{{ loadError() }}</p>
+    <button type="button" class="btn" (click)="load()">Retry</button>
+  }
+  @if (actionError()) {
+    <p class="error" role="alert">{{ actionError() }}</p>
+  }
+
+  @if (!pending() && !loadError()) {
+    @if (visible().length === 0) {
+      <p class="meta">No partners match these filters.</p>
+    }
+    <ul class="list">
+      @for (partner of visible(); track partner.id) {
+        <li>
+          <a [routerLink]="['/admin/partners', partner.id]" class="card">
+            <span class="kind">{{ categoryLabel(partner) }}</span>
+            <strong>{{ partner.name }}</strong>
+            <span class="meta">
+              <span
+                class="status-pill"
+                [class.active]="partner.isActive"
+                [class.paused]="!partner.isActive"
+              >
+                {{ statusLabel(partner) }}
+              </span>
+              @if (partner.listing?.sponsored) {
+                · <span class="chip chip-gold">Sponsored</span>
+              }
+              · {{ partner.slug }}
+              @if (partner.listing?.city) {
+                · {{ partner.listing?.city }}
+              }
+            </span>
+          </a>
+          <div class="row-actions">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              [disabled]="!partner.isActive && !canApprove(partner)"
+              [title]="approveHint(partner)"
+              (click)="toggleStatus(partner)"
+            >
+              {{ partner.isActive ? 'Pause' : 'Approve' }}
+            </button>
+            <button type="button" class="btn btn-danger" (click)="remove(partner)">Delete</button>
+          </div>
+        </li>
+      }
+    </ul>
+  }
+</section>

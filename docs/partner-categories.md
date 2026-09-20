@@ -181,7 +181,7 @@ Authenticated tourist endpoints (JWT or session cookie). `channel` is the source
 | `GET` | `/referrals/go/:providerId?channel=` | Cookie/JWT outbound start: record a click and `302` to the tracked partner URL |
 | `GET` | `/r/:code` | Public tracked redirect for an issued code (`pending` → `clicked`). `302` only to the stored HTTPS partner URL |
 | `POST` | `/referrals/bookings` | Admin (`ADMIN_TOKEN` or `role: admin`): partner-reported booking/activation. Sets `converted` and `convertedAt` |
-| `GET` | `/admin/referrals/analytics` | Admin: click, lead, and conversion totals plus per-partner and per-channel performance. Query: optional `providerId`, `category`, `channel`. `clicks` / `leads` / `conversions` are event totals (`metadata.clickCount`, `leadCount`, `bookingCount`, with status fallbacks). `referrals` is the row count. `conversionRate` is conversions ÷ clicks (`0` when there are no clicks). Partner admin UI and payout reports stay out of scope. |
+| `GET` | `/admin/referrals/analytics` | Admin: click, lead, and conversion totals plus per-partner and per-channel performance. Query: optional `providerId`, `category`, `channel`. `clicks` / `leads` / `conversions` are event totals (`metadata.clickCount`, `leadCount`, `bookingCount`, with status fallbacks). `referrals` is the row count. `conversionRate` is conversions ÷ clicks (`0` when there are no clicks). Angular partner admin is `/admin/partners`. Payout reports stay out of scope. |
 
 Inactive partners cannot open new clicks or leads (`404`). Existing codes still redirect. Clicks never set `converted`. Open redirects are rejected: the Location is always the listing `bookingUrl`, else `reservationUrl`, else `website`, and only `https://`.
 
@@ -267,4 +267,4 @@ Legacy `transport` / `lodging` / `activity` rows remap to `transfers` / `hotels`
 
 ## Out of scope
 
-Partner admin **UI**, payout reports, insurance products, in-app checkout, ranking ads in Explore organic results without a Sponsored badge, and destinations outside Malaysia.
+Payout reports, insurance products, in-app checkout, ranking ads in Explore organic results without a Sponsored badge, and destinations outside Malaysia.

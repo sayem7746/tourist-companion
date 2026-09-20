@@ -4,7 +4,7 @@ Operational checklist for putting a Malaysia marketplace partner live: verify th
 
 Asana: [Define partner onboarding process](https://app.asana.com/1/1218080418840809/project/1218661619289569/task/1218661691725071) (EPIC 07 — Referral Marketplace).
 
-Product fields, traveler disclosure, and category rules: `docs/partner-categories.md`. Shared contract: `Provider`, `PartnerListing`, `PartnerCommission` in `shared/types/index.ts`. Admin listing CRUD: `/admin/partners` (`ADMIN_TOKEN` or JWT `role: admin`). Ops sign in at Angular `/admin/login`.
+Product fields, traveler disclosure, and category rules: `docs/partner-categories.md`. Shared contract: `Provider`, `PartnerListing`, `PartnerCommission` in `shared/types/index.ts`. Admin listing CRUD: `/admin/partners` (`ADMIN_TOKEN` or JWT `role: admin`). Ops sign in at Angular `/admin/login` and manage listings at `/admin/partners`.
 
 New partners stay **inactive** until this checklist is complete. Inactive rows never appear on traveler CTAs. Contact email and commission stay on the ops `Provider` view only — never on `GET /partners`.
 
@@ -20,7 +20,7 @@ An ops owner can take a candidate from intake to an approved listing without inv
 | Partner (counterparty) | Signed terms, conversion reports, payout destination, license proofs |
 | Admin API | Create inactive `providers` row, patch fields, `approve` / `pause` |
 
-Ops sign in at `/admin/login` (JWT `role: admin`). There is no partner listing CRUD UI and no in-app payout report in MVP. Record contract and bank details in the signed agreement (and ops vault), not in tourist APIs.
+Ops sign in at `/admin/login` (JWT `role: admin`) and manage listings at Angular `/admin/partners`. There is no in-app payout report in MVP. Record contract and bank details in the signed agreement (and ops vault), not in tourist APIs.
 
 ## Stages
 
@@ -163,7 +163,7 @@ If rate, basis, or destination is still “TBD”, leave `is_active` false.
 
 ## Listing record (admin API)
 
-Create the row **inactive**. Fill fields, then approve.
+Create the row **inactive**. Fill fields, then approve. Angular ops: `/admin/partners` (list / approve / pause) and `/admin/partners/new` (create).
 
 | Step | Method | Path |
 | --- | --- | --- |
@@ -211,4 +211,4 @@ Existing referral codes for a paused partner still redirect; new clicks and lead
 
 ## Out of scope
 
-Partner admin UI, automated payout files, storing bank accounts on `providers`, insurance products, in-app checkout, auto-expiry of attribution windows, destinations outside Malaysia, and legal review of a specific contract’s wording (this checklist is operational; counsel still reviews the agreement).
+Automated payout files, storing bank accounts on `providers`, insurance products, in-app checkout, auto-expiry of attribution windows, destinations outside Malaysia, and legal review of a specific contract’s wording (this checklist is operational; counsel still reviews the agreement).
