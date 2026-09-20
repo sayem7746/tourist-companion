@@ -16,6 +16,10 @@ import { createMemoryTripStore } from './trips/memory-store.js';
 import { createPgTripStore } from './trips/pg-store.js';
 import { registerTripRoutes } from './trips/routes.js';
 import type { TripStore } from './trips/types.js';
+import { createMemoryItineraryStore } from './itinerary/memory-store.js';
+import { createPgItineraryStore } from './itinerary/pg-store.js';
+import { registerItineraryRoutes } from './itinerary/routes.js';
+import type { ItineraryStore } from './itinerary/types.js';
 import type { AppConfig } from './config.js';
 import { registerDb } from './db/pool.js';
 import { AppError, NotFoundError } from './errors.js';
@@ -172,6 +176,7 @@ export function buildApp(config: AppConfig): FastifyInstance {
   let memoryAuthStore: AuthStore | undefined;
   let memoryProfileStore: ProfileStore | undefined;
   let memoryTripStore: TripStore | undefined;
+  let memoryItineraryStore: ItineraryStore | undefined;
   let memoryArrivalStore: ArrivalChecklistStore | undefined;
   let memoryHistoryStore: ConciergeHistoryStore | undefined;
 
@@ -210,6 +215,19 @@ export function buildApp(config: AppConfig): FastifyInstance {
     return undefined;
   };
 
+  const resolveItineraryStore = (): ItineraryStore | undefined => {
+    const tripStore = resolveTripStore();
+    if (!tripStore) return undefined;
+    if (app.db) {
+      return createPgItineraryStore(app.db, tripStore);
+    }
+    if (config.NODE_ENV === 'test') {
+      memoryItineraryStore ??= createMemoryItineraryStore(tripStore);
+      return memoryItineraryStore;
+    }
+    return undefined;
+  };
+
   const resolveHistoryStore = (): ConciergeHistoryStore | undefined => {
     if (app.db) {
       return createPgConciergeHistoryStore(app.db);
@@ -224,6 +242,7 @@ export function buildApp(config: AppConfig): FastifyInstance {
   void registerAuthRoutes(app, config, resolveAuthStore);
   void registerProfileRoutes(app, config, resolveProfileStore);
   void registerTripRoutes(app, config, resolveTripStore);
+  void registerItineraryRoutes(app, config, resolveItineraryStore);
   void registerConciergeRoutes(app, config, {
     resolveProfileStore,
     resolveTripStore,
