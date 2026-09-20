@@ -75,6 +75,9 @@ describe('CORS and cookie credentials', () => {
     expect(String(preflight.headers['access-control-allow-headers'])).toMatch(/Content-Type/i);
     expect(String(preflight.headers['access-control-allow-headers'])).toMatch(/Authorization/i);
     expect(preflight.headers['access-control-expose-headers']).toBe('X-Request-Id');
+    expect(preflight.headers['x-content-type-options']).toBe('nosniff');
+    expect(preflight.headers['x-frame-options']).toBe('DENY');
+    expect(preflight.headers.vary).toMatch(/Origin/i);
 
     const nearby = await app.inject({
       method: 'GET',

@@ -24,13 +24,14 @@ export function signAccessToken(
     role: parseAuthRole(user.role),
   };
   return jwt.sign(payload, config.JWT_SECRET, {
+    algorithm: 'HS256',
     expiresIn: config.JWT_EXPIRES_IN as jwt.SignOptions['expiresIn'],
   });
 }
 
 export function verifyAccessToken(token: string, config: AppConfig): AuthUser {
   try {
-    const payload = jwt.verify(token, config.JWT_SECRET) as AccessPayload;
+    const payload = jwt.verify(token, config.JWT_SECRET, { algorithms: ['HS256'] }) as AccessPayload;
     if (!payload.sub || !payload.email) {
       throw new UnauthorizedError('Invalid session');
     }

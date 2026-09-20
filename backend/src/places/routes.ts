@@ -1,6 +1,8 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import type { AppConfig } from '../config.js';
+import { TooManyRequestsError } from '../errors.js';
+import { SlidingWindowLimiter } from '../rate-limit.js';
 import { validateRequest } from '../validate.js';
 import { getPlaceDetails } from './details.js';
 import { searchNearbyPlaces } from './search.js';
@@ -65,6 +67,25 @@ function asBool(value: 'true' | 'false' | undefined): boolean | undefined {
 }
 
 export async function registerPlacesRoutes(app: FastifyInstance, config: AppConfig): Promise<void> {
+  const limiter = new SlidingWindowLimiter(
+    config.PLACES_RATE_LIMIT_MAX,
+    config.PLACES_RATE_LIMIT_WINDOW_MS,
+  );
+
+  const enforcePlacesRateLimit = (
+    request: { ip: string },
+    reply: { header: (k: string, v: string) => unknown },
+  ): void => {
+    const limited = limiter.take(`ip:${request.ip}`);
+    if (!limited.ok) {
+      reply.header('Retry-After', String(limited.retryAfterSeconds));
+      throw new TooManyRequestsError(
+        'Places rate limit exceeded. Try again shortly.',
+        limited.retryAfterSeconds,
+      );
+    }
+  };
+
   app.get('/places/categories', async () => ({
     country: 'MY',
     destination: 'Malaysia',
@@ -73,7 +94,8 @@ export async function registerPlacesRoutes(app: FastifyInstance, config: AppConf
     areas: NEARBY_AREAS,
   }));
 
-  app.get('/places/nearby', async (request) => {
+  app.get('/places/nearby', async (request, reply) => {
+    enforcePlacesRateLimit(request, reply);
     const { query } = validateRequest(request, { query: nearbyQuerySchema });
     return searchNearbyPlaces(config, {
       latitude: query.lat,
@@ -88,7 +110,8 @@ export async function registerPlacesRoutes(app: FastifyInstance, config: AppConf
     });
   });
 
-  app.get('/places/:id', async (request) => {
+  app.get('/places/:id', async (request, reply) => {
+    enforcePlacesRateLimit(request, reply);
     const { params, query } = validateRequest(request, {
       params: placeIdParamsSchema,
       query: placeIdQuerySchema,

@@ -54,6 +54,7 @@ export interface AuthStore {
   }): Promise<void>;
   findResetToken(tokenHash: string): Promise<ResetTokenRecord | undefined>;
   markResetTokenUsed(tokenHash: string): Promise<void>;
+  invalidateResetTokensForUser(userId: string): Promise<void>;
 }
 
 declare module 'fastify' {

@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { randomUUID } from 'node:crypto';
 import { buildApp } from '../src/app.js';
 import { loadConfig } from '../src/config.js';
 import { serializeErrorForLog } from '../src/observability/error-log.js';
@@ -59,6 +60,23 @@ describe('observability', () => {
     expect(body.byRoute['GET /health']?.count).toBeGreaterThanOrEqual(1);
     expect(body.latencyMs.histogram.at(-1)?.le).toBe('+Inf');
     expect(body.latencyMs.p95).not.toBeUndefined();
+  });
+
+  it('sets baseline security headers and records route templates instead of ids', async () => {
+    const tripId = randomUUID();
+    await app.inject({ method: 'GET', url: `/trips/${tripId}` });
+    const health = await app.inject({ method: 'GET', url: '/health' });
+    expect(health.headers['x-content-type-options']).toBe('nosniff');
+    expect(health.headers['x-frame-options']).toBe('DENY');
+    expect(health.headers['referrer-policy']).toBe('no-referrer');
+
+    const response = await app.inject({ method: 'GET', url: '/metrics' });
+    const body = response.json() as { byRoute: Record<string, { count: number }> };
+    expect(body.byRoute[`GET /trips/${tripId}`]).toBeUndefined();
+    expect(body.byRoute['GET /trips/:id']?.count).toBeGreaterThanOrEqual(1);
+    expect(JSON.stringify(body.byRoute)).not.toMatch(
+      /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i,
+    );
   });
 
   it('includes a metrics summary on verbose health', async () => {

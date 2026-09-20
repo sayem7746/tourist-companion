@@ -101,6 +101,14 @@ export function createPgAuthStore(pool: pg.Pool): AuthStore {
         [tokenHash],
       );
     },
+    async invalidateResetTokensForUser(userId) {
+      await pool.query(
+        `UPDATE password_reset_tokens
+         SET used_at = NOW()
+         WHERE user_id = $1 AND used_at IS NULL`,
+        [userId],
+      );
+    },
   };
 }
 

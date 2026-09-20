@@ -11,6 +11,8 @@ describe('loadConfig', () => {
     });
     expect(cfg.APP_ENV).toBe('development');
     expect(cfg.JWT_SECRET.length).toBeGreaterThanOrEqual(16);
+    expect(cfg.AUTH_RATE_LIMIT_MAX).toBe(20);
+    expect(cfg.PLACES_RATE_LIMIT_MAX).toBe(60);
   });
 
   it('rejects staging without a strong JWT_SECRET and DATABASE_URL', () => {
@@ -64,5 +66,7 @@ describe('loadConfig', () => {
     expect(cfg.WEATHER_PROVIDER).toBeUndefined();
     expect(cfg.OPEN_METEO_BASE_URL).toBe('https://api.open-meteo.com');
     expect(cfg.WEATHER_TIMEOUT_MS).toBe(2_500);
+    expect(cfg.AUTH_RATE_LIMIT_MAX).toBe(20);
+    expect(cfg.PLACES_RATE_LIMIT_MAX).toBe(60);
   });
 });

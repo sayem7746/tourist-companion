@@ -27,6 +27,10 @@ const envSchema = z.object({
   LLM_MODEL: z.string().min(1).default('gpt-4o-mini'),
   CONCIERGE_RATE_LIMIT_MAX: z.coerce.number().int().min(1).max(1000).default(30),
   CONCIERGE_RATE_LIMIT_WINDOW_MS: z.coerce.number().int().min(1000).default(60_000),
+  AUTH_RATE_LIMIT_MAX: z.coerce.number().int().min(1).max(10_000).optional(),
+  AUTH_RATE_LIMIT_WINDOW_MS: z.coerce.number().int().min(1000).default(15 * 60 * 1000),
+  PLACES_RATE_LIMIT_MAX: z.coerce.number().int().min(1).max(10_000).optional(),
+  PLACES_RATE_LIMIT_WINDOW_MS: z.coerce.number().int().min(1000).default(60_000),
   CONCIERGE_HISTORY_MAX_MESSAGES: z.coerce.number().int().min(2).max(100).default(20),
   CONCIERGE_HISTORY_TTL_MS: z.coerce.number().int().min(60_000).default(7 * 24 * 60 * 60 * 1000),
   PLACES_PROVIDER: z.enum(['seed', 'google', 'overpass']).optional(),
@@ -50,7 +54,13 @@ export function hasUsableLlmKey(key: string | undefined): boolean {
   return hasUsableApiKey(key);
 }
 
-export type AppConfig = z.infer<typeof envSchema>;
+export type AppConfig = Omit<
+  z.infer<typeof envSchema>,
+  'AUTH_RATE_LIMIT_MAX' | 'PLACES_RATE_LIMIT_MAX'
+> & {
+  AUTH_RATE_LIMIT_MAX: number;
+  PLACES_RATE_LIMIT_MAX: number;
+};
 
 function requiresStrongSecrets(cfg: AppConfig): boolean {
   return cfg.APP_ENV === 'staging' || cfg.APP_ENV === 'production' || cfg.NODE_ENV === 'production';
@@ -63,7 +73,12 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     throw new Error(`Invalid environment configuration: ${JSON.stringify(details)}`);
   }
   const cfg = parsed.data;
-  if (requiresStrongSecrets(cfg)) {
+  const resolved: AppConfig = {
+    ...cfg,
+    AUTH_RATE_LIMIT_MAX: cfg.AUTH_RATE_LIMIT_MAX ?? (cfg.NODE_ENV === 'test' ? 1000 : 20),
+    PLACES_RATE_LIMIT_MAX: cfg.PLACES_RATE_LIMIT_MAX ?? (cfg.NODE_ENV === 'test' ? 1000 : 60),
+  };
+  if (requiresStrongSecrets(resolved)) {
     if (cfg.JWT_SECRET === INSECURE_DEV_JWT || cfg.JWT_SECRET.length < 32) {
       throw new Error(
         'Invalid environment configuration: staging/production require JWT_SECRET of at least 32 characters (not the development placeholder)',
@@ -78,7 +93,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
       throw new Error('Invalid environment configuration: staging/production require DATABASE_URL');
     }
   }
-  return cfg;
+  return resolved;
 }
 
 export const config = loadConfig();

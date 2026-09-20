@@ -73,6 +73,7 @@ export function buildApp(config: AppConfig): FastifyInstance {
     requestIdHeader: REQUEST_ID_HEADER,
     genReqId: resolveRequestId,
     disableRequestLogging: true,
+    bodyLimit: 256 * 1024,
   });
 
   app.decorate('metrics', createMetricsCollector());
@@ -81,6 +82,10 @@ export function buildApp(config: AppConfig): FastifyInstance {
 
   app.addHook('onRequest', async (request, reply) => {
     reply.header(REQUEST_ID_HEADER, request.id);
+    reply.header('X-Content-Type-Options', 'nosniff');
+    reply.header('X-Frame-Options', 'DENY');
+    reply.header('Referrer-Policy', 'no-referrer');
+    reply.header('Vary', 'Origin');
 
     const origin = request.headers.origin;
     if (origin === config.FRONTEND_ORIGIN) {
@@ -173,7 +178,11 @@ export function buildApp(config: AppConfig): FastifyInstance {
 
   app.addHook('onResponse', async (request, reply) => {
     const durationMs = reply.elapsedTime;
-    app.metrics.record(request.method, request.url, reply.statusCode, durationMs);
+    const routePath =
+      reply.statusCode === 404
+        ? '(unmatched)'
+        : (request.routeOptions?.url ?? '(unmatched)');
+    app.metrics.record(request.method, routePath, reply.statusCode, durationMs);
     request.log.info(
       {
         method: request.method,

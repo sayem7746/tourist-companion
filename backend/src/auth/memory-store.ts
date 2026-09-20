@@ -61,5 +61,13 @@ export function createMemoryAuthStore(): AuthStore {
       if (!existing) return;
       resetTokens.set(tokenHash, { ...existing, usedAt: new Date() });
     },
+    async invalidateResetTokensForUser(userId) {
+      const usedAt = new Date();
+      for (const [hash, record] of resetTokens) {
+        if (record.userId === userId && !record.usedAt) {
+          resetTokens.set(hash, { ...record, usedAt });
+        }
+      }
+    },
   };
 }

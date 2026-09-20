@@ -275,4 +275,104 @@ describe('auth endpoints', () => {
     });
     expect(reset.statusCode).toBe(400);
   });
+
+  it('invalidates unused reset tokens after a successful reset', async () => {
+    await app.inject({
+      method: 'POST',
+      url: '/auth/signup',
+      payload: {
+        email: 'multi-reset@example.com',
+        password: 'old-password',
+        displayName: 'Multi',
+      },
+    });
+
+    const first = await app.inject({
+      method: 'POST',
+      url: '/auth/forgot-password',
+      payload: { email: 'multi-reset@example.com' },
+    });
+    const second = await app.inject({
+      method: 'POST',
+      url: '/auth/forgot-password',
+      payload: { email: 'multi-reset@example.com' },
+    });
+    const firstToken = (first.json() as { resetToken: string }).resetToken;
+    const secondToken = (second.json() as { resetToken: string }).resetToken;
+    expect(firstToken).not.toBe(secondToken);
+
+    expect(
+      (
+        await app.inject({
+          method: 'POST',
+          url: '/auth/reset-password',
+          payload: { token: secondToken, password: 'new-password' },
+        })
+      ).statusCode,
+    ).toBe(200);
+
+    expect(
+      (
+        await app.inject({
+          method: 'POST',
+          url: '/auth/reset-password',
+          payload: { token: firstToken, password: 'other-password' },
+        })
+      ).statusCode,
+    ).toBe(400);
+  });
+
+  it('rejects unsigned JWT payloads', () => {
+    const header = Buffer.from(JSON.stringify({ alg: 'none', typ: 'JWT' })).toString('base64url');
+    const payload = Buffer.from(
+      JSON.stringify({
+        sub: '00000000-0000-0000-0000-000000000001',
+        email: 'forged@example.com',
+        displayName: 'Forged',
+        role: 'admin',
+      }),
+    ).toString('base64url');
+    expect(() => verifyAccessToken(`${header}.${payload}.`, config)).toThrow(/Invalid/);
+  });
+});
+
+describe('auth rate limits', () => {
+  const limitedApp = buildApp(
+    loadConfig({
+      NODE_ENV: 'test',
+      HOST: '127.0.0.1',
+      PORT: '3000',
+      LOG_LEVEL: 'silent',
+      JWT_SECRET: 'test-only-insecure-jwt-secret',
+      ADMIN_TOKEN,
+      AUTH_RATE_LIMIT_MAX: '1',
+      AUTH_RATE_LIMIT_WINDOW_MS: '60000',
+    }),
+  );
+
+  beforeAll(async () => {
+    await limitedApp.ready();
+  });
+
+  afterAll(async () => {
+    await limitedApp.close();
+  });
+
+  it('returns 429 after the authentication budget is spent', async () => {
+    const first = await limitedApp.inject({
+      method: 'POST',
+      url: '/auth/login',
+      payload: { email: 'rate-limit@example.com', password: 'password12' },
+    });
+    expect(first.statusCode).toBe(401);
+
+    const second = await limitedApp.inject({
+      method: 'POST',
+      url: '/auth/login',
+      payload: { email: 'rate-limit@example.com', password: 'password12' },
+    });
+    expect(second.statusCode).toBe(429);
+    expect(second.headers['retry-after']).toBeTruthy();
+    expect((second.json() as { error: { code: string } }).error.code).toBe('RATE_LIMITED');
+  });
 });
