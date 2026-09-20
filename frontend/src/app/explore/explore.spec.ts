@@ -5,6 +5,7 @@ import { provideRouter } from '@angular/router';
 import { environment } from '../../environments/environment';
 import { Explore } from './explore';
 import {
+  BOOKMARK_GOLD,
   directionsUrl,
   EXPLORE_SEARCH_HEIGHT_PX,
   EXPLORE_SEARCH_PLACEHOLDER,
@@ -15,6 +16,7 @@ import {
   type NearbyPlace,
   type NearbySearchResult,
 } from './explore.service';
+import { Router } from '@angular/router';
 
 function place(partial: Partial<NearbyPlace> & Pick<NearbyPlace, 'id' | 'name'>): NearbyPlace {
   return {
@@ -99,6 +101,7 @@ describe('nearby helpers', () => {
 describe('Explore', () => {
   let fixture: ComponentFixture<Explore>;
   let http: HttpTestingController;
+  let router: Router;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -108,6 +111,7 @@ describe('Explore', () => {
 
     fixture = TestBed.createComponent(Explore);
     http = TestBed.inject(HttpTestingController);
+    router = TestBed.inject(Router);
   });
 
   afterEach(() => {
@@ -118,7 +122,11 @@ describe('Explore', () => {
     return fixture.nativeElement as HTMLElement;
   }
 
-  function flushNearby(payload: NearbySearchResult, expected?: Record<string, string | null>): void {
+  function flushNearby(
+    payload: NearbySearchResult,
+    expected?: Record<string, string | null>,
+    session: 'anon' | 'skip' = 'anon',
+  ): void {
     const req = http.expectOne((request) => request.url === `${environment.apiBaseUrl}/places/nearby`);
     expect(req.request.method).toBe('GET');
     if (expected) {
@@ -127,6 +135,12 @@ describe('Explore', () => {
       }
     }
     req.flush(payload);
+    if (session === 'anon') {
+      for (const tripReq of http.match(`${environment.apiBaseUrl}/trips`)) {
+        expect(tripReq.request.withCredentials).toBeTrue();
+        tripReq.flush({ error: { code: 'UNAUTHORIZED' } }, { status: 401, statusText: 'Unauthorized' });
+      }
+    }
     fixture.detectChanges();
   }
 
@@ -250,7 +264,87 @@ describe('Explore', () => {
     fixture.detectChanges();
     const req = http.expectOne((request) => request.url === `${environment.apiBaseUrl}/places/nearby`);
     req.flush({ error: 'fail' }, { status: 500, statusText: 'Server Error' });
+    const tripsReq = http.expectOne(`${environment.apiBaseUrl}/trips`);
+    tripsReq.flush({ error: { code: 'UNAUTHORIZED' } }, { status: 401, statusText: 'Unauthorized' });
     fixture.detectChanges();
     expect(compiled().textContent).toContain('Could not load nearby places');
+  });
+
+  it('sends anonymous users to sign in when they bookmark a place', () => {
+    const navigate = spyOn(router, 'navigate').and.resolveTo(true);
+    fixture.detectChanges();
+    flushNearby(body([place({ id: 'my-food-madam-kwan', name: 'Madam Kwan’s (Suria KLCC)' })]));
+
+    (compiled().querySelector('.bookmark') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(navigate).toHaveBeenCalledWith(['/login'], { queryParams: { returnUrl: '/explore' } });
+    expect(BOOKMARK_GOLD).toBe('#D97706');
+  });
+
+  it('saves and unsaves a place on the current trip with gold bookmark', () => {
+    fixture.detectChanges();
+    flushNearby(body([place({ id: 'my-food-madam-kwan', name: 'Madam Kwan’s (Suria KLCC)' })]), undefined, 'skip');
+
+    const tripsReq = http.expectOne(`${environment.apiBaseUrl}/trips`);
+    expect(tripsReq.request.withCredentials).toBeTrue();
+    tripsReq.flush({
+      trips: [
+        {
+          id: 'trip-1',
+          userId: 'user-1',
+          destination: 'Kuala Lumpur',
+          startDate: '2020-01-01',
+          endDate: '2099-12-31',
+          adultCount: 1,
+          childCount: 0,
+          interests: ['food'],
+          dailyBudget: 'medium',
+          travelStyle: 'balanced',
+        },
+      ],
+    });
+    const savedReq = http.expectOne(`${environment.apiBaseUrl}/trips/trip-1/places`);
+    expect(savedReq.request.method).toBe('GET');
+    expect(savedReq.request.withCredentials).toBeTrue();
+    savedReq.flush({ places: [] });
+    fixture.detectChanges();
+
+    const bookmark = compiled().querySelector('.bookmark') as HTMLButtonElement;
+    bookmark.click();
+    fixture.detectChanges();
+    const post = http.expectOne(`${environment.apiBaseUrl}/trips/trip-1/places`);
+    expect(post.request.method).toBe('POST');
+    expect(post.request.body).toEqual({ placeId: 'my-food-madam-kwan' });
+    expect(post.request.withCredentials).toBeTrue();
+    post.flush({
+      place: {
+        tripId: 'trip-1',
+        placeId: 'my-food-madam-kwan',
+        catalogId: 'cat-1',
+        name: 'Madam Kwan’s (Suria KLCC)',
+        category: 'food',
+        city: 'Kuala Lumpur',
+        address: null,
+        latitude: 3.15,
+        longitude: 101.71,
+        notes: null,
+        sortOrder: 0,
+      },
+    });
+    fixture.detectChanges();
+
+    expect(bookmark.getAttribute('aria-pressed')).toBe('true');
+    expect(bookmark.getAttribute('aria-label')).toBe('Remove bookmark');
+    expect(bookmark.classList.contains('on')).toBeTrue();
+    expect(bookmark.style.color.replace(/\s/g, '').toLowerCase()).toMatch(/#d97706|rgb\(217,119,6\)/);
+    expect(BOOKMARK_GOLD).toBe('#D97706');
+
+    bookmark.click();
+    fixture.detectChanges();
+    const del = http.expectOne(`${environment.apiBaseUrl}/trips/trip-1/places/my-food-madam-kwan`);
+    expect(del.request.method).toBe('DELETE');
+    del.flush(null);
+    fixture.detectChanges();
+    expect(compiled().querySelector('.bookmark')?.getAttribute('aria-pressed')).toBe('false');
   });
 });

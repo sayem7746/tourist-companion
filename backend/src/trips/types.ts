@@ -53,10 +53,57 @@ export interface CreateTripInput {
 
 export type UpdateTripInput = Partial<CreateTripInput>;
 
+export const PLACE_CATEGORIES = [
+  'airport',
+  'attraction',
+  'food',
+  'lodging',
+  'transport',
+  'shopping',
+  'safety',
+  'other',
+] as const;
+
+export type PlaceCategory = (typeof PLACE_CATEGORIES)[number];
+
+export interface SavedTripPlace {
+  tripId: string;
+  placeId: string;
+  catalogId: string;
+  name: string;
+  category: PlaceCategory;
+  city: string | null;
+  address: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  notes: string | null;
+  sortOrder: number;
+}
+
+export interface SaveTripPlaceInput {
+  placeId: string;
+  name: string;
+  category: PlaceCategory;
+  city?: string | null;
+  address?: string | null;
+  description?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  country?: string | null;
+  notes?: string | null;
+}
+
 export interface TripStore {
   list(userId: string): Promise<Trip[]>;
   get(userId: string, tripId: string): Promise<Trip | undefined>;
   create(userId: string, input: CreateTripInput): Promise<Trip>;
   update(userId: string, tripId: string, patch: UpdateTripInput): Promise<Trip | undefined>;
   delete(userId: string, tripId: string): Promise<boolean>;
+  listPlaces(userId: string, tripId: string): Promise<SavedTripPlace[] | undefined>;
+  savePlace(
+    userId: string,
+    tripId: string,
+    input: SaveTripPlaceInput,
+  ): Promise<SavedTripPlace | undefined>;
+  removePlace(userId: string, tripId: string, placeId: string): Promise<boolean | undefined>;
 }

@@ -3,6 +3,9 @@ import type {
   CreateTripInput,
   DailyBudget,
   Interest,
+  PlaceCategory,
+  SavedTripPlace,
+  SaveTripPlaceInput,
   TravelStyle,
   Trip,
   TripStatus,
@@ -80,6 +83,59 @@ function mapTrip(row: TripRow): Trip {
     status: row.status,
   };
 }
+
+interface TripPlaceRow {
+  tripId: string;
+  catalogId: string;
+  placeId: string | null;
+  name: string;
+  category: PlaceCategory;
+  city: string | null;
+  address: string | null;
+  latitude: string | number | null;
+  longitude: string | number | null;
+  notes: string | null;
+  sortOrder: number;
+}
+
+function toCoord(value: string | number | null): number | null {
+  if (value == null || value === '') return null;
+  const parsed = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function mapSavedPlace(row: TripPlaceRow): SavedTripPlace {
+  return {
+    tripId: row.tripId,
+    placeId: row.placeId || row.catalogId,
+    catalogId: row.catalogId,
+    name: row.name,
+    category: row.category,
+    city: row.city,
+    address: row.address,
+    latitude: toCoord(row.latitude),
+    longitude: toCoord(row.longitude),
+    notes: row.notes,
+    sortOrder: row.sortOrder,
+  };
+}
+
+const SELECT_SAVED_PLACE = `
+  SELECT
+    tp.trip_id AS "tripId",
+    p.id AS "catalogId",
+    p.external_id AS "placeId",
+    p.name,
+    p.category,
+    p.city,
+    p.address,
+    p.latitude,
+    p.longitude,
+    tp.notes,
+    tp.sort_order AS "sortOrder"
+  FROM trip_places tp
+  JOIN places p ON p.id = tp.place_id
+`;
 
 export function createPgTripStore(pool: pg.Pool): TripStore {
   return {
@@ -203,6 +259,99 @@ export function createPgTripStore(pool: pg.Pool): TripStore {
       const result = await pool.query(
         'DELETE FROM trips WHERE id = $1 AND user_id = $2 RETURNING id',
         [tripId, userId],
+      );
+      return (result.rowCount ?? 0) > 0;
+    },
+    async listPlaces(userId, tripId) {
+      const trip = await this.get(userId, tripId);
+      if (!trip) return undefined;
+      const result = await pool.query<TripPlaceRow>(
+        `${SELECT_SAVED_PLACE}
+         JOIN trips t ON t.id = tp.trip_id
+         WHERE tp.trip_id = $1 AND t.user_id = $2
+         ORDER BY tp.sort_order ASC, tp.created_at ASC`,
+        [tripId, userId],
+      );
+      return result.rows.map(mapSavedPlace);
+    },
+    async savePlace(userId, tripId, input: SaveTripPlaceInput) {
+      const trip = await this.get(userId, tripId);
+      if (!trip) return undefined;
+
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        const place = await client.query<{ id: string }>(
+          `
+          INSERT INTO places (
+            name, category, description, address, city, country,
+            latitude, longitude, external_id
+          )
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+          ON CONFLICT (external_id) DO UPDATE SET
+            name = EXCLUDED.name,
+            category = EXCLUDED.category,
+            description = EXCLUDED.description,
+            address = EXCLUDED.address,
+            city = EXCLUDED.city,
+            country = EXCLUDED.country,
+            latitude = EXCLUDED.latitude,
+            longitude = EXCLUDED.longitude
+          RETURNING id
+          `,
+          [
+            input.name,
+            input.category,
+            input.description ?? null,
+            input.address ?? null,
+            input.city ?? null,
+            input.country ?? 'MY',
+            input.latitude ?? null,
+            input.longitude ?? null,
+            input.placeId,
+          ],
+        );
+        const catalogId = place.rows[0]!.id;
+        const nextOrder = await client.query<{ next: number }>(
+          `SELECT COALESCE(MAX(sort_order), -1) + 1 AS next FROM trip_places WHERE trip_id = $1`,
+          [tripId],
+        );
+        await client.query(
+          `
+          INSERT INTO trip_places (trip_id, place_id, sort_order, notes)
+          VALUES ($1, $2, $3, $4)
+          ON CONFLICT (trip_id, place_id) DO UPDATE SET
+            notes = COALESCE(EXCLUDED.notes, trip_places.notes)
+          `,
+          [tripId, catalogId, nextOrder.rows[0]?.next ?? 0, input.notes ?? null],
+        );
+        const saved = await client.query<TripPlaceRow>(
+          `${SELECT_SAVED_PLACE}
+           WHERE tp.trip_id = $1 AND tp.place_id = $2`,
+          [tripId, catalogId],
+        );
+        await client.query('COMMIT');
+        return saved.rows[0] ? mapSavedPlace(saved.rows[0]) : undefined;
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+      } finally {
+        client.release();
+      }
+    },
+    async removePlace(userId, tripId, placeId) {
+      const trip = await this.get(userId, tripId);
+      if (!trip) return undefined;
+      const result = await pool.query(
+        `
+        DELETE FROM trip_places tp
+        USING places p
+        WHERE tp.place_id = p.id
+          AND tp.trip_id = $1
+          AND (p.external_id = $2 OR p.id::text = $2)
+        RETURNING tp.place_id
+        `,
+        [tripId, placeId],
       );
       return (result.rowCount ?? 0) > 0;
     },

@@ -315,7 +315,8 @@ h2 {
 }
 
 .bookmark.on {
-  color: var(--color-primary);
+  color: #d97706;
+  background: var(--color-gold-tint);
 }
 
 .place-body {

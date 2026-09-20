@@ -35,7 +35,22 @@
   <p class="placeholder">Itinerary summary will appear here once daily plans are available.</p>
 
   <h2>Saved places</h2>
-  <p class="placeholder">Saved places will appear here once that API is ready.</p>
+  @if (savedError()) {
+    <p class="error" role="alert">{{ savedError() }}</p>
+  }
+  @if (!pending() && !loadError() && featured() && savedPlaces().length === 0 && !savedError()) {
+    <p class="placeholder">No saved places yet. Bookmark spots from Explore to keep them with this trip.</p>
+  }
+  @if (savedPlaces().length) {
+    <ul class="saved-list">
+      @for (place of savedPlaces(); track place.placeId) {
+        <li>
+          <a [routerLink]="['/explore', place.placeId]">{{ place.name }}</a>
+          <button type="button" class="secondary" (click)="unsave(place)">Remove</button>
+        </li>
+      }
+    </ul>
+  }
 
   <h2>Referrals</h2>
   <p class="placeholder">Partner referrals will appear here once that API is ready.</p>

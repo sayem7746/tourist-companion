@@ -1,10 +1,45 @@
 import { randomUUID } from 'node:crypto';
-import type { Trip, TripStore } from './types.js';
+import type { SavedTripPlace, SaveTripPlaceInput, Trip, TripStore } from './types.js';
+
+interface StoredPlace {
+  catalogId: string;
+  snapshot: SaveTripPlaceInput;
+}
 
 export function createMemoryTripStore(): TripStore {
   const trips = new Map<string, Trip>();
+  const catalog = new Map<string, StoredPlace>();
+  const links = new Map<string, { tripId: string; placeId: string; notes: string | null; sortOrder: number }>();
 
   const assemble = (trip: Trip): Trip => ({ ...trip, interests: [...trip.interests] });
+
+  const linkKey = (tripId: string, placeId: string) => `${tripId}:${placeId}`;
+
+  const toSaved = (
+    tripId: string,
+    placeId: string,
+    stored: StoredPlace,
+    notes: string | null,
+    sortOrder: number,
+  ): SavedTripPlace => ({
+    tripId,
+    placeId,
+    catalogId: stored.catalogId,
+    name: stored.snapshot.name,
+    category: stored.snapshot.category,
+    city: stored.snapshot.city ?? null,
+    address: stored.snapshot.address ?? null,
+    latitude: stored.snapshot.latitude ?? null,
+    longitude: stored.snapshot.longitude ?? null,
+    notes,
+    sortOrder,
+  });
+
+  const ownedTrip = (userId: string, tripId: string): Trip | undefined => {
+    const trip = trips.get(tripId);
+    if (!trip || trip.userId !== userId) return undefined;
+    return trip;
+  };
 
   return {
     async list(userId) {
@@ -14,9 +49,8 @@ export function createMemoryTripStore(): TripStore {
         .map(assemble);
     },
     async get(userId, tripId) {
-      const trip = trips.get(tripId);
-      if (!trip || trip.userId !== userId) return undefined;
-      return assemble(trip);
+      const trip = ownedTrip(userId, tripId);
+      return trip ? assemble(trip) : undefined;
     },
     async create(userId, input) {
       const trip: Trip = {
@@ -70,7 +104,42 @@ export function createMemoryTripStore(): TripStore {
       const trip = trips.get(tripId);
       if (!trip || trip.userId !== userId) return false;
       trips.delete(tripId);
+      for (const key of [...links.keys()]) {
+        if (key.startsWith(`${tripId}:`)) links.delete(key);
+      }
       return true;
+    },
+    async listPlaces(userId, tripId) {
+      if (!ownedTrip(userId, tripId)) return undefined;
+      return [...links.values()]
+        .filter((link) => link.tripId === tripId)
+        .sort((a, b) => a.sortOrder - b.sortOrder || a.placeId.localeCompare(b.placeId))
+        .map((link) => {
+          const stored = catalog.get(link.placeId)!;
+          return toSaved(tripId, link.placeId, stored, link.notes, link.sortOrder);
+        });
+    },
+    async savePlace(userId, tripId, input: SaveTripPlaceInput) {
+      if (!ownedTrip(userId, tripId)) return undefined;
+      const existingCatalog = catalog.get(input.placeId);
+      const stored: StoredPlace = {
+        catalogId: existingCatalog?.catalogId ?? randomUUID(),
+        snapshot: { ...input },
+      };
+      catalog.set(input.placeId, stored);
+
+      const key = linkKey(tripId, input.placeId);
+      const existingLink = links.get(key);
+      const sortOrder =
+        existingLink?.sortOrder ??
+        Math.max(0, ...[...links.values()].filter((link) => link.tripId === tripId).map((link) => link.sortOrder + 1));
+      const notes = input.notes != null ? input.notes : (existingLink?.notes ?? null);
+      links.set(key, { tripId, placeId: input.placeId, notes, sortOrder });
+      return toSaved(tripId, input.placeId, stored, notes, sortOrder);
+    },
+    async removePlace(userId, tripId, placeId) {
+      if (!ownedTrip(userId, tripId)) return undefined;
+      return links.delete(linkKey(tripId, placeId));
     },
   };
 }

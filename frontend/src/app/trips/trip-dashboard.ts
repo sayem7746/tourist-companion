@@ -1,34 +1,15 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { Trip, TripService } from './trip.service';
+import {
+  inclusiveDayCount,
+  localTodayIso,
+  selectFeaturedTrip,
+  Trip,
+  TripService,
+  type SavedTripPlace,
+} from './trip.service';
 
-export function localTodayIso(now = new Date()): string {
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
-
-export function inclusiveDayCount(startDate: string, endDate: string): number {
-  const start = Date.parse(`${startDate}T00:00:00Z`);
-  const end = Date.parse(`${endDate}T00:00:00Z`);
-  if (Number.isNaN(start) || Number.isNaN(end) || end < start) {
-    return 0;
-  }
-  return Math.round((end - start) / 86_400_000) + 1;
-}
-
-export function selectFeaturedTrip(trips: Trip[], today: string): Trip | null {
-  const current = trips.filter((trip) => trip.startDate <= today && today <= trip.endDate);
-  if (current.length > 0) {
-    return [...current].sort((a, b) => a.startDate.localeCompare(b.startDate) || a.id.localeCompare(b.id))[0];
-  }
-  const upcoming = trips.filter((trip) => trip.startDate > today);
-  if (upcoming.length > 0) {
-    return [...upcoming].sort((a, b) => a.startDate.localeCompare(b.startDate) || a.id.localeCompare(b.id))[0];
-  }
-  return null;
-}
+export { inclusiveDayCount, localTodayIso, selectFeaturedTrip } from './trip.service';
 
 @Component({
   selector: 'app-trip-dashboard',
@@ -44,6 +25,8 @@ export class TripDashboard implements OnInit {
   readonly featured = signal<Trip | null>(null);
   readonly featuredKind = signal<'current' | 'upcoming' | 'none'>('none');
   readonly dayCount = signal(0);
+  readonly savedPlaces = signal<SavedTripPlace[]>([]);
+  readonly savedError = signal('');
 
   ngOnInit(): void {
     this.load();
@@ -52,6 +35,7 @@ export class TripDashboard implements OnInit {
   load(): void {
     this.pending.set(true);
     this.loadError.set('');
+    this.savedError.set('');
     this.tripsApi.list().subscribe({
       next: ({ trips }) => {
         const today = localTodayIso();
@@ -60,12 +44,16 @@ export class TripDashboard implements OnInit {
         if (!trip) {
           this.featuredKind.set('none');
           this.dayCount.set(0);
+          this.savedPlaces.set([]);
+          this.pending.set(false);
         } else if (trip.startDate <= today && today <= trip.endDate) {
           this.featuredKind.set('current');
           this.dayCount.set(inclusiveDayCount(trip.startDate, trip.endDate));
+          this.loadSaved(trip.id);
         } else {
           this.featuredKind.set('upcoming');
           this.dayCount.set(inclusiveDayCount(trip.startDate, trip.endDate));
+          this.loadSaved(trip.id);
         }
         this.pending.set(false);
       },
@@ -73,7 +61,29 @@ export class TripDashboard implements OnInit {
         this.pending.set(false);
         this.featured.set(null);
         this.featuredKind.set('none');
+        this.savedPlaces.set([]);
         this.loadError.set('Could not load your trips. Try again.');
+      },
+    });
+  }
+
+  private loadSaved(tripId: string): void {
+    this.tripsApi.listPlaces(tripId).subscribe({
+      next: ({ places }) => this.savedPlaces.set(places),
+      error: () => {
+        this.savedPlaces.set([]);
+        this.savedError.set('Could not load saved places.');
+      },
+    });
+  }
+
+  unsave(place: SavedTripPlace): void {
+    this.tripsApi.removePlace(place.tripId, place.placeId).subscribe({
+      next: () => {
+        this.savedPlaces.set(this.savedPlaces().filter((item) => item.placeId !== place.placeId));
+      },
+      error: () => {
+        this.savedError.set('Could not remove that saved place.');
       },
     });
   }

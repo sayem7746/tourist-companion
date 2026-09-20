@@ -90,6 +90,26 @@ describe('TripDashboard', () => {
         }),
       ],
     });
+    const placesReq = http.expectOne(`${environment.apiBaseUrl}/trips/trip-1/places`);
+    expect(placesReq.request.method).toBe('GET');
+    expect(placesReq.request.withCredentials).toBeTrue();
+    placesReq.flush({
+      places: [
+        {
+          tripId: 'trip-1',
+          placeId: 'my-food-madam-kwan',
+          catalogId: 'cat-1',
+          name: 'Madam Kwan’s (Suria KLCC)',
+          category: 'food' as const,
+          city: 'Kuala Lumpur',
+          address: null,
+          latitude: 3.15,
+          longitude: 101.71,
+          notes: null,
+          sortOrder: 0,
+        },
+      ],
+    });
     fixture.detectChanges();
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -98,7 +118,10 @@ describe('TripDashboard', () => {
     expect(compiled.textContent).toContain('Langkawi');
     expect(compiled.textContent).toContain('5 days');
     expect(compiled.textContent).toContain('Itinerary summary will appear');
-    expect(compiled.textContent).toContain('Saved places will appear');
+    expect(compiled.textContent).toContain('Madam Kwan’s (Suria KLCC)');
+    expect(compiled.querySelector('a[href="/explore/my-food-madam-kwan"]')?.textContent).toContain(
+      'Madam Kwan’s (Suria KLCC)',
+    );
     expect(compiled.textContent).toContain('Partner referrals will appear');
     expect(compiled.querySelector('a[href="/trips/new"]')?.textContent).toContain('Plan a trip');
     expect(compiled.querySelector('a[href="/arrival"]')?.textContent).toContain('Arrival checklist');

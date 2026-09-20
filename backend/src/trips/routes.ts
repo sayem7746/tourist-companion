@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { requireAuth } from '../auth/middleware.js';
 import type { AppConfig } from '../config.js';
 import { NotFoundError, ServiceUnavailableError, ValidationError } from '../errors.js';
+import { getPlaceDetails } from '../places/details.js';
 import { validateRequest } from '../validate.js';
 import {
   DAILY_BUDGETS,
@@ -75,6 +76,18 @@ const idParams = z.object({
   id: z.string().uuid(),
 });
 
+const placeIdParams = z.object({
+  id: z.string().uuid(),
+  placeId: z.string().trim().min(1).max(160),
+});
+
+const savePlaceSchema = z
+  .object({
+    placeId: z.string().trim().min(1).max(160),
+    notes: z.string().trim().max(500).nullable().optional(),
+  })
+  .strict();
+
 export async function registerTripRoutes(
   app: FastifyInstance,
   config: AppConfig,
@@ -143,6 +156,56 @@ export async function registerTripRoutes(
     const deleted = await getStore().delete(requireUserId(request), params.id);
     if (!deleted) {
       throw new NotFoundError('Trip not found');
+    }
+    return reply.status(204).send();
+  });
+
+  app.get('/trips/:id/places', auth, async (request) => {
+    const { params } = validateRequest(request, { params: idParams });
+    const places = await getStore().listPlaces(requireUserId(request), params.id);
+    if (!places) {
+      throw new NotFoundError('Trip not found');
+    }
+    return { places };
+  });
+
+  app.post('/trips/:id/places', auth, async (request, reply) => {
+    const { params, body } = validateRequest(request, { params: idParams, body: savePlaceSchema });
+    const userId = requireUserId(request);
+    const store = getStore();
+    const trip = await store.get(userId, params.id);
+    if (!trip) {
+      throw new NotFoundError('Trip not found');
+    }
+    const details = await getPlaceDetails(config, { id: body.placeId });
+    const existing = await store.listPlaces(userId, params.id);
+    const alreadySaved = existing?.some((place) => place.placeId === body.placeId);
+    const saved = await store.savePlace(userId, params.id, {
+      placeId: body.placeId,
+      name: details.name,
+      category: details.category,
+      city: details.city ?? null,
+      address: details.address ?? null,
+      description: details.description ?? null,
+      latitude: details.latitude,
+      longitude: details.longitude,
+      country: details.country ?? 'MY',
+      notes: body.notes ?? null,
+    });
+    if (!saved) {
+      throw new NotFoundError('Trip not found');
+    }
+    return reply.status(alreadySaved ? 200 : 201).send({ place: saved });
+  });
+
+  app.delete('/trips/:id/places/:placeId', auth, async (request, reply) => {
+    const { params } = validateRequest(request, { params: placeIdParams });
+    const removed = await getStore().removePlace(requireUserId(request), params.id, params.placeId);
+    if (removed == null) {
+      throw new NotFoundError('Trip not found');
+    }
+    if (!removed) {
+      throw new NotFoundError('Saved place not found');
     }
     return reply.status(204).send();
   });

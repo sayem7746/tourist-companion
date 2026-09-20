@@ -6,6 +6,7 @@ import { environment } from '../../environments/environment';
 export const EXPLORE_SEARCH_HEIGHT_PX = 52;
 export const EXPLORE_SEARCH_PLACEHOLDER = 'Search food, sights, ATMs, pharmacies...';
 export const SOS_COLOR = '#E11D48';
+export const BOOKMARK_GOLD = '#D97706';
 export const SOS_NUMBERS = [
   { code: '999', label: 'Police, fire, ambulance' },
   { code: '112', label: 'Mobile networks' },

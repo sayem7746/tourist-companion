@@ -114,6 +114,10 @@
     <p class="meta">No places match these filters. Try All, a wider area, or clear search.</p>
   }
 
+  @if (saveError()) {
+    <p class="error" role="alert">{{ saveError() }}</p>
+  }
+
   <div class="place-list">
     @for (place of places(); track place.id) {
       <article class="place-card" [attr.data-cat]="place.nearbyCategory" [attr.data-place-id]="place.id">
@@ -126,8 +130,10 @@
             type="button"
             class="bookmark"
             [class.on]="isBookmarked(place.id)"
+            [style.color]="isBookmarked(place.id) ? bookmarkGold : null"
             [attr.aria-pressed]="isBookmarked(place.id)"
             [attr.aria-label]="isBookmarked(place.id) ? 'Remove bookmark' : 'Bookmark'"
+            [disabled]="bookmarkBusy().has(place.id)"
             (click)="toggleBookmark(place.id)"
           >
             {{ isBookmarked(place.id) ? '★' : '☆' }}

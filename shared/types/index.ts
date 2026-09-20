@@ -177,6 +177,20 @@ export interface Place {
   country?: string;
 }
 
+export interface SavedTripPlace {
+  tripId: TripId;
+  placeId: PlaceId;
+  catalogId: PlaceId;
+  name: string;
+  category: PlaceCategory;
+  city?: string | null;
+  address?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  notes?: string | null;
+  sortOrder: number;
+}
+
 /** Normalized Explore / nearby POI (provider-agnostic). */
 export interface NearbyPlace extends Place {
   nearbyCategory: NearbyCategory;
