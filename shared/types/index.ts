@@ -78,6 +78,60 @@ export type PlaceCategory =
   | 'safety'
   | 'other';
 
+/** MVP Explore / nearby filter ids. `all` is a chip only, not a place type. */
+export const NEARBY_CATEGORIES = [
+  'food',
+  'attractions',
+  'transport',
+  'atm',
+  'pharmacy',
+  'convenience',
+  'tourist_services',
+] as const;
+
+export type NearbyCategory = (typeof NEARBY_CATEGORIES)[number];
+
+export const NEARBY_CHIP_IDS = ['all', ...NEARBY_CATEGORIES] as const;
+export type NearbyChipId = (typeof NEARBY_CHIP_IDS)[number];
+
+export interface NearbyCategoryChip {
+  id: NearbyChipId;
+  /** Stitch Explore chip copy (horizontal scroller). */
+  label: string;
+  /** Material-style icon name used in the Stitch mock. */
+  icon: string;
+}
+
+export const NEARBY_CATEGORY_CHIPS: NearbyCategoryChip[] = [
+  { id: 'all', label: 'All', icon: '' },
+  { id: 'food', label: 'Food & Halal', icon: 'restaurant' },
+  { id: 'attractions', label: 'Must-See Sights', icon: 'photo_camera' },
+  { id: 'transport', label: 'Transit', icon: 'directions_transit' },
+  { id: 'atm', label: 'ATMs', icon: 'atm' },
+  { id: 'pharmacy', label: 'Pharmacy', icon: 'local_pharmacy' },
+  { id: 'convenience', label: 'Convenience', icon: 'local_convenience_store' },
+  { id: 'tourist_services', label: 'Tourist services', icon: 'info' },
+];
+
+export const NEARBY_QUICK_FILTERS = ['open_now', 'halal_only', 'walk_15'] as const;
+export type NearbyQuickFilter = (typeof NEARBY_QUICK_FILTERS)[number];
+
+export const NEARBY_QUICK_FILTER_CHIPS: Array<{ id: NearbyQuickFilter; label: string }> = [
+  { id: 'open_now', label: 'Open Now' },
+  { id: 'halal_only', label: 'Halal Only' },
+  { id: 'walk_15', label: '≤ 15 min walk' },
+];
+
+export const PLACE_CATEGORY_BY_NEARBY: Record<NearbyCategory, PlaceCategory> = {
+  food: 'food',
+  attractions: 'attraction',
+  transport: 'transport',
+  atm: 'other',
+  pharmacy: 'safety',
+  convenience: 'shopping',
+  tourist_services: 'other',
+};
+
 export interface Place {
   id: PlaceId;
   name: string;
