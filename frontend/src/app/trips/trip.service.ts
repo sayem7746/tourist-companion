@@ -52,4 +52,8 @@ export class TripService {
   create(body: CreateTripRequest): Observable<{ trip: Trip }> {
     return this.http.post<{ trip: Trip }>(this.base, body, { withCredentials: true });
   }
+
+  update(id: string, body: Partial<CreateTripRequest>): Observable<{ trip: Trip }> {
+    return this.http.patch<{ trip: Trip }>(`${this.base}/${id}`, body, { withCredentials: true });
+  }
 }

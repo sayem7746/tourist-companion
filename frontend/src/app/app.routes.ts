@@ -3,6 +3,7 @@ import { Home } from './home/home';
 import { Login } from './auth/login';
 import { Signup } from './auth/signup';
 import { authGuard } from './auth/auth.guard';
+import { Preferences } from './profile/preferences';
 import { TripOnboarding } from './trips/trip-onboarding';
 import { TripDashboard } from './trips/trip-dashboard';
 
@@ -21,6 +22,12 @@ export const routes: Routes = [
     component: TripOnboarding,
     canActivate: [authGuard],
     title: 'Plan a trip',
+  },
+  {
+    path: 'settings',
+    component: Preferences,
+    canActivate: [authGuard],
+    title: 'Preferences',
   },
   { path: '**', redirectTo: '' },
 ];

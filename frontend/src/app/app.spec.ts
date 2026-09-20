@@ -30,4 +30,9 @@ describe('App', () => {
     const dashboard = routes.find((route) => route.path === 'trips');
     expect(dashboard?.canActivate).toEqual([authGuard]);
   });
+
+  it('should guard preferences', () => {
+    const settings = routes.find((route) => route.path === 'settings');
+    expect(settings?.canActivate).toEqual([authGuard]);
+  });
 });

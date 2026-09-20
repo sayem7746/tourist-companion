@@ -1,0 +1,111 @@
+<section>
+  <h1>Preferences</h1>
+  <p class="lede">Update non-sensitive travel preferences. These stay on your profile and selected trip.</p>
+
+  @if (pending()) {
+    <p class="meta" aria-live="polite">Loading preferences…</p>
+  }
+
+  @if (loadError()) {
+    <p class="error" role="alert">{{ loadError() }}</p>
+    <button type="button" (click)="load()">Retry</button>
+  }
+
+  @if (!pending() && !loadError()) {
+    @if (saveError()) {
+      <p class="error" role="alert">{{ saveError() }}</p>
+    }
+    @if (saved()) {
+      <p class="success" role="status">Preferences saved.</p>
+    }
+
+    <form (ngSubmit)="save()">
+      <h2>Profile</h2>
+      <label>
+        Display name
+        <input name="displayName" type="text" [(ngModel)]="displayName" maxlength="80" required />
+      </label>
+      <label>
+        Language
+        <input name="language" type="text" [(ngModel)]="language" maxlength="16" list="languages" required />
+      </label>
+      <datalist id="languages">
+        @for (code of languageOptions; track code) {
+          <option [value]="code"></option>
+        }
+      </datalist>
+
+      <h2>Food preferences</h2>
+      <div class="chips" role="list">
+        @for (option of dietaryOptions; track option) {
+          <button type="button" class="chip" [class.selected]="isDietarySelected(option)" (click)="toggleDietary(option)">
+            {{ option }}
+          </button>
+        }
+      </div>
+
+      <h2>Mobility</h2>
+      <div class="chips" role="list">
+        @for (option of mobilityOptions; track option) {
+          <button
+            type="button"
+            class="chip"
+            [class.selected]="isMobilitySelected(option)"
+            (click)="toggleMobility(option)"
+          >
+            {{ option }}
+          </button>
+        }
+      </div>
+
+      <h2>Travel style</h2>
+      <div class="chips" role="list">
+        @for (option of styleOptions; track option) {
+          <button type="button" class="chip" [class.selected]="travelStyle === option" (click)="travelStyle = option">
+            {{ option }}
+          </button>
+        }
+      </div>
+
+      <h2>Trip interests and budget</h2>
+      @if (!trips.length) {
+        <p class="meta">No trip yet. <a routerLink="/trips/new">Plan a trip</a> to set interests and budget.</p>
+      } @else {
+        <label>
+          Trip
+          <select name="selectedTripId" [ngModel]="selectedTripId" (ngModelChange)="selectTrip($event)">
+            @for (trip of trips; track trip.id) {
+              <option [value]="trip.id">{{ trip.destination }} ({{ trip.startDate }})</option>
+            }
+          </select>
+        </label>
+        <p class="meta">Interests</p>
+        <div class="chips" role="list">
+          @for (interest of interestOptions; track interest) {
+            <button
+              type="button"
+              class="chip"
+              [class.selected]="isInterestSelected(interest)"
+              (click)="toggleInterest(interest)"
+            >
+              {{ interest }}
+            </button>
+          }
+        </div>
+        <p class="meta">Daily budget</p>
+        <div class="chips" role="list">
+          @for (option of budgetOptions; track option) {
+            <button type="button" class="chip" [class.selected]="dailyBudget === option" (click)="dailyBudget = option">
+              {{ option }}
+            </button>
+          }
+        </div>
+      }
+
+      <div class="actions">
+        <button type="submit" [disabled]="saving()">{{ saving() ? 'Saving…' : 'Save preferences' }}</button>
+        <a routerLink="/trips">Back to dashboard</a>
+      </div>
+    </form>
+  }
+</section>
