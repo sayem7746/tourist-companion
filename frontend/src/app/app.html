@@ -1,41 +1,82 @@
 <div class="shell">
   <header class="top-bar">
-    <a routerLink="/" class="brand">{{ title }}</a>
-    <nav class="nav" aria-label="Account">
-      <a routerLink="/trips">Dashboard</a>
-      <a routerLink="/arrival">Arrival</a>
-      <a routerLink="/arrival/transport">Transport</a>
-      <a routerLink="/arrival/sim">SIM</a>
-      <a routerLink="/arrival/money">MYR</a>
-      <a routerLink="/trips/new">New trip</a>
-      <a routerLink="/settings">Preferences</a>
-      <a routerLink="/login">Sign in</a>
-      <a routerLink="/signup">Sign up</a>
-    </nav>
+    <div class="brand-cluster">
+      @if (showBack()) {
+        <button type="button" class="icon-btn" aria-label="Back" (click)="goBack()">
+          <span class="material-symbols-outlined">arrow_back</span>
+        </button>
+      }
+      <a routerLink="/" class="brand">
+        <img class="logo" [src]="logoUrl" alt="" />
+        <span class="brand-copy">
+          <span class="brand-name">{{ title }}</span>
+          <span class="brand-meta">{{ weatherLine }}</span>
+        </span>
+      </a>
+    </div>
+    <div class="header-actions">
+      <button
+        type="button"
+        class="sos-btn"
+        data-path="emergency-help"
+        [style.background]="sosColor"
+        (click)="openSos()"
+      >
+        <span class="material-symbols-outlined">e911_emergency</span>
+        SOS
+      </button>
+      <a routerLink="/settings" class="avatar-link" aria-label="Profile">
+        <img class="avatar" [src]="avatarUrl" alt="" />
+      </a>
+    </div>
   </header>
+
+  @if (sosOpen()) {
+    <aside
+      id="emergency-help"
+      class="sos-panel"
+      data-path="emergency-help"
+      role="alertdialog"
+      aria-labelledby="app-sos-title"
+      [style.background]="sosColor"
+    >
+      <div class="sos-sheet-head">
+        <p id="app-sos-title" class="sos-title">Emergency help</p>
+        <button type="button" class="sos-close" (click)="closeSos()">Close</button>
+      </div>
+      <p>Stay safe. Call now and share your location if you can.</p>
+      @for (number of sosNumbers; track number.code) {
+        <p>
+          <a class="sos-dial" [href]="'tel:' + number.code">{{ number.code }} — {{ number.label }}</a>
+        </p>
+      }
+    </aside>
+  }
+
   <main class="content">
     <router-outlet />
   </main>
   <nav class="tab-bar" aria-label="Primary">
     <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
-      <span class="icon" aria-hidden="true">⌂</span>
-      Home
+      <span class="material-symbols-outlined">explore</span>
+      <span class="tab-label">Home</span>
     </a>
     <a routerLink="/explore" routerLinkActive="active">
-      <span class="icon" aria-hidden="true">◎</span>
-      Explore
+      <span class="material-symbols-outlined">pin_drop</span>
+      <span class="tab-label">Explore</span>
     </a>
     <a routerLink="/trips" routerLinkActive="active">
-      <span class="icon" aria-hidden="true">☰</span>
-      Plan
+      <span class="material-symbols-outlined">calendar_month</span>
+      <span class="tab-label">Plan</span>
     </a>
-    <a routerLink="/concierge" routerLinkActive="active">
-      <span class="icon" aria-hidden="true">✦</span>
-      Concierge
+    <a routerLink="/concierge" routerLinkActive="active" class="concierge-tab">
+      <span class="material-symbols-outlined">auto_awesome</span>
+      <span class="tab-label">Concierge</span>
+      <span class="concierge-dot" aria-hidden="true"></span>
     </a>
     <a routerLink="/settings" routerLinkActive="active">
-      <span class="icon" aria-hidden="true">●</span>
-      Profile
+      <span class="material-symbols-outlined">account_circle</span>
+      <span class="tab-label">Profile</span>
     </a>
   </nav>
 </div>

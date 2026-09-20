@@ -1,8 +1,235 @@
-<section>
-  <h1>Tourist Companion</h1>
-  <p>Malaysia trip helper for web and mobile browsers.</p>
-  <p class="meta">Environment: {{ envName }}</p>
-  <p class="meta">API: {{ apiBaseUrl }}</p>
-  <p class="meta"><a routerLink="/trips">Trip dashboard</a> · <a routerLink="/arrival">Arrival checklist</a> · <a routerLink="/arrival/sim">SIM &amp; connectivity</a> · <a routerLink="/arrival/money">Currency &amp; payments</a> · <a routerLink="/trips/new">Plan a trip</a> · <a routerLink="/settings">Preferences</a></p>
-  <p class="meta"><a routerLink="/login">Sign in</a> or <a routerLink="/signup">create an account</a>.</p>
+<section class="home">
+  <section class="greet">
+    <div class="greet-row">
+      <h1>{{ greetLine() }} <span class="wave" aria-hidden="true">👋</span></h1>
+      @if (trip(); as featured) {
+        <span class="day-pill">
+          <span class="live-dot" aria-hidden="true"></span>
+          Day {{ dayNumber() }} of {{ dayCount() }}
+        </span>
+      }
+    </div>
+    <p class="meta-row">
+      <span class="place">{{ trip()?.destination || 'Kuala Lumpur' }}</span>
+      @if (tripRange()) {
+        <span>•</span>
+        <span>{{ tripRange() }}</span>
+      }
+      <span class="weather-chip">
+        <span class="material-symbols-outlined">wb_sunny</span>
+        31°C Sunny Intervals
+      </span>
+    </p>
+    @if (weather(); as note) {
+      <p class="rain-note">
+        <span class="material-symbols-outlined">thunderstorm</span>
+        {{ note.hint }}
+      </p>
+    }
+  </section>
+
+  <section class="arrival-banner">
+    <div class="glow" aria-hidden="true"></div>
+    <div class="banner-body">
+      <div class="banner-top">
+        <p class="welcome"><span aria-hidden="true">🇲🇾</span> Welcome to Malaysia</p>
+        <span class="done-pill">{{ arrivalDoneCount() }} of {{ arrivalItems().length || 5 }} Done</span>
+      </div>
+      <p class="banner-copy">
+        Arrival checklist:
+        {{ arrivalItems().length ? arrivalPercent() + '% completed' : 'open the KLIA guide' }}. Let's finish your setup
+        for seamless exploring.
+      </p>
+      <div class="meter" role="progressbar" [attr.aria-valuenow]="arrivalPercent()" aria-valuemin="0" aria-valuemax="100">
+        <span [style.width.%]="arrivalPercent()"></span>
+      </div>
+      <div class="next-step">
+        <div class="next-icon">
+          <span class="material-symbols-outlined">{{ nextMeta().icon }}</span>
+        </div>
+        <div class="next-copy">
+          <span class="next-kicker">Step {{ nextStepIndex() }} Next</span>
+          <span class="next-title">{{ nextMeta().label }}</span>
+        </div>
+        <a class="go" [routerLink]="nextMeta().href">
+          Go
+          <span class="material-symbols-outlined">arrow_forward</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section class="quick-grid">
+    <a routerLink="/explore" class="quick-card">
+      <div class="quick-icon explore">
+        <span class="material-symbols-outlined">travel_explore</span>
+      </div>
+      <h3>Explore Nearby</h3>
+      <p>Food, sights &amp; heritage</p>
+    </a>
+    <a routerLink="/concierge" class="quick-card">
+      <div class="quick-icon concierge">
+        <span class="material-symbols-outlined">auto_awesome</span>
+      </div>
+      <h3>Ask Concierge</h3>
+      <p>AI local tips &amp; instant translation</p>
+    </a>
+    <a routerLink="/arrival/transport" class="quick-card">
+      <div class="quick-icon transit">
+        <span class="material-symbols-outlined">directions_subway</span>
+      </div>
+      <h3>Getting Around</h3>
+      <p>LRT, MRT, Grab &amp; Monorail</p>
+    </a>
+    <a routerLink="/concierge" class="quick-card" fragment="emergency-help">
+      <div class="quick-icon sos">
+        <span class="material-symbols-outlined">local_police</span>
+      </div>
+      <h3>Emergency &amp; SOS</h3>
+      <p>Tourist police, 999 &amp; clinics</p>
+    </a>
+  </section>
+
+  <section class="plan">
+    <div class="section-head">
+      <div>
+        <h2>Today's Plan</h2>
+        <p class="lede">
+          @if (selectedDay(); as day) {
+            {{ formatDate(day.date) }} • {{ highlights() }} highlight{{ highlights() === 1 ? '' : 's' }}
+          } @else {
+            Open Plan to generate a day-by-day itinerary.
+          }
+        </p>
+      </div>
+      <a class="add-link" routerLink="/trips">
+        <span class="material-symbols-outlined">add_circle</span>
+        Add Activity
+      </a>
+    </div>
+
+    <div class="plan-card">
+      @if (planEmpty()) {
+        <p class="placeholder">No timed stops yet. Generate a draft from your trip dates and interests.</p>
+      }
+      @for (row of timeline(); track $index) {
+        @if (row.type === 'commute') {
+          <div class="rail commute">
+            <span class="node muted">
+              <span class="material-symbols-outlined">commute</span>
+            </span>
+            <p>
+              {{ row.minutes }} min travel time
+              @if (row.directionsHref) {
+                <a class="directions" [href]="row.directionsHref" target="_blank" rel="noreferrer">Directions →</a>
+              }
+            </p>
+          </div>
+        } @else {
+          <div class="rail" [class.up-next]="$index === 0">
+            <span class="node" [class.meal]="row.item.kind === 'meal'">
+              <span class="material-symbols-outlined">{{ itemIcon(row.item) }}</span>
+            </span>
+            <article>
+              <div class="event-meta">
+                <span>{{ formatTime(row.item.startTime) }}</span>
+                @if (row.item.kind === 'meal') {
+                  <span class="chip chip-gold">Meal</span>
+                }
+                @if (row.item.bookingUrl) {
+                  <span class="ticket">Ticket Ready</span>
+                }
+              </div>
+              <h4>
+                @if (row.item.placeId) {
+                  <a [routerLink]="['/explore', row.item.placeId]">{{ itemTitle(row.item) }}</a>
+                } @else {
+                  {{ itemTitle(row.item) }}
+                }
+              </h4>
+              @if (row.item.notes) {
+                <p>{{ row.item.notes }}</p>
+              }
+            </article>
+          </div>
+        }
+      }
+      <a class="full-plan" routerLink="/trips">View Full 7-Day Itinerary</a>
+    </div>
+  </section>
+
+  <section class="near">
+    <div class="section-head">
+      <h2>
+        <span class="material-symbols-outlined">near_me</span>
+        Near You Right Now
+      </h2>
+      <span class="lede">{{ areaLabel() }}</span>
+    </div>
+    @for (place of nearby(); track place.id) {
+      <article class="near-card">
+        <div class="thumb" [attr.data-cat]="place.nearbyCategory"></div>
+        <div>
+          <div class="near-tags">
+            @if (place.priceBandMyr) {
+              <span class="chip chip-primary">{{ place.priceBandMyr }}</span>
+            }
+            @if (distance(place)) {
+              <span class="lede">{{ distance(place) }}</span>
+            }
+          </div>
+          <h4><a [routerLink]="['/explore', place.id]">{{ place.name }}</a></h4>
+          <p>{{ place.description || place.area || place.city }}</p>
+        </div>
+      </article>
+    }
+    @if (!nearby().length) {
+      <p class="placeholder">Nearby gems will appear here once Explore is loaded.</p>
+    }
+  </section>
+
+  <aside class="tip-card">
+    <div class="tip-icon">
+      <span class="material-symbols-outlined">lightbulb</span>
+    </div>
+    <div>
+      <h3>Local Travel Tip of the Day</h3>
+      <p>
+        Tipping is not customary in Malaysia, but rounding up for great service is appreciated. While most city vendors
+        accept cashless <strong>DuitNow QR</strong> or credit cards, carry <strong>RM20–RM50 cash</strong> for hawker
+        stall treats and local fruit markets.
+      </p>
+      <p class="tip-foot">
+        <span>Tipping &amp; Payment Customs</span>
+        <a routerLink="/arrival/money">Read Guide <span class="material-symbols-outlined">chevron_right</span></a>
+      </p>
+    </div>
+  </aside>
+
+  <section class="quick-bar">
+    <div class="rate">
+      <span class="rm">RM</span>
+      <div>
+        <span class="kicker">Quick Rate</span>
+        <p>1 USD ≈ 4.38 MYR</p>
+      </div>
+    </div>
+    <div class="phrase">
+      <span class="phrase-icon">
+        <span class="material-symbols-outlined">record_voice_over</span>
+      </span>
+      <div>
+        <span class="kicker">Phrase</span>
+        <p>"Terima Kasih" (Thank you)</p>
+      </div>
+    </div>
+  </section>
+
+  <p class="account-links sr-only">
+    <a routerLink="/arrival">Arrival checklist</a>
+    · <a routerLink="/arrival/sim">SIM &amp; connectivity</a>
+    · <a routerLink="/arrival/money">Currency &amp; payments</a>
+    · <a routerLink="/login">Sign in</a>
+    · <a routerLink="/signup">create an account</a>
+  </p>
 </section>

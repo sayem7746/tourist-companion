@@ -1,6 +1,8 @@
 h1 {
   margin: 0 0 0.5rem;
-  font-size: 1.5rem;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
 }
 
 form {
@@ -16,20 +18,25 @@ label {
 }
 
 input {
-  padding: 0.5rem 0.6rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.375rem;
+  min-height: 3rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-inner);
   font: inherit;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
 }
 
 button {
   justify-self: start;
-  padding: 0.5rem 0.9rem;
+  min-height: var(--btn-min-height);
+  padding: 0.5rem 1.15rem;
   border: 0;
-  border-radius: 0.375rem;
-  background: #111827;
+  border-radius: var(--radius-pill);
+  background: var(--color-primary);
   color: #fff;
   font: inherit;
+  font-weight: 600;
   cursor: pointer;
 }
 
@@ -39,10 +46,10 @@ button:disabled {
 }
 
 .error {
-  color: #b91c1c;
+  color: var(--color-sos);
 }
 
 .meta {
-  color: #4b5563;
+  color: var(--color-text-muted);
   font-size: 0.9rem;
 }

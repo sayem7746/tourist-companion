@@ -23,7 +23,8 @@ describe('App', () => {
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('.brand')?.textContent).toContain('Tourist Companion');
+    expect(compiled.querySelector('.brand-name')?.textContent).toContain('Malaysia Companion');
+    expect(compiled.querySelector('.sos-btn')?.textContent).toContain('SOS');
   });
 
   it('should guard the trip dashboard', () => {
@@ -91,7 +92,9 @@ describe('App', () => {
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    const labels = Array.from(compiled.querySelectorAll('.tab-bar a')).map((el) => el.textContent?.replace(/\s+/g, ' ').trim());
-    expect(labels).toEqual(['⌂ Home', '◎ Explore', '☰ Plan', '✦ Concierge', '● Profile']);
+    const labels = Array.from(compiled.querySelectorAll('.tab-bar .tab-label')).map((el) =>
+      el.textContent?.replace(/\s+/g, ' ').trim(),
+    );
+    expect(labels).toEqual(['Home', 'Explore', 'Plan', 'Concierge', 'Profile']);
   });
 });

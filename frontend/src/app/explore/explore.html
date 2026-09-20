@@ -1,19 +1,14 @@
 <section class="explore">
-  <header class="page-head">
-    <div>
-      <h1>Explore &amp; Nearby Helper</h1>
-      <p class="lede">Map and list of places around your pin, with walking distance and hours when we know them.</p>
-    </div>
-    <button
-      type="button"
-      class="sos-btn"
-      data-path="emergency-help"
-      [style.background]="sosColor"
-      (click)="openSos()"
-    >
-      SOS
-    </button>
-  </header>
+  <h1 class="sr-only">Explore &amp; Nearby Helper</h1>
+  <button
+    type="button"
+    class="sos-btn sr-only"
+    data-path="emergency-help"
+    [style.background]="sosColor"
+    (click)="openSos()"
+  >
+    SOS
+  </button>
 
   @if (sosOpen()) {
     <aside
@@ -38,6 +33,7 @@
   }
 
   <div class="search-wrap">
+    <span class="material-symbols-outlined search-icon" aria-hidden="true">search</span>
     <label class="sr-only" for="exploreSearchInput">Search nearby places</label>
     <input
       id="exploreSearchInput"
@@ -49,30 +45,47 @@
       (ngModelChange)="onSearchInput($event)"
     />
     @if (q) {
-      <button type="button" class="clear-search" aria-label="Clear search" (click)="clearSearch()">×</button>
+      <button type="button" class="clear-search" aria-label="Clear search" (click)="clearSearch()">
+        <span class="material-symbols-outlined">close</span>
+      </button>
     }
   </div>
 
   <div class="scope-row">
     <label class="area-field">
+      <span class="material-symbols-outlined near-icon" aria-hidden="true">near_me</span>
       <span class="sr-only">Area</span>
       <select [ngModel]="areaId" (ngModelChange)="onAreaChange($event)" [disabled]="pending()">
         @for (area of areas; track area.id) {
           <option [value]="area.id">{{ area.label }}</option>
         }
       </select>
-      <span class="radius-chip">{{ radiusKmLabel() }}</span>
+      <span class="radius-chip">({{ radiusKmLabel() }})</span>
+      <span class="material-symbols-outlined expand-icon" aria-hidden="true">expand_more</span>
     </label>
     <div class="view-toggle" role="group" aria-label="Results view">
-      <button type="button" [class.active]="view === 'list'" (click)="setView('list')">List</button>
-      <button type="button" [class.active]="view === 'map'" (click)="setView('map')">Map</button>
+      <button type="button" [class.active]="view === 'list'" (click)="setView('list')">
+        <span class="material-symbols-outlined" aria-hidden="true">format_list_bulleted</span>
+        List
+      </button>
+      <button type="button" [class.active]="view === 'map'" (click)="setView('map')">
+        <span class="material-symbols-outlined" aria-hidden="true">map</span>
+        Map
+      </button>
     </div>
   </div>
 
   <div class="mini-map" [class.expanded]="view === 'map'" [attr.data-view]="view">
+    <div class="map-photo" [style.backgroundImage]="'url(' + mapUrl + ')'"></div>
     <div class="radar-copy">
-      <p class="radar-kicker">Radar active</p>
-      <p class="radar-title">{{ places().length }} curated gems around you</p>
+      <span class="radar-icon" aria-hidden="true">
+        <span class="material-symbols-outlined">explore</span>
+      </span>
+      <div>
+        <p class="radar-kicker">Radar active</p>
+        <p class="radar-title">{{ places().length }} curated gems around you</p>
+      </div>
+      <button type="button" class="full-map" (click)="setView(view === 'map' ? 'list' : 'map')">Full Map</button>
     </div>
     <div class="pin-field" aria-hidden="true">
       <span class="you-pin" title="You"></span>
@@ -93,6 +106,7 @@
         [attr.aria-selected]="category === chip.id"
         (click)="selectCategory(chip.id)"
       >
+        <span class="material-symbols-outlined" aria-hidden="true">{{ chip.icon || 'apps' }}</span>
         {{ chip.label }}
         @if (chipCount(chip.id) != null) {
           <span class="count">{{ chipCount(chip.id) }}</span>
@@ -136,7 +150,7 @@
             [disabled]="bookmarkBusy().has(place.id)"
             (click)="toggleBookmark(place.id)"
           >
-            {{ isBookmarked(place.id) ? '★' : '☆' }}
+            <span class="material-symbols-outlined" [class.fill]="isBookmarked(place.id)">bookmark</span>
           </button>
         </div>
         <div class="place-body">
@@ -169,7 +183,14 @@
             <p class="price">{{ place.priceBandMyr }}</p>
           }
           <div class="place-actions">
-            <a class="btn" [href]="mapsHref(place)" target="_blank" rel="noreferrer">Directions</a>
+            <a class="btn" [href]="mapsHref(place)" target="_blank" rel="noreferrer">
+              <span class="material-symbols-outlined">turn_right</span>
+              Directions
+            </a>
+            <a class="btn btn-secondary" routerLink="/trips">
+              <span class="material-symbols-outlined">add_circle</span>
+              Add to Day
+            </a>
             <a class="btn btn-secondary" [routerLink]="['/explore', place.id]">Details</a>
           </div>
         </div>

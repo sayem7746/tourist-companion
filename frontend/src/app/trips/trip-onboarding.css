@@ -1,6 +1,8 @@
 h1 {
   margin: 0 0 0.25rem;
-  font-size: 1.5rem;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
 }
 
 h2 {
@@ -11,14 +13,14 @@ h2 {
 .progress,
 .meta,
 .label {
-  color: #4b5563;
+  color: var(--color-text-muted);
   font-size: 0.9rem;
 }
 
 .bar {
-  height: 0.35rem;
-  background: #e5e7eb;
-  border-radius: 999px;
+  height: 0.5rem;
+  background: var(--color-border);
+  border-radius: var(--radius-pill);
   overflow: hidden;
   margin: 0.5rem 0 1rem;
 }
@@ -26,7 +28,7 @@ h2 {
 .bar span {
   display: block;
   height: 100%;
-  background: #111827;
+  background: var(--color-primary);
 }
 
 form,
@@ -40,10 +42,12 @@ form {
 }
 
 input {
-  padding: 0.5rem 0.6rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.375rem;
+  min-height: 3rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-inner);
   font: inherit;
+  background: var(--color-surface);
 }
 
 .chips {
@@ -55,17 +59,17 @@ input {
 
 .chip {
   padding: 0.45rem 0.75rem;
-  border: 1px solid #d1d5db;
-  border-radius: 999px;
-  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
   font: inherit;
   cursor: pointer;
 }
 
 .chip.selected {
-  background: #111827;
+  background: var(--color-primary);
   color: #fff;
-  border-color: #111827;
+  border-color: transparent;
 }
 
 .nav-row {
@@ -76,19 +80,21 @@ input {
 }
 
 button {
-  padding: 0.5rem 0.9rem;
+  min-height: var(--btn-min-height);
+  padding: 0.5rem 1.15rem;
   border: 0;
-  border-radius: 0.375rem;
-  background: #111827;
+  border-radius: var(--radius-pill);
+  background: var(--color-primary);
   color: #fff;
   font: inherit;
+  font-weight: 600;
   cursor: pointer;
 }
 
 button.secondary {
-  background: #fff;
-  color: #111827;
-  border: 1px solid #d1d5db;
+  background: var(--color-canvas);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
 }
 
 button:disabled {
@@ -97,7 +103,7 @@ button:disabled {
 }
 
 .error {
-  color: #b91c1c;
+  color: var(--color-sos);
 }
 
 .review {
@@ -108,7 +114,7 @@ button:disabled {
 }
 
 .review dt {
-  color: #4b5563;
+  color: var(--color-text-muted);
   font-size: 0.85rem;
 }
 

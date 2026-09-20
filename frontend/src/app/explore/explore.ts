@@ -1,6 +1,7 @@
 import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { STITCH_EXPLORE_MAP_URL } from '../stitch-assets';
 import { TripService, localTodayIso, selectFeaturedTrip } from '../trips/trip.service';
 import {
   coverTone,
@@ -40,6 +41,7 @@ export class Explore implements OnInit, OnDestroy {
 
   readonly searchHeightPx = EXPLORE_SEARCH_HEIGHT_PX;
   readonly searchPlaceholder = EXPLORE_SEARCH_PLACEHOLDER;
+  readonly mapUrl = STITCH_EXPLORE_MAP_URL;
   readonly areas = NEARBY_AREAS;
   readonly quickFilters = NEARBY_QUICK_FILTER_CHIPS;
   readonly sosColor = SOS_COLOR;

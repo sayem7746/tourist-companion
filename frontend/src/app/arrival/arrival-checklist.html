@@ -1,11 +1,23 @@
-<section>
-  <h1>Arrival checklist</h1>
+<section class="arrival">
+  <h1 class="sr-only">Arrival checklist</h1>
+
+  <section class="hero">
+    <span class="hero-pill">
+      <span class="material-symbols-outlined">flight_land</span>
+      KLIA Terminal 1 &amp; 2 Companion
+    </span>
+    <h2>Welcome to Malaysia 🇲🇾</h2>
+    <p class="lede">
+      Selamat Datang! Let's get you smoothly from touchdown to your stay in Kuala Lumpur with verified transit options.
+    </p>
+    <p class="actions hero-actions">
+      <a routerLink="/arrival/sim" class="btn btn-secondary">SIM &amp; connectivity</a>
+      <a routerLink="/arrival/money" class="btn btn-secondary">Currency &amp; payments</a>
+      <a routerLink="/arrival/transport" class="btn">Airport transport guide</a>
+    </p>
+  </section>
+
   <p class="lede">Step through KLIA or KLIA2 after you land. Tick items as you go — progress stays on this device.</p>
-  <p class="actions">
-    <a routerLink="/arrival/sim" class="btn btn-secondary">SIM &amp; connectivity</a>
-    <a routerLink="/arrival/money" class="btn btn-secondary">Currency &amp; payments</a>
-    <a routerLink="/arrival/transport" class="btn">Airport transport guide</a>
-  </p>
 
   <div class="filters">
     <label>
@@ -43,7 +55,7 @@
 
   @if (loadError()) {
     <p class="error" role="alert">{{ loadError() }}</p>
-    <button type="button" (click)="load()">Retry</button>
+    <button type="button" class="btn" (click)="load()">Retry</button>
   }
 
   @if (!pending() && !loadError()) {
@@ -53,6 +65,20 @@
         <span class="fill" [style.width.%]="percent()"></span>
       </div>
     </div>
+
+    <aside class="advisory">
+      <span class="advisory-icon">
+        <span class="material-symbols-outlined fill">security_update_warning</span>
+      </span>
+      <div>
+        <p class="advisory-kicker">Official Travel Advisory</p>
+        <p class="advisory-title">Ignore Unofficial Ride Touts</p>
+        <p>
+          Only book via official e-hailing apps (Grab / AirAsia Ride) or prepaid coupon taxi booths inside the terminal.
+          Avoid drivers soliciting in arrival halls.
+        </p>
+      </div>
+    </aside>
 
     @if (!items().length) {
       <p>No checklist items for this filter.</p>

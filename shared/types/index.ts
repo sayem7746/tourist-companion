@@ -688,6 +688,25 @@ export const REFERRAL_CHANNELS = [
 ] as const;
 export type ReferralChannel = (typeof REFERRAL_CHANNELS)[number];
 
+export const REFERRAL_EVENT_TYPES = ['click', 'lead', 'booking'] as const;
+export type ReferralEventType = (typeof REFERRAL_EVENT_TYPES)[number];
+
+export interface ReferralEvent {
+  type: ReferralEventType;
+  at: string;
+  channel?: ReferralChannel;
+}
+
+export interface ReferralMetadata {
+  clickKey?: string;
+  clickCount?: number;
+  leadCount?: number;
+  bookingCount?: number;
+  events?: ReferralEvent[];
+  source?: string;
+  [key: string]: unknown;
+}
+
 export interface Referral {
   id: ReferralId;
   userId: UserId;
@@ -698,4 +717,6 @@ export interface Referral {
   status: ReferralStatus;
   channel?: ReferralChannel;
   itineraryItemId?: ItineraryItemId | null;
+  convertedAt?: string | null;
+  metadata?: ReferralMetadata;
 }

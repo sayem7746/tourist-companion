@@ -1,18 +1,26 @@
 <section class="concierge">
-  <header class="page-head">
+  <button
+    type="button"
+    class="sos-btn sr-only"
+    data-path="emergency-help"
+    [style.background]="sosColor"
+    (click)="openSos()"
+  >
+    SOS
+  </button>
+
+  <header class="persona">
+    <div class="persona-avatar" aria-hidden="true">
+      <span class="material-symbols-outlined">smart_toy</span>
+      <span class="live"></span>
+    </div>
     <div>
-      <h1>Malaysia AI Concierge</h1>
+      <div class="persona-title">
+        <h1>Malaysia AI Concierge</h1>
+        <span aria-hidden="true">🇲🇾✨</span>
+      </div>
       <p class="lede">Your 24/7 friendly local guide &amp; cultural translator</p>
     </div>
-    <button
-      type="button"
-      class="sos-btn"
-      data-path="emergency-help"
-      [style.background]="sosColor"
-      (click)="openSos()"
-    >
-      SOS
-    </button>
   </header>
 
   <p class="live-context">
@@ -178,6 +186,7 @@
   </div>
 
   <form class="composer" (ngSubmit)="submitDraft()">
+    <span class="material-symbols-outlined cam" aria-hidden="true">photo_camera</span>
     <label class="sr-only" for="concierge-draft">Message</label>
     <input
       id="concierge-draft"
@@ -188,6 +197,8 @@
       maxlength="2000"
       [disabled]="pending()"
     />
-    <button type="submit" class="btn send" [disabled]="pending() || !draft.trim()">Send</button>
+    <button type="submit" class="send" [disabled]="pending() || !draft.trim()" aria-label="Send">
+      <span class="material-symbols-outlined">arrow_upward</span>
+    </button>
   </form>
 </section>

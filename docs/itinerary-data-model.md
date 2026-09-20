@@ -136,7 +136,7 @@ Prefer (2) for short walks; use (1) when the transfer is the highlight (airport 
 ### Booking and referrals
 
 - `bookingUrl` is the same idea as `PlaceDetails.bookingUrl`: official tickets or partner page. Concierge still cannot hold tables or charge cards.
-- `referralPartnerId` points at `providers` (`ProviderId`). Creating a `Referral` row from a click is a later referrals task; this field only records which partner the block is attributed to.
+- `referralPartnerId` points at `providers` (`ProviderId`). Clicks create or update a `Referral` via `POST /referrals/clicks` (or `GET /r/:code` / `GET /referrals/go/:providerId`); this field only records which partner the block is attributed to until that request runs.
 - Either field may appear alone. Neither is required for a valid item.
 
 ### Locked flag

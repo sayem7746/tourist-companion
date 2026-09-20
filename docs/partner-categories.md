@@ -6,7 +6,7 @@ Asana: [Define partner categories](https://app.asana.com/1/1218080418840809/proj
 
 Shared contract: `PARTNER_CATEGORIES`, `PARTNER_CATEGORY_CHIPS`, `Provider`, `PartnerListing`, `PartnerCommission`, `Referral`, and `REFERRAL_DISCLOSURE` in `shared/types/index.ts`.
 
-This document is the category and compliance model. Partner admin listing CRUD lives at `/admin/partners`. Click-tracking APIs are a later EPIC 07 task.
+This document is the category and compliance model. Partner admin listing CRUD lives at `/admin/partners`. Traveler click, lead, and outbound-redirect tracking lives at `/referrals/*` and `GET /r/:code`.
 
 ## Screen contract
 
@@ -127,7 +127,7 @@ interface PartnerListing {
 
 ## Referral model
 
-A `Referral` attributes one traveler (and optional trip/place) to one `Provider`. Creating the row from a click is a later task; itinerary items already store `referralPartnerId`.
+A `Referral` attributes one traveler (and optional trip/place) to one `Provider`. Itinerary items still store `referralPartnerId` without creating a row; clicks and leads create or update the tracking row.
 
 ```ts
 type ReferralStatus = 'pending' | 'clicked' | 'converted' | 'expired';
@@ -142,6 +142,8 @@ interface Referral {
   status: ReferralStatus;
   channel?: ReferralChannel;
   itineraryItemId?: string | null;
+  convertedAt?: string | null;
+  metadata?: ReferralMetadata;
 }
 ```
 
@@ -164,8 +166,23 @@ Rules:
 
 - One click → at most one new `Referral` (idempotent on `referralCode` or click key in `metadata`).
 - `referralPartnerId` on an itinerary item does not create a row by itself.
-- Conversion is partner-reported; the app must not mark `converted` from a click alone.
+- Conversion is partner-reported (`POST /referrals/bookings`); the app must not mark `converted` from a click or lead alone.
 - Traveler UI may show partner name, category, status, and disclosure — not commission rate.
+
+### Tracking API
+
+Authenticated tourist endpoints (JWT or session cookie). `channel` is the source placement.
+
+| Method | Path | Behavior |
+| --- | --- | --- |
+| `POST` | `/referrals/clicks` | Record an outbound click. Body: `providerId`, `channel`, optional `tripId`, `placeId`, `itineraryItemId`, `referralCode`, `clickKey`. Returns `referral`, `outboundUrl` (HTTPS partner URL with `ref` + UTM), `redirectPath`. `201` on insert, `200` on replay. Status becomes `clicked`. |
+| `POST` | `/referrals/leads` | Record a lead (form / booking intent). Identify with `referralId`, `referralCode`, or `providerId` + `channel`. Status stays `clicked` (or is set from `pending`). Does not convert. |
+| `GET` | `/referrals` | List the current traveler’s referrals and status |
+| `GET` | `/referrals/go/:providerId?channel=` | Cookie/JWT outbound start: record a click and `302` to the tracked partner URL |
+| `GET` | `/r/:code` | Public tracked redirect for an issued code (`pending` → `clicked`). `302` only to the stored HTTPS partner URL |
+| `POST` | `/referrals/bookings` | Admin (`ADMIN_TOKEN` or `role: admin`): partner-reported booking/activation. Sets `converted` and `convertedAt` |
+
+Inactive partners cannot open new clicks or leads (`404`). Existing codes still redirect. Clicks never set `converted`. Open redirects are rejected: the Location is always the listing `bookingUrl`, else `reservationUrl`, else `website`, and only `https://`.
 
 ## Commission fields
 
@@ -239,7 +256,7 @@ Core tables (`backend/migrations/1730000000000_init-core-schema.cjs`) plus marke
 - location — `listing_city`, `listing_area`, plus `airportCodes` in extras
 - contact — `website`, `contact_email` (ops only)
 - commission — `commission_rate`, `commission_basis`, `commission_currency` (`MYR`)
-- `referrals` (tracking) — `user_id`, `trip_id`, `provider_id`, `place_id`, `referral_code`, `status`, `channel`, `itinerary_item_id`, `metadata`, `converted_at`
+- `referrals` (tracking) — `user_id`, `trip_id`, `provider_id`, `place_id`, `referral_code`, `status`, `channel`, `itinerary_item_id`, `metadata` (click key + events), `converted_at`. Unique click keys: `backend/migrations/1730000009000_referral-click-key.cjs`.
 
 Admin API (`ADMIN_TOKEN` or JWT `role: admin`): `GET`/`POST /admin/partners`, `GET`/`PATCH`/`DELETE /admin/partners/:id`, `POST /admin/partners/:id/approve` (sets `is_active`), `POST /admin/partners/:id/pause`. Responses use the ops `Provider` view (contact + commission). Delete fails with 409 when referrals still point at the row — pause instead.
 
@@ -247,4 +264,4 @@ Legacy `transport` / `lodging` / `activity` rows remap to `transfers` / `hotels`
 
 ## Out of scope
 
-Partner admin **UI**, click tracking API, payout reports, insurance products, in-app checkout, ranking ads in Explore organic results without a Sponsored badge, and destinations outside Malaysia.
+Partner admin **UI**, payout reports, insurance products, in-app checkout, ranking ads in Explore organic results without a Sponsored badge, and destinations outside Malaysia.

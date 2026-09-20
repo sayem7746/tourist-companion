@@ -1,6 +1,40 @@
-h1 {
-  margin: 0 0 0.25rem;
-  font-size: 1.5rem;
+.hero {
+  position: relative;
+  overflow: hidden;
+  margin: 0 0 1.25rem;
+  padding: 1.5rem 1.25rem;
+  border-radius: var(--radius-inner);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-deep) 70%);
+  color: #fff;
+  box-shadow: var(--shadow-card);
+}
+
+.hero-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.15);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.hero-pill .material-symbols-outlined {
+  font-size: 16px;
+  color: var(--color-secondary-fixed);
+}
+
+.hero h2 {
+  margin: 0.5rem 0 0.35rem;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: #fff;
+}
+
+.hero .lede {
+  color: rgba(255, 255, 255, 0.9);
 }
 
 h2 {
@@ -18,7 +52,18 @@ h2 {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-  margin: 0.75rem 0 0;
+  margin: 0.85rem 0 0;
+}
+
+.hero-actions .btn {
+  background: #fff;
+  color: var(--color-primary);
+}
+
+.hero-actions .btn-secondary {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.35);
 }
 
 .filters {
@@ -58,14 +103,56 @@ select {
 .fill {
   display: block;
   height: 100%;
-  background: var(--color-primary);
+  background: var(--color-secondary-fixed);
+}
+
+.advisory {
+  display: flex;
+  gap: 0.75rem;
+  margin: 0 0 1rem;
+  padding: 1rem;
+  border-radius: var(--radius-inner);
+  background: var(--color-tertiary-fixed);
+  color: #40000c;
+  box-shadow: var(--shadow-card);
+}
+
+.advisory-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--color-tertiary);
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.advisory-kicker {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-tertiary);
+}
+
+.advisory-title {
+  margin: 0.2rem 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.advisory p:last-child {
+  margin: 0;
+  font-size: 13px;
 }
 
 .card {
   margin: 0.75rem 0;
   padding: 1rem;
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-card);
+  border-radius: var(--radius-inner);
   background: var(--color-surface);
   box-shadow: var(--shadow-card);
 }
@@ -88,16 +175,4 @@ select {
 
 .error {
   color: var(--color-sos);
-}
-
-button {
-  min-height: var(--btn-min-height);
-  padding: 0.5rem 1.15rem;
-  border: 0;
-  border-radius: var(--radius-pill);
-  background: var(--color-primary);
-  color: #fff;
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
 }

@@ -1,6 +1,8 @@
 h1 {
   margin: 0 0 0.25rem;
-  font-size: 1.5rem;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
 }
 
 h2 {
@@ -10,7 +12,7 @@ h2 {
 
 .lede,
 .meta {
-  color: #4b5563;
+  color: var(--color-text-muted);
   font-size: 0.9rem;
 }
 
@@ -26,10 +28,12 @@ form {
 
 input,
 select {
-  padding: 0.5rem 0.6rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.375rem;
+  min-height: 3rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-inner);
   font: inherit;
+  background: var(--color-surface);
 }
 
 .chips {
@@ -41,18 +45,18 @@ select {
 
 .chip {
   padding: 0.45rem 0.75rem;
-  border: 1px solid #d1d5db;
-  border-radius: 999px;
-  background: #fff;
-  color: #111827;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
   font: inherit;
   cursor: pointer;
 }
 
 .chip.selected {
-  background: #111827;
+  background: var(--color-primary);
   color: #fff;
-  border-color: #111827;
+  border-color: transparent;
 }
 
 .actions {
@@ -65,21 +69,23 @@ select {
 
 button,
 .actions a {
-  padding: 0.5rem 0.9rem;
+  min-height: var(--btn-min-height);
+  padding: 0.5rem 1.15rem;
   border: 0;
-  border-radius: 0.375rem;
-  background: #111827;
+  border-radius: var(--radius-pill);
+  background: var(--color-primary);
   color: #fff;
   font: inherit;
   cursor: pointer;
   text-decoration: none;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
 }
 
 .actions a {
-  background: #fff;
-  color: #111827;
-  border: 1px solid #d1d5db;
+  background: var(--color-canvas);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
 }
 
 button:disabled {
@@ -88,9 +94,9 @@ button:disabled {
 }
 
 .error {
-  color: #b91c1c;
+  color: var(--color-sos);
 }
 
 .success {
-  color: #047857;
+  color: var(--color-primary);
 }

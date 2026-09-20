@@ -123,7 +123,20 @@ export function toOpsProvider(row: ProviderRow): Provider {
   };
 }
 
+function toIsoTimestamp(value: Date | string | null | undefined): string | null {
+  if (value == null) return null;
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : value.toISOString();
+  }
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
 export function toReferral(row: ReferralRow): Referral {
+  const metadata =
+    row.metadata && typeof row.metadata === 'object' && !Array.isArray(row.metadata)
+      ? { ...row.metadata }
+      : {};
   return {
     id: row.id,
     userId: row.userId,
@@ -134,6 +147,8 @@ export function toReferral(row: ReferralRow): Referral {
     status: row.status,
     channel: row.channel ?? undefined,
     itineraryItemId: row.itineraryItemId,
+    convertedAt: toIsoTimestamp(row.convertedAt),
+    metadata,
   };
 }
 

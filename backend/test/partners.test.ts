@@ -101,6 +101,8 @@ describe('partner marketplace model', () => {
       status: 'clicked',
       channel: 'arrival',
       itineraryItemId: null,
+      convertedAt: null,
+      metadata: { source: 'seed', clickCount: 1 },
     };
     expect(toReferral(row)).toEqual({
       id: row.id,
@@ -112,6 +114,8 @@ describe('partner marketplace model', () => {
       status: 'clicked',
       channel: 'arrival',
       itineraryItemId: null,
+      convertedAt: null,
+      metadata: { source: 'seed', clickCount: 1 },
     });
     expect(isReferralStatus('pending')).toBe(true);
     expect(isReferralStatus('paid')).toBe(false);

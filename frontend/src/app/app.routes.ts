@@ -15,7 +15,7 @@ import { PlaceDetailsPage } from './explore/place-details';
 import { Concierge } from './concierge/concierge';
 
 export const routes: Routes = [
-  { path: '', component: Home, title: 'Tourist Companion' },
+  { path: '', component: Home, title: 'Malaysia Companion' },
   { path: 'login', component: Login, title: 'Sign in' },
   { path: 'signup', component: Signup, title: 'Create account' },
   { path: 'arrival/transport', component: ArrivalTransport, title: 'Airport transport' },

@@ -79,13 +79,23 @@ h2 {
 
 .search-wrap {
   position: relative;
-  margin: 0.85rem 0 0.65rem;
+  margin: 0 0 0.65rem;
+}
+
+.search-icon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 20px;
+  color: var(--color-text-faint);
+  pointer-events: none;
 }
 
 .search-input {
   width: 100%;
   height: 52px;
-  padding: 0 2.5rem 0 1.1rem;
+  padding: 0 2.5rem 0 2.75rem;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-pill);
   background: var(--color-surface);
@@ -173,9 +183,23 @@ h2 {
   height: 6rem;
   margin-bottom: 0.75rem;
   overflow: hidden;
-  border-radius: var(--radius-card);
+  border-radius: var(--radius-inner);
   background:
     radial-gradient(circle at 50% 55%, color-mix(in srgb, var(--color-primary) 35%, #0f172a), #0f172a 72%);
+}
+
+.map-photo {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+}
+
+.mini-map::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(19, 27, 46, 0.7), rgba(19, 27, 46, 0.3), transparent);
 }
 
 .mini-map.expanded {
@@ -187,7 +211,7 @@ h2 {
   left: 1rem;
   top: 50%;
   transform: translateY(-50%);
-  z-index: 1;
+  z-index: 2;
   color: #fff;
   pointer-events: none;
 }
@@ -210,6 +234,7 @@ h2 {
 .pin-field {
   position: absolute;
   inset: 0;
+  z-index: 2;
 }
 
 .you-pin,
@@ -247,6 +272,10 @@ h2 {
 .category-pill {
   flex-shrink: 0;
   min-height: 2.35rem;
+}
+
+.category-pill .material-symbols-outlined {
+  font-size: 16px;
 }
 
 .count {
