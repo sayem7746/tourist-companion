@@ -27,14 +27,22 @@ const envSchema = z.object({
   CONCIERGE_RATE_LIMIT_WINDOW_MS: z.coerce.number().int().min(1000).default(60_000),
   CONCIERGE_HISTORY_MAX_MESSAGES: z.coerce.number().int().min(2).max(100).default(20),
   CONCIERGE_HISTORY_TTL_MS: z.coerce.number().int().min(60_000).default(7 * 24 * 60 * 60 * 1000),
+  PLACES_PROVIDER: z.enum(['seed', 'google', 'overpass']).optional(),
+  GOOGLE_PLACES_API_KEY: z.string().min(1).optional(),
+  GOOGLE_PLACES_BASE_URL: z.string().url().default('https://places.googleapis.com'),
+  OVERPASS_URL: z.string().url().default('https://overpass-api.de/api/interpreter'),
 });
 
-export function hasUsableLlmKey(key: string | undefined): boolean {
+export function hasUsableApiKey(key: string | undefined): boolean {
   if (!key) return false;
   const trimmed = key.trim();
   if (trimmed.length < 8) return false;
   if (trimmed.startsWith('CHANGE_ME')) return false;
   return true;
+}
+
+export function hasUsableLlmKey(key: string | undefined): boolean {
+  return hasUsableApiKey(key);
 }
 
 export type AppConfig = z.infer<typeof envSchema>;

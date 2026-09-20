@@ -40,5 +40,11 @@ describe('loadConfig', () => {
     expect(cfg.LLM_MODEL).toBe('gpt-4o-mini');
     expect(cfg.CONCIERGE_HISTORY_MAX_MESSAGES).toBe(20);
     expect(cfg.CONCIERGE_HISTORY_TTL_MS).toBe(7 * 24 * 60 * 60 * 1000);
+    expect(cfg.PLACES_PROVIDER).toBeUndefined();
+    expect(cfg.GOOGLE_PLACES_BASE_URL).toBe('https://places.googleapis.com');
+    expect(cfg.OVERPASS_URL).toBe('https://overpass-api.de/api/interpreter');
+    expect(cfg.PLACES_PROVIDER).toBeUndefined();
+    expect(cfg.GOOGLE_PLACES_BASE_URL).toBe('https://places.googleapis.com');
+    expect(cfg.OVERPASS_URL).toBe('https://overpass-api.de/api/interpreter');
   });
 });

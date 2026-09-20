@@ -132,12 +132,68 @@ export const PLACE_CATEGORY_BY_NEARBY: Record<NearbyCategory, PlaceCategory> = {
   tourist_services: 'other',
 };
 
+export type PlacesProviderKind = 'seed' | 'google' | 'overpass';
+
+export interface NearbyArea {
+  id: string;
+  label: string;
+  radiusMeters: number;
+  latitude: number;
+  longitude: number;
+}
+
+/** Default Explore pin is KLCC & Downtown, ≤2 km (Stitch). */
+export const NEARBY_AREAS: NearbyArea[] = [
+  {
+    id: 'klcc',
+    label: 'KLCC & Downtown',
+    radiusMeters: 2000,
+    latitude: 3.15785,
+    longitude: 101.71165,
+  },
+  {
+    id: 'bukit_bintang',
+    label: 'Bukit Bintang',
+    radiusMeters: 1500,
+    latitude: 3.1466,
+    longitude: 101.711,
+  },
+  {
+    id: 'batu_caves',
+    label: 'Batu Caves',
+    radiusMeters: 2500,
+    latitude: 3.2379,
+    longitude: 101.684,
+  },
+];
+
+export const DEFAULT_NEARBY_AREA_ID = 'klcc' as const;
+
 export interface Place {
   id: PlaceId;
   name: string;
   category: PlaceCategory;
   city?: string;
   country?: string;
+}
+
+/** Normalized Explore / nearby POI (provider-agnostic). */
+export interface NearbyPlace extends Place {
+  nearbyCategory: NearbyCategory;
+  area?: string;
+  address?: string;
+  description?: string;
+  latitude: number;
+  longitude: number;
+  distanceMeters?: number;
+  walkMinutes?: number;
+  openNow?: boolean | null;
+  halal?: boolean | null;
+  englishSpoken?: boolean | null;
+  badges: string[];
+  priceBandMyr?: string;
+  source: PlacesProviderKind;
+  externalId?: string;
 }
 
 export type ProviderCategory =

@@ -37,6 +37,7 @@ Workflow: `.github/workflows/deploy.yml`. Create GitHub **Environments** named `
 | `JWT_SECRET` | `env.JWT_SECRET` | Backend tokens |
 | `JWT_EXPIRES_IN` | `env.JWT_EXPIRES_IN` | Backend tokens (optional; default `7d`) |
 | `LLM_API_KEY` | `env.LLM_API_KEY` | Optional concierge LLM; omit to retrieve-and-rank the knowledge seed |
+| `GOOGLE_PLACES_API_KEY` | `env.GOOGLE_PLACES_API_KEY` | Optional Explore nearby (Google Places). Omit or `CHANGE_ME_*` to use the Malaysia seed |
 | `FRONTEND_ORIGIN` | `env.FRONTEND_ORIGIN` | Backend CORS |
 | `API_BASE_URL` | `NG_APP_API_BASE_URL` on the frontend build step | SPA API origin |
 

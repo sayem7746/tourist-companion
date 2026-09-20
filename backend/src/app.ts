@@ -27,6 +27,7 @@ import { createMemoryConciergeHistoryStore } from './concierge/memory-store.js';
 import { createPgConciergeHistoryStore } from './concierge/pg-store.js';
 import type { ConciergeHistoryStore } from './concierge/history-types.js';
 import { registerKnowledgeRoutes } from './knowledge/routes.js';
+import { registerPlacesRoutes } from './places/routes.js';
 import { registerHealthRoutes } from './routes/health.js';
 import { registerMetricsRoutes } from './routes/metrics.js';
 
@@ -166,6 +167,7 @@ export function buildApp(config: AppConfig): FastifyInstance {
   void registerHealthRoutes(app);
   void registerMetricsRoutes(app);
   void registerKnowledgeRoutes(app, config);
+  void registerPlacesRoutes(app, config);
 
   let memoryAuthStore: AuthStore | undefined;
   let memoryProfileStore: ProfileStore | undefined;

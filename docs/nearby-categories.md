@@ -64,6 +64,18 @@ Generic `Place` records still use `PlaceCategory`. Nearby chips are more specifi
 
 Do not overload concierge ids (`nearby_dining`, `food_spice_diet`, `local_transport`). Concierge answers questions; Explore filters a map/list.
 
+## Places providers
+
+`GET /places/nearby` and `GET /places/categories` serve Explore. Results are always normalized to `NearbyPlace` (`nearbyCategory` from this spec, `category` via `PLACE_CATEGORY_BY_NEARBY`).
+
+| `PLACES_PROVIDER` | When used |
+| --- | --- |
+| unset / `seed` | Malaysia seed in `backend/src/places/malaysia-seed.ts` (JSON copy: `backend/db/malaysia-places.json`) |
+| `google` | Google Places API (New) Nearby Search when `GOOGLE_PLACES_API_KEY` is a real key |
+| `overpass` | Public Overpass (`OVERPASS_URL`, default `https://overpass-api.de/api/interpreter`) |
+
+If Google is selected but the key is missing, placeholder (`CHANGE_ME_*`), or the live call fails, the API falls back to the Malaysia seed. Default pin is **KLCC & Downtown, 2 km**.
+
 ## Out of scope for MVP chips
 
 Lodging, nightlife-only, shopping malls as a top-level chip, clinics/hospitals (direct to SOS or concierge safety), and destinations outside the selected area.

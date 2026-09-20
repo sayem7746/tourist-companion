@@ -1,0 +1,301 @@
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { buildApp } from '../src/app.js';
+import { loadConfig } from '../src/config.js';
+import { resolvePlacesProviderKind } from '../src/places/factory.js';
+import { googlePlaceToNearby, nearbyCategoryFromGoogleTypes } from '../src/places/google-provider.js';
+import { isSeedPlaceOpen } from '../src/places/hours.js';
+import { MALAYSIA_PLACES_SEED } from '../src/places/malaysia-seed.js';
+import { PLACE_CATEGORY_BY_NEARBY } from '../src/places/types.js';
+import {
+  buildOverpassQuery,
+  nearbyCategoryFromOsmTags,
+  overpassElementToNearby,
+} from '../src/places/overpass-provider.js';
+import { searchNearbyPlaces } from '../src/places/search.js';
+import { NEARBY_CATEGORIES, type PlacesSearchQuery } from '../src/places/types.js';
+
+const dirname = path.dirname(fileURLToPath(import.meta.url));
+
+const baseQuery: PlacesSearchQuery = {
+  latitude: 3.15785,
+  longitude: 101.71165,
+  radiusMeters: 2000,
+  category: 'all',
+};
+
+function testConfig(overrides: Record<string, string> = {}) {
+  return loadConfig({
+    NODE_ENV: 'test',
+    HOST: '127.0.0.1',
+    PORT: '3000',
+    LOG_LEVEL: 'silent',
+    JWT_SECRET: 'test-only-insecure-jwt-secret',
+    ...overrides,
+  });
+}
+
+describe('Malaysia nearby seed', () => {
+  it('JSON seed matches TypeScript seed', () => {
+    const jsonPath = path.resolve(dirname, '../db/malaysia-places.json');
+    const fromJson = JSON.parse(readFileSync(jsonPath, 'utf8')) as typeof MALAYSIA_PLACES_SEED;
+    expect(fromJson).toEqual(MALAYSIA_PLACES_SEED);
+  });
+
+  it('covers every MVP nearby category and maps to PlaceCategory', () => {
+    const present = new Set(MALAYSIA_PLACES_SEED.places.map((place) => place.nearbyCategory));
+    expect([...NEARBY_CATEGORIES].every((category) => present.has(category))).toBe(true);
+    for (const place of MALAYSIA_PLACES_SEED.places) {
+      expect(PLACE_CATEGORY_BY_NEARBY[place.nearbyCategory]).toBeDefined();
+    }
+  });
+
+  it('includes Stitch example venues', () => {
+    const names = MALAYSIA_PLACES_SEED.places.map((place) => place.name);
+    expect(names.some((name) => name.includes('Madam Kwan'))).toBe(true);
+    expect(names).toContain('Petronas Twin Towers');
+    expect(names).toContain('Batu Caves');
+    expect(names.some((name) => name.includes('Guardian Pharmacy'))).toBe(true);
+  });
+});
+
+describe('hours (Asia/Kuala_Lumpur)', () => {
+  const madam = MALAYSIA_PLACES_SEED.places.find((place) => place.id === 'my-food-madam-kwan')!;
+  const alor = MALAYSIA_PLACES_SEED.places.find((place) => place.id === 'my-food-jalan-alor')!;
+  const pelita = MALAYSIA_PLACES_SEED.places.find((place) => place.id === 'my-food-mamak-klcc')!;
+
+  it('treats mall restaurants as open at noon KL time', () => {
+    expect(isSeedPlaceOpen(madam, new Date('2026-09-22T04:00:00.000Z'))).toBe(true);
+  });
+
+  it('handles overnight hawker hours', () => {
+    expect(isSeedPlaceOpen(alor, new Date('2026-09-22T04:00:00.000Z'))).toBe(false);
+    expect(isSeedPlaceOpen(alor, new Date('2026-09-22T10:00:00.000Z'))).toBe(true);
+    expect(isSeedPlaceOpen(alor, new Date('2026-09-22T17:30:00.000Z'))).toBe(true);
+  });
+
+  it('alwaysOpen venues stay open', () => {
+    expect(isSeedPlaceOpen(pelita, new Date('2026-09-22T16:00:00.000Z'))).toBe(true);
+  });
+});
+
+describe('resolvePlacesProviderKind', () => {
+  it('uses Malaysia seed when no Google key is set', () => {
+    expect(resolvePlacesProviderKind(testConfig())).toBe('seed');
+    expect(resolvePlacesProviderKind(testConfig({ PLACES_PROVIDER: 'google' }))).toBe('seed');
+    expect(
+      resolvePlacesProviderKind(testConfig({ PLACES_PROVIDER: 'google', GOOGLE_PLACES_API_KEY: 'CHANGE_ME_KEY' })),
+    ).toBe('seed');
+  });
+
+  it('selects google when a usable key is present', () => {
+    expect(
+      resolvePlacesProviderKind(testConfig({ GOOGLE_PLACES_API_KEY: 'AIzaSyTestKeyValue' })),
+    ).toBe('google');
+  });
+
+  it('selects overpass when requested via env', () => {
+    expect(resolvePlacesProviderKind(testConfig({ PLACES_PROVIDER: 'overpass' }))).toBe('overpass');
+  });
+});
+
+describe('provider normalization', () => {
+  it('maps Google types into nearby categories and PlaceCategory', () => {
+    expect(nearbyCategoryFromGoogleTypes('restaurant', [])).toBe('food');
+    expect(nearbyCategoryFromGoogleTypes('atm', ['point_of_interest'])).toBe('atm');
+    const place = googlePlaceToNearby(
+      {
+        id: 'ChIJtest',
+        primaryType: 'pharmacy',
+        types: ['pharmacy', 'point_of_interest'],
+        displayName: { text: 'Guardian Pharmacy' },
+        formattedAddress: 'Suria KLCC',
+        location: { latitude: 3.15758, longitude: 101.7125 },
+        currentOpeningHours: { openNow: true },
+      },
+      baseQuery,
+    );
+    expect(place?.nearbyCategory).toBe('pharmacy');
+    expect(place?.category).toBe('safety');
+    expect(place?.source).toBe('google');
+    expect(place?.id).toBe('google:ChIJtest');
+    expect(place?.country).toBe('MY');
+  });
+
+  it('maps Overpass tags and infers halal from OSM diet tag', () => {
+    expect(nearbyCategoryFromOsmTags({ amenity: 'restaurant' })).toBe('food');
+    expect(nearbyCategoryFromOsmTags({ shop: 'convenience' })).toBe('convenience');
+    const place = overpassElementToNearby(
+      {
+        type: 'node',
+        id: 42,
+        lat: 3.158,
+        lon: 101.712,
+        tags: { name: 'Restoran Test', amenity: 'restaurant', 'diet:halal': 'yes' },
+      },
+      baseQuery,
+    );
+    expect(place?.nearbyCategory).toBe('food');
+    expect(place?.category).toBe('food');
+    expect(place?.halal).toBe(true);
+    expect(place?.source).toBe('overpass');
+    expect(buildOverpassQuery(baseQuery)).toContain('amenity');
+    expect(buildOverpassQuery({ ...baseQuery, category: 'pharmacy' })).toContain('pharmacy');
+  });
+});
+
+describe('searchNearbyPlaces (seed)', () => {
+  const config = testConfig();
+  const noonKl = new Date('2026-09-22T04:00:00.000Z');
+
+  it('defaults to KLCC & Downtown within 2 km and excludes Batu Caves', async () => {
+    const result = await searchNearbyPlaces(config, { now: noonKl });
+    expect(result.provider).toBe('seed');
+    expect(result.fallback).toBe(false);
+    expect(result.areaId).toBe('klcc');
+    expect(result.areaLabel).toBe('KLCC & Downtown');
+    expect(result.radiusMeters).toBe(2000);
+    expect(result.places.some((place) => place.name === 'Petronas Twin Towers')).toBe(true);
+    expect(result.places.some((place) => place.name === 'Batu Caves')).toBe(false);
+    expect(result.counts.all).toBe(result.places.length);
+    expect(result.counts.food).toBeGreaterThan(0);
+    expect(result.counts.attractions).toBeGreaterThan(0);
+    expect(result.counts.pharmacy).toBeGreaterThan(0);
+  });
+
+  it('filters Food & Halal and Halal Only', async () => {
+    const food = await searchNearbyPlaces(config, { category: 'food', now: noonKl });
+    expect(food.places.every((place) => place.nearbyCategory === 'food')).toBe(true);
+    expect(food.places.every((place) => place.category === 'food')).toBe(true);
+
+    const halal = await searchNearbyPlaces(config, { halalOnly: true, now: noonKl });
+    expect(halal.places.every((place) => place.nearbyCategory === 'food' && place.halal === true)).toBe(true);
+    expect(halal.counts.pharmacy).toBe(0);
+
+    const pharmacyHalal = await searchNearbyPlaces(config, {
+      category: 'pharmacy',
+      halalOnly: true,
+      now: noonKl,
+    });
+    expect(pharmacyHalal.places).toEqual([]);
+  });
+
+  it('applies walk_15, open_now, and free-text search', async () => {
+    const walk = await searchNearbyPlaces(config, { walk15: true, now: noonKl });
+    expect(walk.places.every((place) => (place.distanceMeters ?? 0) <= 1200)).toBe(true);
+    expect(walk.quickFilters).toContain('walk_15');
+
+    const open = await searchNearbyPlaces(config, { openNow: true, now: noonKl });
+    expect(open.places.every((place) => place.openNow === true)).toBe(true);
+    expect(open.places.some((place) => place.name.includes('Jalan Alor'))).toBe(false);
+
+    const search = await searchNearbyPlaces(config, { q: 'ATM', now: noonKl });
+    expect(search.places.some((place) => /atm|maybank/i.test(place.name))).toBe(true);
+  });
+
+  it('uses the Batu Caves area pin', async () => {
+    const result = await searchNearbyPlaces(config, { areaId: 'batu_caves', now: noonKl });
+    expect(result.places.some((place) => place.name === 'Batu Caves')).toBe(true);
+    expect(result.areaLabel).toBe('Batu Caves');
+  });
+
+  it('falls back to seed when Google errors', async () => {
+    const googleConfig = testConfig({
+      PLACES_PROVIDER: 'google',
+      GOOGLE_PLACES_API_KEY: 'AIzaSyTestKeyValue',
+    });
+    const result = await searchNearbyPlaces(
+      googleConfig,
+      { now: noonKl },
+      {
+        fetchImpl: async () =>
+          new Response('nope', { status: 500, headers: { 'Content-Type': 'application/json' } }),
+      },
+    );
+    expect(result.fallback).toBe(true);
+    expect(result.provider).toBe('seed');
+    expect(result.places.length).toBeGreaterThan(0);
+  });
+
+  it('normalizes Google Nearby Search payloads', async () => {
+    const googleConfig = testConfig({
+      PLACES_PROVIDER: 'google',
+      GOOGLE_PLACES_API_KEY: 'AIzaSyTestKeyValue',
+    });
+    const result = await searchNearbyPlaces(
+      googleConfig,
+      { category: 'food', now: noonKl },
+      {
+        fetchImpl: async () =>
+          new Response(
+            JSON.stringify({
+              places: [
+                {
+                  id: 'ChIJ1',
+                  primaryType: 'restaurant',
+                  types: ['restaurant'],
+                  displayName: { text: 'Halal Dummy Cafe' },
+                  location: { latitude: 3.1579, longitude: 101.7117 },
+                  currentOpeningHours: { openNow: true },
+                },
+              ],
+            }),
+            { status: 200, headers: { 'Content-Type': 'application/json' } },
+          ),
+      },
+    );
+    expect(result.provider).toBe('google');
+    expect(result.fallback).toBe(false);
+    expect(result.places).toHaveLength(1);
+    expect(result.places[0]?.halal).toBe(true);
+    expect(result.places[0]?.nearbyCategory).toBe('food');
+  });
+});
+
+describe('GET /places', () => {
+  const app = buildApp(testConfig());
+
+  beforeAll(async () => {
+    await app.ready();
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  it('returns category chips and areas', async () => {
+    const response = await app.inject({ method: 'GET', url: '/places/categories' });
+    expect(response.statusCode).toBe(200);
+    const body = response.json() as { chips: Array<{ id: string }>; areas: Array<{ id: string }> };
+    expect(body.chips.map((chip) => chip.id)).toEqual([
+      'all',
+      'food',
+      'attractions',
+      'transport',
+      'atm',
+      'pharmacy',
+      'convenience',
+      'tourist_services',
+    ]);
+    expect(body.areas.some((area) => area.id === 'klcc')).toBe(true);
+  });
+
+  it('returns normalized Malaysia seed nearby places', async () => {
+    const response = await app.inject({ method: 'GET', url: '/places/nearby' });
+    expect(response.statusCode).toBe(200);
+    const body = response.json() as {
+      provider: string;
+      places: Array<{ nearbyCategory: string; category: string; country: string }>;
+    };
+    expect(body.provider).toBe('seed');
+    expect(body.places.length).toBeGreaterThan(5);
+    expect(body.places.every((place) => place.country === 'MY')).toBe(true);
+  });
+
+  it('rejects unknown query parameters', async () => {
+    const response = await app.inject({ method: 'GET', url: '/places/nearby?foo=1' });
+    expect(response.statusCode).toBe(400);
+  });
+});
