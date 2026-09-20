@@ -24,6 +24,7 @@ import { AdminFaqs } from './admin/admin-faqs';
 import { AdminFaqEditor } from './admin/admin-faq-editor';
 import { AdminPartners } from './admin/admin-partners';
 import { AdminPartnerEditor } from './admin/admin-partner-editor';
+import { AdminAudit } from './admin/admin-audit';
 import { adminGuard } from './admin/admin.guard';
 
 export const routes: Routes = [
@@ -123,6 +124,12 @@ export const routes: Routes = [
     component: AdminPartnerEditor,
     canActivate: [adminGuard],
     title: 'Edit partner',
+  },
+  {
+    path: 'admin/audit',
+    component: AdminAudit,
+    canActivate: [adminGuard],
+    title: 'Audit log',
   },
   { path: '**', redirectTo: '' },
 ];

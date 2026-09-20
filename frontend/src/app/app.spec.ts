@@ -58,6 +58,7 @@ describe('App', () => {
     expect(isAdminPath('/admin/content')).toBeTrue();
     expect(isAdminPath('/admin/faqs')).toBeTrue();
     expect(isAdminPath('/admin/partners')).toBeTrue();
+    expect(isAdminPath('/admin/audit')).toBeTrue();
     expect(isAdminPath('/')).toBeFalse();
   });
 
@@ -81,6 +82,12 @@ describe('App', () => {
     const edit = routes.find((route) => route.path === 'admin/faqs/:id');
     expect(edit?.canActivate).toEqual([adminGuard]);
     expect(edit?.title).toBe('Edit FAQ');
+  });
+
+  it('should guard the admin audit log', () => {
+    const audit = routes.find((route) => route.path === 'admin/audit');
+    expect(audit?.canActivate).toEqual([adminGuard]);
+    expect(audit?.title).toBe('Audit log');
   });
 
   it('should guard partner listing admin pages', () => {

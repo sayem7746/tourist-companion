@@ -1,0 +1,47 @@
+<section class="admin-content">
+  <p class="crumb"><a routerLink="/admin">Operations</a> / Audit log</p>
+  <h1>Audit log</h1>
+  <p class="lede">
+    Partner create, update, delete, approve, and pause, plus content and FAQ publish changes.
+  </p>
+
+  <div class="chips" role="list">
+    @for (chip of chips; track chip.id) {
+      <button
+        type="button"
+        class="chip"
+        [class.selected]="entityType === chip.id"
+        (click)="filterEntity(chip.id)"
+      >
+        {{ chip.label }}
+      </button>
+    }
+  </div>
+
+  @if (pending()) {
+    <p class="meta" aria-live="polite">Loading audit events…</p>
+  }
+  @if (loadError()) {
+    <p class="error" role="alert">{{ loadError() }}</p>
+    <button type="button" class="btn" (click)="load()">Retry</button>
+  }
+
+  @if (!pending() && !loadError()) {
+    @if (events().length === 0) {
+      <p class="meta">No audit events match these filters.</p>
+    } @else {
+      <p class="meta">{{ total() }} recorded {{ total() === 1 ? 'change' : 'changes' }}.</p>
+    }
+    <ul class="list">
+      @for (event of events(); track event.id) {
+        <li>
+          <article class="card">
+            <span class="kind">{{ labels[event.entityType] }}</span>
+            <strong>{{ event.summary }}</strong>
+            <span class="meta">{{ timeLabel(event) }} · {{ actorLabel(event) }}</span>
+          </article>
+        </li>
+      }
+    </ul>
+  }
+</section>

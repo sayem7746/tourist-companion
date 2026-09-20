@@ -1,5 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { recordAdminAudit } from '../audit/record.js';
+import type { AuditStore } from '../audit/types.js';
 import { requireAdmin } from '../auth/middleware.js';
 import type { AppConfig } from '../config.js';
 import { NotFoundError, ServiceUnavailableError, ValidationError } from '../errors.js';
@@ -157,6 +159,7 @@ export async function registerPartnerAdminRoutes(
   app: FastifyInstance,
   config: AppConfig,
   resolveStore: () => PartnerStore | undefined,
+  resolveAuditStore: () => AuditStore | undefined = () => undefined,
 ): Promise<void> {
   const getStore = (): PartnerStore => {
     const store = resolveStore();
@@ -240,6 +243,18 @@ export async function registerPartnerAdminRoutes(
           }
         : undefined,
     });
+    await recordAdminAudit(request, resolveAuditStore, {
+      action: 'partner.create',
+      entityType: 'partner',
+      entityId: partner.id,
+      summary: `Created partner ${partner.name}`,
+      metadata: {
+        name: partner.name,
+        slug: partner.slug,
+        category: partner.category,
+        isActive: partner.isActive,
+      },
+    });
     return reply.status(201).send({ partner });
   });
 
@@ -259,6 +274,18 @@ export async function registerPartnerAdminRoutes(
     if (!partner) {
       throw new NotFoundError('Partner not found');
     }
+    await recordAdminAudit(request, resolveAuditStore, {
+      action: 'partner.update',
+      entityType: 'partner',
+      entityId: partner.id,
+      summary: `Updated partner ${partner.name}`,
+      metadata: {
+        name: partner.name,
+        slug: partner.slug,
+        category: partner.category,
+        isActive: partner.isActive,
+      },
+    });
     return { partner };
   });
 
@@ -268,6 +295,18 @@ export async function registerPartnerAdminRoutes(
     if (!partner) {
       throw new NotFoundError('Partner not found');
     }
+    await recordAdminAudit(request, resolveAuditStore, {
+      action: 'partner.approve',
+      entityType: 'partner',
+      entityId: partner.id,
+      summary: `Approved partner ${partner.name}`,
+      metadata: {
+        name: partner.name,
+        slug: partner.slug,
+        category: partner.category,
+        isActive: partner.isActive,
+      },
+    });
     return { partner };
   });
 
@@ -277,15 +316,42 @@ export async function registerPartnerAdminRoutes(
     if (!partner) {
       throw new NotFoundError('Partner not found');
     }
+    await recordAdminAudit(request, resolveAuditStore, {
+      action: 'partner.pause',
+      entityType: 'partner',
+      entityId: partner.id,
+      summary: `Paused partner ${partner.name}`,
+      metadata: {
+        name: partner.name,
+        slug: partner.slug,
+        category: partner.category,
+        isActive: partner.isActive,
+      },
+    });
     return { partner };
   });
 
   app.delete('/admin/partners/:id', admin, async (request, reply) => {
     const { params } = validateRequest(request, { params: idParams });
+    const existing = await getStore().get(params.id);
     const deleted = await getStore().delete(params.id);
     if (!deleted) {
       throw new NotFoundError('Partner not found');
     }
+    await recordAdminAudit(request, resolveAuditStore, {
+      action: 'partner.delete',
+      entityType: 'partner',
+      entityId: params.id,
+      summary: existing ? `Deleted partner ${existing.name}` : `Deleted partner ${params.id}`,
+      metadata: existing
+        ? {
+            name: existing.name,
+            slug: existing.slug,
+            category: existing.category,
+            isActive: existing.isActive,
+          }
+        : {},
+    });
     return reply.status(204).send();
   });
 }

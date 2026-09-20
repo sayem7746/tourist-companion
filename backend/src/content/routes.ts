@@ -1,5 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { recordAdminAudit } from '../audit/record.js';
+import type { AuditStore } from '../audit/types.js';
 import { requireAdmin } from '../auth/middleware.js';
 import type { AppConfig } from '../config.js';
 import { NotFoundError, ServiceUnavailableError, ValidationError } from '../errors.js';
@@ -83,6 +85,7 @@ export async function registerContentAdminRoutes(
   app: FastifyInstance,
   config: AppConfig,
   resolveStore: () => ContentStore | undefined,
+  resolveAuditStore: () => AuditStore | undefined = () => undefined,
 ): Promise<void> {
   const getStore = (): ContentStore => {
     const store = resolveStore();
@@ -163,6 +166,18 @@ export async function registerContentAdminRoutes(
     if (!item) {
       throw new NotFoundError('Content item not found');
     }
+    await recordAdminAudit(request, resolveAuditStore, {
+      action: 'content.publish',
+      entityType: 'content',
+      entityId: item.id,
+      summary: `Published content ${item.title}`,
+      metadata: {
+        title: item.title,
+        slug: item.slug,
+        kind: item.kind,
+        published: item.published,
+      },
+    });
     return { item };
   });
 
@@ -172,6 +187,18 @@ export async function registerContentAdminRoutes(
     if (!item) {
       throw new NotFoundError('Content item not found');
     }
+    await recordAdminAudit(request, resolveAuditStore, {
+      action: 'content.unpublish',
+      entityType: 'content',
+      entityId: item.id,
+      summary: `Unpublished content ${item.title}`,
+      metadata: {
+        title: item.title,
+        slug: item.slug,
+        kind: item.kind,
+        published: item.published,
+      },
+    });
     return { item };
   });
 

@@ -1,5 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { recordAdminAudit } from '../audit/record.js';
+import type { AuditStore } from '../audit/types.js';
 import { requireAdmin } from '../auth/middleware.js';
 import type { AppConfig } from '../config.js';
 import type { ContentItem, ContentStore } from '../content/types.js';
@@ -78,6 +80,7 @@ export async function registerFaqRoutes(
   app: FastifyInstance,
   config: AppConfig,
   resolveStore: () => ContentStore | undefined,
+  resolveAuditStore: () => AuditStore | undefined = () => undefined,
 ): Promise<void> {
   const getStore = (): ContentStore => {
     const store = resolveStore();
@@ -177,6 +180,18 @@ export async function registerFaqRoutes(
     if (!item) {
       throw new NotFoundError('FAQ not found');
     }
+    await recordAdminAudit(request, resolveAuditStore, {
+      action: 'faq.publish',
+      entityType: 'faq',
+      entityId: item.id,
+      summary: `Published FAQ ${item.title}`,
+      metadata: {
+        title: item.title,
+        slug: item.slug,
+        topic: item.topic,
+        published: item.published,
+      },
+    });
     return { item: toFaqItem(item) };
   });
 
@@ -187,6 +202,18 @@ export async function registerFaqRoutes(
     if (!item) {
       throw new NotFoundError('FAQ not found');
     }
+    await recordAdminAudit(request, resolveAuditStore, {
+      action: 'faq.unpublish',
+      entityType: 'faq',
+      entityId: item.id,
+      summary: `Unpublished FAQ ${item.title}`,
+      metadata: {
+        title: item.title,
+        slug: item.slug,
+        topic: item.topic,
+        published: item.published,
+      },
+    });
     return { item: toFaqItem(item) };
   });
 

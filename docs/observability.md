@@ -37,6 +37,10 @@ Hooks log `incoming request` and `request completed`. Unexpected 5xx errors use 
 
 Admin `GET /admin/dashboard` (JWT `role: admin` or `ADMIN_TOKEN`) reuses this snapshot for concierge chat, nearby search, and error counts. User, trip, and referral totals come from stores when they are configured; otherwise those three also fall back to process metrics (`POST /auth/signup`, `POST /trips`, `POST /referrals/clicks`).
 
+## Admin audit log
+
+Successful partner CRUD, approve/pause, and content/FAQ publish (or unpublish) writes an `audit_events` row. `GET /admin/audit` (same admin auth as other ops routes) lists them newest first, with optional `action`, `entityType`, `entityId`, `limit`, and `offset` filters. Each event stores the actor (JWT email or `admin_token`), `requestId`, entity id, and a short summary. Reads and failed writes are not recorded.
+
 ## Health
 
 | Endpoint | Purpose |

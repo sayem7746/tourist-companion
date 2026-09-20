@@ -45,6 +45,10 @@ import { createMemoryPartnerStore } from './partners/memory-store.js';
 import { createPgPartnerStore } from './partners/pg-store.js';
 import type { PartnerStore } from './partners/types.js';
 import { registerPlacesRoutes } from './places/routes.js';
+import { registerAuditRoutes } from './audit/routes.js';
+import { createMemoryAuditStore } from './audit/memory-store.js';
+import { createPgAuditStore } from './audit/pg-store.js';
+import type { AuditStore } from './audit/types.js';
 import { registerDashboardRoutes } from './dashboard/routes.js';
 import { registerHealthRoutes } from './routes/health.js';
 import { registerMetricsRoutes } from './routes/metrics.js';
@@ -197,6 +201,7 @@ export function buildApp(config: AppConfig): FastifyInstance {
   let memoryHistoryStore: ConciergeHistoryStore | undefined;
   let memoryPartnerStore: PartnerStore | undefined;
   let memoryContentStore: ContentStore | undefined;
+  let memoryAuditStore: AuditStore | undefined;
 
   const resolveAuthStore = (): AuthStore | undefined => {
     if (app.db) {
@@ -279,6 +284,17 @@ export function buildApp(config: AppConfig): FastifyInstance {
     return undefined;
   };
 
+  const resolveAuditStore = (): AuditStore | undefined => {
+    if (app.db) {
+      return createPgAuditStore(app.db);
+    }
+    if (config.NODE_ENV === 'test') {
+      memoryAuditStore ??= createMemoryAuditStore();
+      return memoryAuditStore;
+    }
+    return undefined;
+  };
+
   app.decorate('getAuthStore', resolveAuthStore);
 
   void registerAuthRoutes(app, config, resolveAuthStore);
@@ -305,15 +321,16 @@ export function buildApp(config: AppConfig): FastifyInstance {
   });
 
   void registerPartnerPublicRoutes(app, config, resolvePartnerStore);
-  void registerPartnerAdminRoutes(app, config, resolvePartnerStore);
+  void registerPartnerAdminRoutes(app, config, resolvePartnerStore, resolveAuditStore);
   void registerReferralRoutes(app, config, resolvePartnerStore);
-  void registerContentAdminRoutes(app, config, resolveContentStore);
-  void registerFaqRoutes(app, config, resolveContentStore);
+  void registerContentAdminRoutes(app, config, resolveContentStore, resolveAuditStore);
+  void registerFaqRoutes(app, config, resolveContentStore, resolveAuditStore);
   void registerDashboardRoutes(app, config, {
     resolveAuthStore,
     resolveTripStore,
     resolvePartnerStore,
   });
+  void registerAuditRoutes(app, config, resolveAuditStore);
 
   return app;
 }

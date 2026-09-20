@@ -96,9 +96,11 @@ describe('AdminHome', () => {
     expect(compiled.textContent).toContain('Manage content');
     expect(compiled.textContent).toContain('Manage FAQs');
     expect(compiled.textContent).toContain('Manage partners');
+    expect(compiled.textContent).toContain('Audit log');
     expect(compiled.querySelector('a[href="/admin/content"]')).toBeTruthy();
     expect(compiled.querySelector('a[href="/admin/faqs"]')).toBeTruthy();
     expect(compiled.querySelector('a[href="/admin/partners"]')).toBeTruthy();
+    expect(compiled.querySelector('a[href="/admin/audit"]')).toBeTruthy();
     expect(compiled.querySelector('[aria-label="Operational counts"]')).toBeTruthy();
     expect(compiled.textContent).toContain('Users');
     expect(compiled.textContent).toContain('Trips');
