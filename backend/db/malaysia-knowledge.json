@@ -822,14 +822,17 @@
       "category": "safety_non_emergency",
       "title": "Lost passport or customs trouble",
       "summary": "Hotel desk plus your embassy; this product is not a lawyer or immigration officer.",
-      "body": "Lost passport: file a police report, then contact your embassy or high commission. Keep a photo of the biodata page separately. Customs or MDAC questions belong to official immigration channels — the Arrival checklist explains the usual airport path but does not rule on visas. This concierge will not invent immigration law.",
+      "body": "Lost passport: file a police report, then contact your embassy or high commission from the in-app embassy directory (official mission websites only). Keep a photo of the biodata page separately. Customs or MDAC questions belong to official immigration channels — the Arrival checklist explains the usual airport path but does not rule on visas. This concierge will not invent immigration law.",
       "tags": [
         "passport",
         "embassy",
         "customs",
         "mdac"
       ],
-      "deepLink": "/arrival",
+      "followUpChips": [
+        "Find my embassy"
+      ],
+      "deepLink": "/embassies",
       "escalation": "handoff",
       "sortOrder": 6
     },

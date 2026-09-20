@@ -70,6 +70,13 @@ describe('App', () => {
     expect(emergency?.title).toBe('Emergency help');
   });
 
+  it('should expose a public embassy directory route', () => {
+    const embassies = routes.find((route) => route.path === 'embassies');
+    expect(embassies?.component).toBeTruthy();
+    expect(embassies?.canActivate).toBeUndefined();
+    expect(embassies?.title).toBe('Embassies and consulates');
+  });
+
   it('should expose a public Malaysia AI Concierge route', () => {
     const concierge = routes.find((route) => route.path === 'concierge');
     expect(concierge?.component).toBeTruthy();

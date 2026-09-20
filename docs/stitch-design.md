@@ -26,4 +26,5 @@ Source: https://stitch.withgoogle.com/projects/10046914594084234943
 - Explore & Nearby Helper
 - Place details (`screens/61acea1620b34fedb9c8c39df537ee97`)
 - Emergency & SOS Help (`screens/290e8555c0384578ae2a8f06dfe76496`) — route `/emergency`, SOS `#E11D48`, `data-path="emergency-help"`, `tel:` dialers
+- Embassies and consulates — route `/embassies`, searchable KL missions, official websites only
 - Logo

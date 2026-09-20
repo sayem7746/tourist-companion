@@ -1,4 +1,5 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import {
   CATEGORY_LABELS,
   EMERGENCY_CONTEXT_AREA,
@@ -17,6 +18,7 @@ import {
 
 @Component({
   selector: 'app-emergency',
+  imports: [RouterLink],
   templateUrl: './emergency.html',
   styleUrl: './emergency.css',
 })

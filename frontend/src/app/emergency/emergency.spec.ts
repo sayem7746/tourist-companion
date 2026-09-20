@@ -144,6 +144,7 @@ describe('Emergency', () => {
     expect(host.querySelector('a[href="tel:999"]')?.textContent).toContain('999');
     expect(host.querySelector('a[href="tel:112"]')?.textContent).toContain('112');
     expect(host.querySelector('a[href="tel:+60321496590"]')?.textContent).toContain('03-2149 6590');
+    expect(host.querySelector('a[href="/embassies"]')?.textContent).toContain('Find your embassy');
   });
 
   it('filters the directory by urgency and category', () => {

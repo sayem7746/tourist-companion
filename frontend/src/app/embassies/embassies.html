@@ -1,0 +1,109 @@
+<section class="embassies">
+  <h1>Embassies and consulates</h1>
+  <p class="lede">{{ lede }}</p>
+
+  <article class="card context">
+    <div class="context-head">
+      <span class="material-symbols-outlined" aria-hidden="true">info</span>
+      <h2>Official websites only</h2>
+    </div>
+    <p>
+      File a police report first if your passport is lost or stolen, then open your mission’s
+      official site. This directory is not 999 and does not give visa or immigration rulings.
+    </p>
+    <p class="meta"><a routerLink="/emergency">Back to emergency help</a></p>
+  </article>
+
+  <div class="search-wrap">
+    <span class="material-symbols-outlined search-icon" aria-hidden="true">search</span>
+    <label class="sr-only" for="embassySearchInput">Search foreign missions</label>
+    <input
+      id="embassySearchInput"
+      class="search-input"
+      type="search"
+      [placeholder]="searchPlaceholder"
+      [ngModel]="q"
+      (ngModelChange)="onSearchInput($event)"
+    />
+    @if (q) {
+      <button type="button" class="clear-search" aria-label="Clear search" (click)="clearSearch()">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    }
+  </div>
+
+  <div class="chip-row" role="tablist" aria-label="Mission type filters">
+    @for (chip of chips; track chip.id) {
+      <button
+        type="button"
+        class="chip"
+        [class.selected]="filter === chip.id"
+        [attr.aria-pressed]="filter === chip.id"
+        [disabled]="pending()"
+        (click)="onFilter(chip.id)"
+      >
+        {{ chip.label }}
+      </button>
+    }
+  </div>
+
+  @if (pending()) {
+    <p class="meta" aria-live="polite">Loading embassy directory…</p>
+  }
+
+  @if (loadError()) {
+    <p class="error" role="alert">{{ loadError() }}</p>
+    <button type="button" class="btn" (click)="load()">Retry</button>
+  }
+
+  @if (directory(); as dir) {
+    @if (!pending() && !loadError()) {
+      @if (dir.missions.length === 0) {
+        <p class="meta">
+          @if (filter === 'consulate') {
+            No consulates in this Kuala Lumpur seed. Try All or search your country.
+          } @else {
+            No missions match this search. Try another country name.
+          }
+        </p>
+      }
+      <div class="mission-list">
+        @for (mission of dir.missions; track mission.id) {
+          <article class="card mission">
+            <div class="mission-head">
+              <div>
+                <div class="meta-row">
+                  <span class="kind">{{ kindLabels[mission.kind] }}</span>
+                  <span class="meta">{{ mission.sendingCountry }} · {{ mission.city }}</span>
+                </div>
+                <h3>{{ mission.name }}</h3>
+              </div>
+            </div>
+            <p class="summary">{{ mission.summary }}</p>
+            @if (mission.address) {
+              <p class="address">{{ mission.address }}</p>
+            }
+            <p class="when"><strong>When to use:</strong> {{ mission.whenToUse }}</p>
+            <p class="hours">{{ mission.hours }}</p>
+            @if (website(mission); as href) {
+              <a class="btn" [href]="href" target="_blank" rel="noreferrer">
+                Official website
+                <span class="material-symbols-outlined" aria-hidden="true">open_in_new</span>
+              </a>
+            }
+            <p class="source">
+              Source:
+              @if (website(mission); as href) {
+                <a [href]="href" target="_blank" rel="noreferrer">{{ mission.source }}</a>
+              } @else {
+                {{ mission.source }}
+              }
+            </p>
+          </article>
+        }
+      </div>
+    }
+
+    <p class="disclaimer">{{ dir.disclaimer }}</p>
+  }
+</section>

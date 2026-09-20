@@ -728,6 +728,39 @@ export interface EmergencyDirectory {
   contacts: EmergencyContact[];
 }
 
+export const MISSION_KINDS = ['embassy', 'high_commission', 'consulate'] as const;
+export type MissionKind = (typeof MISSION_KINDS)[number];
+
+export interface ForeignMission {
+  id: string;
+  name: string;
+  sendingCountry: string;
+  sendingCountryCode: string;
+  kind: MissionKind;
+  city: 'Kuala Lumpur';
+  area: string;
+  address?: string;
+  officialWebsite: string;
+  summary: string;
+  whenToUse: string;
+  hours: string;
+  tags: string[];
+  source: string;
+  sourceUrl: string;
+  sortOrder: number;
+}
+
+export interface EmbassyDirectory {
+  country: 'MY';
+  destination: 'Malaysia';
+  version: string;
+  q: string | null;
+  kind: MissionKind | null;
+  kinds: MissionKind[];
+  disclaimer: string;
+  missions: ForeignMission[];
+}
+
 export const REFERRAL_STATUSES = ['pending', 'clicked', 'converted', 'expired'] as const;
 export type ReferralStatus = (typeof REFERRAL_STATUSES)[number];
 

@@ -207,7 +207,9 @@ describe('concierge API', () => {
       url: '/concierge/chat',
       payload: { message: 'I lost my passport at the mall.' },
     });
-    expect((passport.json() as ChatBody).escalationLevel).toBe('handoff');
+    const passportBody = passport.json() as ChatBody;
+    expect(passportBody.escalationLevel).toBe('handoff');
+    expect(passportBody.reply.deepLink).toBe('/embassies');
   });
 
   it('allows anonymous chat and injects JWT display name when present', async () => {

@@ -250,6 +250,10 @@ h3 {
   margin: 0.5rem 0 0.35rem;
 }
 
+.embassy-link .btn {
+  margin-top: 0.85rem;
+}
+
 .when {
   margin: 0;
 }
