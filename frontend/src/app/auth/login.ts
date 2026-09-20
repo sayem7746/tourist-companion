@@ -1,7 +1,14 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from './auth.service';
+
+function safeReturnUrl(value: string | null): string {
+  if (value && value.startsWith('/') && !value.startsWith('//')) {
+    return value;
+  }
+  return '/';
+}
 
 @Component({
   selector: 'app-login',
@@ -12,6 +19,7 @@ import { AuthService } from './auth.service';
 export class Login {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   email = '';
   password = '';
@@ -24,7 +32,7 @@ export class Login {
     this.auth.login({ email: this.email, password: this.password }).subscribe({
       next: () => {
         this.pending.set(false);
-        void this.router.navigateByUrl('/');
+        void this.router.navigateByUrl(safeReturnUrl(this.route.snapshot.queryParamMap.get('returnUrl')));
       },
       error: () => {
         this.pending.set(false);

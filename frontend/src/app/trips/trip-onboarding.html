@@ -1,0 +1,138 @@
+<section>
+  <h1>Plan a trip</h1>
+  <p class="progress" aria-live="polite">Step {{ step() }} of {{ totalSteps }}</p>
+  <div class="bar" role="progressbar" [attr.aria-valuenow]="step()" aria-valuemin="1" [attr.aria-valuemax]="totalSteps">
+    <span [style.width.%]="(step() / totalSteps) * 100"></span>
+  </div>
+
+  @if (fieldError()) {
+    <p class="error" role="alert">{{ fieldError() }}</p>
+  }
+  @if (submitError()) {
+    <p class="error" role="alert">{{ submitError() }}</p>
+  }
+
+  @switch (step()) {
+    @case (1) {
+      <h2>Destination</h2>
+      <p>Pick a Malaysia region or type a city.</p>
+      <div class="chips" role="list">
+        @for (place of destinations; track place) {
+          <button
+            type="button"
+            class="chip"
+            [class.selected]="destinationPreset === place"
+            (click)="destinationPreset = place"
+          >
+            {{ place }}
+          </button>
+        }
+      </div>
+      @if (destinationPreset === 'Other') {
+        <label>
+          City
+          <input name="customCity" type="text" [(ngModel)]="customCity" maxlength="120" />
+        </label>
+      }
+    }
+    @case (2) {
+      <h2>Dates</h2>
+      <form>
+        <label>
+          Arrival
+          <input name="startDate" type="date" [(ngModel)]="startDate" required />
+        </label>
+        <label>
+          Departure
+          <input name="endDate" type="date" [(ngModel)]="endDate" required />
+        </label>
+      </form>
+    }
+    @case (3) {
+      <h2>Travelers</h2>
+      <form>
+        <label>
+          Adults
+          <input name="adultCount" type="number" min="1" max="99" [(ngModel)]="adultCount" required />
+        </label>
+        <label>
+          Children
+          <input name="childCount" type="number" min="0" max="99" [(ngModel)]="childCount" />
+        </label>
+      </form>
+    }
+    @case (4) {
+      <h2>Interests</h2>
+      <p>Select at least one.</p>
+      <div class="chips" role="list">
+        @for (interest of interestOptions; track interest) {
+          <button
+            type="button"
+            class="chip"
+            [class.selected]="isInterestSelected(interest)"
+            (click)="toggleInterest(interest)"
+          >
+            {{ interest }}
+          </button>
+        }
+      </div>
+    }
+    @case (5) {
+      <h2>Budget &amp; style</h2>
+      <p>Optional daily budget and pace.</p>
+      <p class="label">Daily budget</p>
+      <div class="chips">
+        @for (band of budgetOptions; track band) {
+          <button
+            type="button"
+            class="chip"
+            [class.selected]="dailyBudget === band"
+            (click)="dailyBudget = dailyBudget === band ? '' : band"
+          >
+            {{ band }}
+          </button>
+        }
+      </div>
+      <p class="label">Travel style</p>
+      <div class="chips">
+        @for (style of styleOptions; track style) {
+          <button
+            type="button"
+            class="chip"
+            [class.selected]="travelStyle === style"
+            (click)="travelStyle = travelStyle === style ? '' : style"
+          >
+            {{ style }}
+          </button>
+        }
+      </div>
+    }
+    @case (6) {
+      <h2>Review</h2>
+      <dl class="review">
+        <dt>Destination</dt>
+        <dd>{{ destinationValue() }}</dd>
+        <dt>Dates</dt>
+        <dd>{{ startDate }} → {{ endDate }}</dd>
+        <dt>Travelers</dt>
+        <dd>{{ adultCount }} adult{{ adultCount === 1 ? '' : 's' }}, {{ childCount }} child{{ childCount === 1 ? '' : 'ren' }}</dd>
+        <dt>Interests</dt>
+        <dd>{{ interests.join(', ') }}</dd>
+        <dt>Budget</dt>
+        <dd>{{ dailyBudget || 'Not set' }}</dd>
+        <dt>Style</dt>
+        <dd>{{ travelStyle || 'Not set' }}</dd>
+      </dl>
+    }
+  }
+
+  <div class="nav-row">
+    <button type="button" class="secondary" [disabled]="step() === 1" (click)="back()">Back</button>
+    @if (step() < totalSteps) {
+      <button type="button" (click)="next()">Next</button>
+    } @else {
+      <button type="button" [disabled]="pending()" (click)="createTrip()">Create trip</button>
+    }
+  </div>
+  <p class="meta"><a routerLink="/">Cancel</a></p>
+</section>
