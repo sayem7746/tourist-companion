@@ -3,29 +3,17 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
 import { environment } from '../../environments/environment';
-import { safeReturnUrl } from './auth.service';
-import { Login } from './login';
+import { Signup } from './signup';
 
-describe('safeReturnUrl', () => {
-  it('keeps in-app paths and rejects open redirects', () => {
-    expect(safeReturnUrl('/trips/new')).toBe('/trips/new');
-    expect(safeReturnUrl('/trips')).toBe('/trips');
-    expect(safeReturnUrl(null)).toBe('/');
-    expect(safeReturnUrl('')).toBe('/');
-    expect(safeReturnUrl('https://evil.example')).toBe('/');
-    expect(safeReturnUrl('//evil.example')).toBe('/');
-  });
-});
-
-describe('Login', () => {
-  let fixture: ComponentFixture<Login>;
-  let component: Login;
+describe('Signup', () => {
+  let fixture: ComponentFixture<Signup>;
+  let component: Signup;
   let http: HttpTestingController;
   let router: Router;
 
   async function setup(returnUrl?: string): Promise<void> {
     await TestBed.configureTestingModule({
-      imports: [Login],
+      imports: [Signup],
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
@@ -41,7 +29,7 @@ describe('Login', () => {
       ],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(Login);
+    fixture = TestBed.createComponent(Signup);
     component = fixture.componentInstance;
     http = TestBed.inject(HttpTestingController);
     router = TestBed.inject(Router);
@@ -53,24 +41,29 @@ describe('Login', () => {
     http.verify();
   });
 
-  it('should render the sign-in form', async () => {
+  it('should render the sign-up form', async () => {
     await setup();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Sign in');
-    expect(compiled.querySelector('button')?.textContent).toContain('Sign in');
-    expect(compiled.querySelector('a[href="/signup"]')?.textContent).toContain('Create one');
+    expect(compiled.querySelector('h1')?.textContent).toContain('Create account');
+    expect(compiled.querySelector('button')?.textContent).toContain('Sign up');
+    expect(compiled.querySelector('a[href="/login"]')?.textContent).toContain('Sign in');
   });
 
-  it('should post credentials to /auth/login', async () => {
+  it('should post credentials to /auth/signup', async () => {
     await setup();
+    component.displayName = 'Ada';
     component.email = 'ada@example.com';
     component.password = 'password12';
     component.submit();
 
-    const req = http.expectOne(`${environment.apiBaseUrl}/auth/login`);
+    const req = http.expectOne(`${environment.apiBaseUrl}/auth/signup`);
     expect(req.request.method).toBe('POST');
     expect(req.request.withCredentials).toBeTrue();
-    expect(req.request.body).toEqual({ email: 'ada@example.com', password: 'password12' });
+    expect(req.request.body).toEqual({
+      displayName: 'Ada',
+      email: 'ada@example.com',
+      password: 'password12',
+    });
     req.flush({
       user: { id: '1', email: 'ada@example.com', displayName: 'Ada', role: 'tourist' },
       token: 'jwt',
@@ -78,48 +71,37 @@ describe('Login', () => {
     expect(router.navigateByUrl).toHaveBeenCalledWith('/');
   });
 
-  it('should honor returnUrl after a successful login', async () => {
+  it('should honor returnUrl after a successful signup', async () => {
     await setup('/trips/new');
+    component.displayName = 'Ada';
     component.email = 'ada@example.com';
     component.password = 'password12';
     component.submit();
 
-    http.expectOne(`${environment.apiBaseUrl}/auth/login`).flush({
+    http.expectOne(`${environment.apiBaseUrl}/auth/signup`).flush({
       user: { id: '1', email: 'ada@example.com', displayName: 'Ada', role: 'tourist' },
       token: 'jwt',
     });
     expect(router.navigateByUrl).toHaveBeenCalledWith('/trips/new');
   });
 
-  it('should ignore an off-site returnUrl', async () => {
-    await setup('https://evil.example');
-    component.email = 'ada@example.com';
+  it('should show an error when signup fails', async () => {
+    await setup();
+    component.displayName = 'Ada';
+    component.email = 'taken@example.com';
     component.password = 'password12';
     component.submit();
 
-    http.expectOne(`${environment.apiBaseUrl}/auth/login`).flush({
-      user: { id: '1', email: 'ada@example.com', displayName: 'Ada', role: 'tourist' },
-      token: 'jwt',
-    });
-    expect(router.navigateByUrl).toHaveBeenCalledWith('/');
-  });
-
-  it('should show an error when login fails', async () => {
-    await setup();
-    component.email = 'ada@example.com';
-    component.password = 'wrong-password';
-    component.submit();
-
     http
-      .expectOne(`${environment.apiBaseUrl}/auth/login`)
+      .expectOne(`${environment.apiBaseUrl}/auth/signup`)
       .flush(
-        { error: { message: 'Invalid email or password' } },
-        { status: 401, statusText: 'Unauthorized' },
+        { error: { message: 'Email already registered' } },
+        { status: 409, statusText: 'Conflict' },
       );
     fixture.detectChanges();
-    expect(component.error()).toBe('Invalid email or password.');
+    expect(component.error()).toContain('Could not create that account');
     expect((fixture.nativeElement as HTMLElement).querySelector('.error')?.textContent).toContain(
-      'Invalid email or password',
+      'Try a different email',
     );
     expect(router.navigateByUrl).not.toHaveBeenCalled();
   });

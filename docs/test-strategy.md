@@ -63,16 +63,16 @@ Twenty-four files under `backend/test/`. Most files mix **unit** (pure helpers) 
 
 ## Coverage map — frontend (Karma / Jasmine)
 
-Twenty-eight `*.spec.ts` files. Typical pattern: TestBed + `HttpTestingController` (HTTP mocked) plus small helper `describe` blocks. These are **UI/component** tests, not browser E2E.
+Thirty `*.spec.ts` files. Typical pattern: TestBed + `HttpTestingController` (HTTP mocked) plus small helper `describe` blocks. These are **UI/component** tests, not browser E2E.
 
 | Screen / area | Spec | What it covers | Gaps |
 | --- | --- | --- | --- |
-| Shell / routes | `app.spec.ts` | Brand, SOS, tab bar, public vs `authGuard` / `adminGuard` route wiring | Guards are asserted as route config, not executed (except `admin.guard.spec.ts`). |
-| Home | `home.spec.ts` | Malay greeting helpers; Tropical Sanctuary chrome | Signed-in vs anonymous dashboard data is shallow. |
-| Tourist login | `auth/login.spec.ts` | Renders the form | **Does not POST `/auth/login`**, errors, or `returnUrl`. |
-| Signup | — | — | **No `signup.spec.ts`.** Component posts `/auth/signup` and honors `returnUrl`. |
-| `authGuard` | (route wiring only) | — | No dedicated spec for redirect to `/login?returnUrl=`. |
-| Onboarding | `trips/trip-onboarding.spec.ts` | 6-step validation; `POST /trips` with credentials | Auth-required redirect is product (`docs/trip-onboarding.md`) but not tested here. |
+| Shell / routes | `app.spec.ts` | Brand, SOS, tab bar, public vs `authGuard` / `adminGuard` route wiring (including `/trips/new` and tourist login/signup) | Guard *execution* lives in dedicated specs. |
+| Home | `home.spec.ts` | Malay greeting helpers; Tropical Sanctuary chrome; signed-in trip/itinerary/nearby cards | — |
+| Tourist login | `auth/login.spec.ts` | Form; `POST /auth/login` with credentials; errors; `returnUrl`; open-redirect rejection | — |
+| Signup | `auth/signup.spec.ts` | Form; `POST /auth/signup` with credentials; errors; `returnUrl` | — |
+| `authGuard` | `auth/auth.guard.spec.ts` | Allows a tourist session; redirects anonymous users to `/login?returnUrl=` | — |
+| Onboarding | `trips/trip-onboarding.spec.ts` | 6-step validation; `POST /trips` with credentials; navigate to `/trips`; create error | Auth-required redirect is product (`docs/trip-onboarding.md`); covered by `authGuard` + `/trips/new` route wiring. |
 | Plan / itinerary | `trips/trip-dashboard.spec.ts` | Load trips, generate, add/replace/remove/move/lock stops, regenerate day/full, sponsored cards | Real drag-and-drop / map is not in Karma. |
 | Preferences | `profile/preferences.spec.ts` | GET/PATCH profile and trip interests | — |
 | Arrival | `arrival-checklist.spec.ts`, `arrival-transport.spec.ts`, `arrival-connectivity.spec.ts`, `arrival-currency.spec.ts`, `arrival-transfer-helper.spec.ts` | Load, airport filter, local checklist progress, errors | Checklist progress is localStorage-only; no API persist (product). |
@@ -83,7 +83,7 @@ Twenty-eight `*.spec.ts` files. Typical pattern: TestBed + `HttpTestingControlle
 | Ops login / guard | `admin-login.spec.ts`, `admin.guard.spec.ts` | Admin login POST, tourist rejected, guard redirect | — |
 | Ops home / CMS / FAQ / partners / audit | `admin.spec.ts`, `admin-content*.spec.ts`, `admin-faq*.spec.ts`, `admin-partners*.spec.ts`, `admin-partner-editor.spec.ts`, `admin-audit.spec.ts` | Counts, CRUD, publish, approve/pause gates, audit filters | Referral analytics chart is not a dedicated Angular spec (API covered in Vitest). |
 
-**Asana frontend follow-on** (“onboarding, dashboard, arrival assistant, concierge, nearby helper, itinerary, and emergency”) is met with Karma except tourist **login submit**, **signup**, and **authGuard behavior**. Those three are the highest-value UI gaps.
+**Asana frontend follow-on** (“onboarding, dashboard, arrival assistant, concierge, nearby helper, itinerary, and emergency”) is met with Karma, including tourist **login submit**, **signup**, and **authGuard returnUrl**.
 
 Services (`*.service.ts`) are not unit-tested in isolation; component specs already assert the HTTP URLs they call. Do not add a second copy of those tests unless a service grows logic beyond HTTP.
 
@@ -95,7 +95,7 @@ These match the UAT Asana note: trip creation → arrival, discovery, itinerary,
 
 | ID | Journey | Why it is launch-blocking | Already approximated by |
 | --- | --- | --- | --- |
-| E2E-1 | Signup or login → `/trips/new` 6-step wizard → trip appears on `/trips` | Auth cookies + onboarding are the front door | Vitest auth; Karma onboarding POST; **Karma login/signup gap** |
+| E2E-1 | Signup or login → `/trips/new` 6-step wizard → trip appears on `/trips` | Auth cookies + onboarding are the front door | Vitest auth; Karma login/signup/`authGuard`; Karma onboarding POST |
 | E2E-2 | Open Plan → generated itinerary → add/lock a stop → regenerate one day | Core “companion” value | Karma `trip-dashboard.spec.ts` + Vitest itinerary |
 | E2E-3 | Arrival checklist (KUL) → transport → SIM → money → transfer helper | First-hour in Malaysia | Karma arrival specs + Vitest `arrival.test.ts` |
 | E2E-4 | Explore nearby (KLCC) → place details → sign-in to bookmark | Discovery + auth upsell | Karma explore/details + Vitest places/trip-places |
@@ -111,20 +111,19 @@ These match the UAT Asana note: trip creation → arrival, discovery, itinerary,
 
 1. **Playwright critical paths E2E-1…E2E-7** (or a documented subset if time-boxed: E2E-1, E2E-2, E2E-5, E2E-6).
 2. **Postgres API smoke** in Vitest or Playwright: signup uniqueness, trip CRUD, itinerary persist, referral click, admin approve, restart process and read the same rows.
-3. **Karma: tourist login submit, signup, `authGuard` returnUrl** — the only traveler auth UI holes.
 
 ### P1 — close the automated-test Asana items
 
-4. CORS + cookies: allowed `FRONTEND_ORIGIN` reflects `Access-Control-Allow-Credentials`; unknown origins do not. At least one inject or Playwright case should authenticate the way the SPA does (`withCredentials` / session cookie), not only `Authorization: Bearer`.
-5. Enable Karma coverage in CI as a report only (no hard fail until a baseline exists). Optionally add Vitest coverage the same way.
-6. Turn CI on pull request once the suite is green locally (`workflow_dispatch` stays as a manual escape hatch).
+3. CORS + cookies: allowed `FRONTEND_ORIGIN` reflects `Access-Control-Allow-Credentials`; unknown origins do not. At least one inject or Playwright case should authenticate the way the SPA does (`withCredentials` / session cookie), not only `Authorization: Bearer`.
+4. Enable Karma coverage in CI as a report only (no hard fail until a baseline exists). Optionally add Vitest coverage the same way.
+5. Turn CI on pull request once the suite is green locally (`workflow_dispatch` stays as a manual escape hatch).
 
 ### P2 — do not block launch
 
-7. Isolated tests for `shared/types` (compile-time is the real contract today).
-8. Password-reset UI (API exists; no Angular screen).
-9. Live provider contract tests behind an explicit opt-in (`GOOGLE_PLACES_API_KEY` / `LLM_API_KEY`), never default CI.
-10. Visual/regression screenshots vs Stitch; performance (separate Asana: Run performance checks).
+6. Isolated tests for `shared/types` (compile-time is the real contract today).
+7. Password-reset UI (API exists; no Angular screen).
+8. Live provider contract tests behind an explicit opt-in (`GOOGLE_PLACES_API_KEY` / `LLM_API_KEY`), never default CI.
+9. Visual/regression screenshots vs Stitch; performance (separate Asana: Run performance checks).
 
 ## What not to test in MVP
 

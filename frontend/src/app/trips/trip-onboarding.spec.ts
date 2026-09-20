@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { environment } from '../../environments/environment';
 import { TripOnboarding } from './trip-onboarding';
 
@@ -9,6 +9,7 @@ describe('TripOnboarding', () => {
   let fixture: ComponentFixture<TripOnboarding>;
   let component: TripOnboarding;
   let http: HttpTestingController;
+  let router: Router;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -19,6 +20,8 @@ describe('TripOnboarding', () => {
     fixture = TestBed.createComponent(TripOnboarding);
     component = fixture.componentInstance;
     http = TestBed.inject(HttpTestingController);
+    router = TestBed.inject(Router);
+    spyOn(router, 'navigateByUrl').and.resolveTo(true);
     fixture.detectChanges();
   });
 
@@ -109,5 +112,30 @@ describe('TripOnboarding', () => {
         travelStyle: 'relaxed',
       },
     });
+    expect(router.navigateByUrl).toHaveBeenCalledWith('/trips');
+  });
+
+  it('should show an error when POST /trips fails', () => {
+    component.destinationPreset = 'Penang';
+    component.next();
+    component.startDate = '2026-12-01';
+    component.endDate = '2026-12-08';
+    component.next();
+    component.adultCount = 2;
+    component.next();
+    component.toggleInterest('food');
+    component.next();
+    component.next();
+    component.createTrip();
+
+    http
+      .expectOne(`${environment.apiBaseUrl}/trips`)
+      .flush(
+        { error: { message: 'Could not create trip' } },
+        { status: 500, statusText: 'Server Error' },
+      );
+    fixture.detectChanges();
+    expect(component.submitError()).toContain('Could not create this trip');
+    expect(router.navigateByUrl).not.toHaveBeenCalled();
   });
 });

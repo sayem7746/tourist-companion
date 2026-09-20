@@ -30,10 +30,25 @@ describe('App', () => {
     expect(compiled.querySelector('.sos-btn')?.getAttribute('data-path')).toBe('emergency-help');
   });
 
+  it('should expose public tourist login and signup routes', () => {
+    const login = routes.find((route) => route.path === 'login');
+    expect(login?.canActivate).toBeUndefined();
+    expect(login?.title).toBe('Sign in');
+    const signup = routes.find((route) => route.path === 'signup');
+    expect(signup?.canActivate).toBeUndefined();
+    expect(signup?.title).toBe('Create account');
+  });
+
   it('should guard the trip dashboard', () => {
     const dashboard = routes.find((route) => route.path === 'trips');
     expect(dashboard?.canActivate).toEqual([authGuard]);
     expect(dashboard?.title).toBe('Plan');
+  });
+
+  it('should guard trip onboarding', () => {
+    const onboarding = routes.find((route) => route.path === 'trips/new');
+    expect(onboarding?.canActivate).toEqual([authGuard]);
+    expect(onboarding?.title).toBe('Plan a trip');
   });
 
   it('should alias /plan to the Plan tab', () => {

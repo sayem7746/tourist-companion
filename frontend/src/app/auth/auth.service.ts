@@ -19,6 +19,13 @@ export function isAdminUser(user: Pick<AuthUser, 'role'> | null | undefined): bo
   return user?.role === 'admin';
 }
 
+export function safeReturnUrl(value: string | null): string {
+  if (value && value.startsWith('/') && !value.startsWith('//')) {
+    return value;
+  }
+  return '/';
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly base = `${environment.apiBaseUrl}/auth`;

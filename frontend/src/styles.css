@@ -179,9 +179,9 @@ h4 {
   background: color-mix(in srgb, var(--color-sos) 85%, black);
 }
 
-input:not([type='checkbox']):not([type='radio']):not([type='range']),
-select,
-textarea {
+:where(input:not([type='checkbox']):not([type='radio']):not([type='range'])),
+:where(select),
+:where(textarea) {
   font: inherit;
   color: var(--color-text);
   background: var(--color-surface);
@@ -189,9 +189,9 @@ textarea {
   border-radius: var(--radius-inner);
 }
 
-input:not([type='checkbox']):not([type='radio']):not([type='range']):focus,
-select:focus,
-textarea:focus {
+:where(input:not([type='checkbox']):not([type='radio']):not([type='range']):focus),
+:where(select:focus),
+:where(textarea:focus) {
   outline: 2px solid color-mix(in srgb, var(--color-primary) 25%, transparent);
   border-color: var(--color-primary);
 }
