@@ -13,10 +13,11 @@ import {
   STAGE_LABELS,
 } from './arrival.service';
 import { loadDoneIds, progressPercent, saveDoneIds } from './arrival-progress';
+import { ArrivalTransport } from './arrival-transport';
 
 @Component({
   selector: 'app-arrival-checklist',
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, ArrivalTransport],
   templateUrl: './arrival-checklist.html',
   styleUrl: './arrival-checklist.css',
 })

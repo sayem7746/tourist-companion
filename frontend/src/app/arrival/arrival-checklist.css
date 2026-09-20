@@ -10,8 +10,12 @@ h2 {
 
 .lede,
 .meta {
-  color: #4b5563;
+  color: var(--color-text-muted);
   font-size: 0.9rem;
+}
+
+.actions {
+  margin: 0.75rem 0 0;
 }
 
 .filters {
@@ -31,9 +35,10 @@ label {
 select {
   font: inherit;
   padding: 0.4rem 0.5rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.375rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
   min-width: 12rem;
+  background: var(--color-surface);
 }
 
 .progress {
@@ -42,27 +47,28 @@ select {
 
 .bar {
   height: 0.5rem;
-  background: #e5e7eb;
-  border-radius: 999px;
+  background: var(--color-border);
+  border-radius: var(--radius-pill);
   overflow: hidden;
 }
 
 .fill {
   display: block;
   height: 100%;
-  background: #111827;
+  background: var(--color-primary);
 }
 
 .card {
   margin: 0.75rem 0;
   padding: 1rem;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.5rem;
-  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
 }
 
 .card.done {
-  background: #f3f4f6;
+  background: var(--color-canvas);
 }
 
 .check-row {
@@ -78,15 +84,17 @@ select {
 }
 
 .error {
-  color: #b91c1c;
+  color: var(--color-sos);
 }
 
 button {
-  padding: 0.5rem 0.9rem;
+  min-height: var(--btn-min-height);
+  padding: 0.5rem 1.15rem;
   border: 0;
-  border-radius: 0.375rem;
-  background: #111827;
+  border-radius: var(--radius-pill);
+  background: var(--color-primary);
   color: #fff;
   font: inherit;
+  font-weight: 600;
   cursor: pointer;
 }

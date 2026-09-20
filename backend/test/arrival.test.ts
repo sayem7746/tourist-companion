@@ -96,4 +96,29 @@ describe('arrival checklist endpoint', () => {
     });
     expect(stage.statusCode).toBe(400);
   });
+
+  it('returns KLIA Ekspres, bus, e-hailing, and private transfer with when-to-use', async () => {
+    const response = await app.inject({ method: 'GET', url: '/arrival-transport' });
+    expect(response.statusCode).toBe(200);
+    const body = response.json() as {
+      airportCode: string;
+      options: Array<{ mode: string; name: string; whenToUse: string; boarding: string }>;
+    };
+    expect(body.airportCode).toBe('KUL');
+    expect(body.options.map((option) => option.mode)).toEqual(['ekspres', 'bus', 'e_hail', 'private']);
+    expect(body.options[0]).toMatchObject({ name: 'KLIA Ekspres' });
+    expect(body.options.every((option) => option.whenToUse.length > 20)).toBe(true);
+    expect(body.options.find((option) => option.mode === 'e_hail')?.boarding).toContain('Grab');
+  });
+
+  it('filters transport by airport and rejects unknown codes', async () => {
+    const klia2 = await app.inject({ method: 'GET', url: '/arrival-transport?airport=KLIA2' });
+    expect(klia2.statusCode).toBe(200);
+    const body = klia2.json() as { airportCode: string; options: Array<{ boarding: string }> };
+    expect(body.airportCode).toBe('KLIA2');
+    expect(body.options[0].boarding).toContain('Gateway@klia2');
+
+    const unknown = await app.inject({ method: 'GET', url: '/arrival-transport?airport=PEN' });
+    expect(unknown.statusCode).toBe(400);
+  });
 });

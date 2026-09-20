@@ -41,4 +41,18 @@ describe('App', () => {
     expect(arrival?.component).toBeTruthy();
     expect(arrival?.canActivate).toBeUndefined();
   });
+
+  it('should expose a public airport transport guide route', () => {
+    const transport = routes.find((route) => route.path === 'arrival/transport');
+    expect(transport?.component).toBeTruthy();
+    expect(transport?.canActivate).toBeUndefined();
+  });
+
+  it('should render Tropical Sanctuary bottom tabs', () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const labels = Array.from(compiled.querySelectorAll('.tab-bar a')).map((el) => el.textContent?.replace(/\s+/g, ' ').trim());
+    expect(labels).toEqual(['⌂ Home', '◎ Explore', '☰ Plan', '✦ Concierge', '● Profile']);
+  });
 });

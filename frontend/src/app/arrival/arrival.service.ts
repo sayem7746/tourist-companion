@@ -51,6 +51,30 @@ export const AIRPORT_LABELS: Record<ArrivalAirportCode, string> = {
   KLIA2: 'KLIA2',
 };
 
+export type TransportMode = 'ekspres' | 'bus' | 'e_hail' | 'private';
+
+export interface ArrivalTransportOption {
+  id: string;
+  airportCode: ArrivalAirportCode;
+  mode: TransportMode;
+  name: string;
+  badge: string;
+  summary: string;
+  cost: string;
+  duration: string;
+  frequency?: string;
+  destination: string;
+  bestFor: string;
+  boarding: string;
+  whenToUse: string;
+  sortOrder: number;
+}
+
+export interface ArrivalTransportResponse {
+  airportCode: ArrivalAirportCode;
+  options: ArrivalTransportOption[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class ArrivalService {
   private readonly base = `${environment.apiBaseUrl}/arrival-checklist`;
@@ -63,5 +87,10 @@ export class ArrivalService {
       params = params.set('stage', stage);
     }
     return this.http.get<ArrivalChecklistResponse>(this.base, { params });
+  }
+
+  listTransport(airport: ArrivalAirportCode = DEFAULT_ARRIVAL_AIRPORT): Observable<ArrivalTransportResponse> {
+    const params = new HttpParams().set('airport', airport);
+    return this.http.get<ArrivalTransportResponse>(`${environment.apiBaseUrl}/arrival-transport`, { params });
   }
 }

@@ -1,0 +1,93 @@
+.transport-guide.embedded {
+  margin-top: 1.5rem;
+}
+
+h1 {
+  margin: 0 0 0.25rem;
+  font-size: 1.5rem;
+}
+
+h2 {
+  margin: 0 0 0.25rem;
+  font-size: 1.2rem;
+}
+
+h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.lede,
+.meta {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+.airport-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+  margin: 1rem 0;
+}
+
+select {
+  font: inherit;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  min-width: 12rem;
+  background: var(--color-surface);
+}
+
+.safety-banner {
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-card);
+  background: color-mix(in srgb, var(--color-sos) 8%, white);
+  color: var(--color-sos);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.option-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.summary {
+  color: var(--color-text-muted);
+  margin: 0.35rem 0 0.75rem;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem 1rem;
+  margin: 0 0 0.75rem;
+}
+
+.facts dt {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-faint);
+}
+
+.facts dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.when {
+  margin-bottom: 0;
+}
+
+.error {
+  color: var(--color-sos);
+}
+
+.option p {
+  margin: 0.4rem 0;
+}

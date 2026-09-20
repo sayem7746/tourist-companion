@@ -7,14 +7,16 @@
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
+  background: var(--color-canvas);
 }
 
 .top-bar {
   padding: 0.75rem 1rem;
-  border-bottom: 1px solid #e5e7eb;
-  background: #fff;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
   position: sticky;
   top: 0;
+  z-index: 10;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -22,26 +24,62 @@
 }
 
 .brand {
-  font-weight: 600;
-  color: inherit;
+  font-weight: 700;
+  color: var(--color-primary);
   text-decoration: none;
 }
 
 .nav {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.75rem;
 }
 
 .nav a {
-  color: #1f2937;
+  color: var(--color-text-muted);
   text-decoration: none;
   font-size: 0.9rem;
 }
 
 .content {
   flex: 1;
-  padding: 1rem;
+  padding: 1rem 1rem var(--content-pad-bottom);
   max-width: 40rem;
   width: 100%;
   margin: 0 auto;
+}
+
+.tab-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 20;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  min-height: var(--nav-height);
+  padding-bottom: env(safe-area-inset-bottom);
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.tab-bar a {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.15rem;
+  color: var(--color-text-faint);
+  text-decoration: none;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.tab-bar a.active {
+  color: var(--color-primary);
+}
+
+.tab-bar .icon {
+  font-size: 1.1rem;
+  line-height: 1;
 }

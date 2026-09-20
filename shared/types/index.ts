@@ -123,6 +123,25 @@ export interface ArrivalChecklistItem {
   estimatedMinutes?: number;
 }
 
+export type TransportMode = 'ekspres' | 'bus' | 'e_hail' | 'private';
+
+export interface ArrivalTransportOption {
+  id: string;
+  airportCode: ArrivalAirportCode;
+  mode: TransportMode;
+  name: string;
+  badge: string;
+  summary: string;
+  cost: string;
+  duration: string;
+  frequency?: string;
+  destination: string;
+  bestFor: string;
+  boarding: string;
+  whenToUse: string;
+  sortOrder: number;
+}
+
 export type ReferralStatus = 'pending' | 'clicked' | 'converted' | 'expired';
 
 export interface Referral {

@@ -7,12 +7,18 @@ import { Preferences } from './profile/preferences';
 import { TripOnboarding } from './trips/trip-onboarding';
 import { TripDashboard } from './trips/trip-dashboard';
 import { ArrivalChecklist } from './arrival/arrival-checklist';
+import { ArrivalTransport } from './arrival/arrival-transport';
+import { Explore } from './explore/explore';
+import { Concierge } from './concierge/concierge';
 
 export const routes: Routes = [
   { path: '', component: Home, title: 'Tourist Companion' },
   { path: 'login', component: Login, title: 'Sign in' },
   { path: 'signup', component: Signup, title: 'Create account' },
+  { path: 'arrival/transport', component: ArrivalTransport, title: 'Airport transport' },
   { path: 'arrival', component: ArrivalChecklist, title: 'Arrival checklist' },
+  { path: 'explore', component: Explore, title: 'Explore' },
+  { path: 'concierge', component: Concierge, title: 'Concierge' },
   {
     path: 'trips',
     component: TripDashboard,

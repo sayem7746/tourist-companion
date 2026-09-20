@@ -3,6 +3,7 @@ import { z } from 'zod';
 import type { AppConfig } from '../config.js';
 import { ServiceUnavailableError } from '../errors.js';
 import { validateRequest } from '../validate.js';
+import { ARRIVAL_TRANSPORT_SEED } from './transport-content.js';
 import {
   ARRIVAL_AIRPORTS,
   ARRIVAL_STAGES,
@@ -38,6 +39,23 @@ export async function registerArrivalRoutes(
       stage: query.stage ?? null,
       stages: [...ARRIVAL_STAGES],
       items,
+    };
+  });
+
+  const transportQuerySchema = z
+    .object({
+      airport: z.enum(ARRIVAL_AIRPORTS).optional().default(DEFAULT_ARRIVAL_AIRPORT),
+    })
+    .strict();
+
+  app.get('/arrival-transport', async (request) => {
+    const { query } = validateRequest(request, { query: transportQuerySchema });
+    const options = ARRIVAL_TRANSPORT_SEED.filter((option) => option.airportCode === query.airport).sort(
+      (a, b) => a.sortOrder - b.sortOrder || a.id.localeCompare(b.id),
+    );
+    return {
+      airportCode: query.airport,
+      options,
     };
   });
 }

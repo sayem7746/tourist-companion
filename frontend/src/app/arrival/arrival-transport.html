@@ -1,0 +1,77 @@
+<section class="transport-guide" [class.embedded]="embedded">
+  @if (!embedded) {
+    <h1>KLIA arrival &amp; transport</h1>
+    <p class="lede">
+      Welcome to Malaysia. Compare KLIA Ekspres, airport buses, Grab/taxi, and private transfers — then pick what fits
+      your bags, group, and hotel.
+    </p>
+    <label class="airport-field">
+      Airport
+      <select name="airport" [ngModel]="airport" (ngModelChange)="onAirportChange($event)" [disabled]="pending()">
+        @for (code of airports; track code) {
+          <option [value]="code">{{ airportLabels[code] }}</option>
+        }
+      </select>
+    </label>
+  } @else {
+    <h2>Airport transit options</h2>
+    <p class="lede">Recommended by speed, cost, and pickup zone. Open the full guide for boarding notes.</p>
+  }
+
+  <p class="safety-banner">
+    Only book official e-hailing apps (Grab / AirAsia Ride) or prepaid coupon taxi booths inside the terminal. Avoid
+    drivers soliciting in arrival halls.
+  </p>
+
+  @if (pending()) {
+    <p class="meta" aria-live="polite">Loading transport options…</p>
+  }
+
+  @if (loadError()) {
+    <p class="error" role="alert">{{ loadError() }}</p>
+    <button type="button" class="btn" (click)="load()">Retry</button>
+  }
+
+  @if (!pending() && !loadError()) {
+    <div class="option-list">
+      @for (option of options(); track option.id) {
+        <article class="card option">
+          <div class="option-head">
+            <h3>{{ option.name }}</h3>
+            <span [class]="chipClass(option.badge)">{{ option.badge }}</span>
+          </div>
+          <p class="summary">{{ option.summary }}</p>
+          <dl class="facts">
+            <div>
+              <dt>Cost</dt>
+              <dd>{{ option.cost }}</dd>
+            </div>
+            <div>
+              <dt>Duration</dt>
+              <dd>{{ option.duration }}</dd>
+            </div>
+            @if (option.frequency) {
+              <div>
+                <dt>Frequency</dt>
+                <dd>{{ option.frequency }}</dd>
+              </div>
+            }
+            <div>
+              <dt>Destination</dt>
+              <dd>{{ option.destination }}</dd>
+            </div>
+          </dl>
+          <p><strong>Best for:</strong> {{ option.bestFor }}</p>
+          <p><strong>Boarding:</strong> {{ option.boarding }}</p>
+          <p class="when"><strong>When to use:</strong> {{ option.whenToUse }}</p>
+        </article>
+      }
+    </div>
+  }
+
+  @if (!embedded) {
+    <p class="meta"><a routerLink="/arrival">Back to arrival checklist</a></p>
+  } @else {
+    <p><a routerLink="/arrival/transport" class="btn">Full transport guide</a></p>
+  }
+</section>

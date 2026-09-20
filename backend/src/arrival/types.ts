@@ -27,3 +27,23 @@ export interface ArrivalChecklistItem {
 export interface ArrivalChecklistStore {
   list(airportCode: ArrivalAirportCode, stage?: ArrivalStage): Promise<ArrivalChecklistItem[]>;
 }
+
+export const TRANSPORT_MODES = ['ekspres', 'bus', 'e_hail', 'private'] as const;
+export type TransportMode = (typeof TRANSPORT_MODES)[number];
+
+export interface ArrivalTransportOption {
+  id: string;
+  airportCode: ArrivalAirportCode;
+  mode: TransportMode;
+  name: string;
+  badge: string;
+  summary: string;
+  cost: string;
+  duration: string;
+  frequency?: string;
+  destination: string;
+  bestFor: string;
+  boarding: string;
+  whenToUse: string;
+  sortOrder: number;
+}

@@ -1,9 +1,10 @@
 <div class="shell">
   <header class="top-bar">
     <a routerLink="/" class="brand">{{ title }}</a>
-    <nav class="nav">
+    <nav class="nav" aria-label="Account">
       <a routerLink="/trips">Dashboard</a>
       <a routerLink="/arrival">Arrival</a>
+      <a routerLink="/arrival/transport">Transport</a>
       <a routerLink="/trips/new">New trip</a>
       <a routerLink="/settings">Preferences</a>
       <a routerLink="/login">Sign in</a>
@@ -13,4 +14,26 @@
   <main class="content">
     <router-outlet />
   </main>
+  <nav class="tab-bar" aria-label="Primary">
+    <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+      <span class="icon" aria-hidden="true">⌂</span>
+      Home
+    </a>
+    <a routerLink="/explore" routerLinkActive="active">
+      <span class="icon" aria-hidden="true">◎</span>
+      Explore
+    </a>
+    <a routerLink="/trips" routerLinkActive="active">
+      <span class="icon" aria-hidden="true">☰</span>
+      Plan
+    </a>
+    <a routerLink="/concierge" routerLinkActive="active">
+      <span class="icon" aria-hidden="true">✦</span>
+      Concierge
+    </a>
+    <a routerLink="/settings" routerLinkActive="active">
+      <span class="icon" aria-hidden="true">●</span>
+      Profile
+    </a>
+  </nav>
 </div>

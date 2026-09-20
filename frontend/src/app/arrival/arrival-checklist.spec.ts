@@ -5,7 +5,7 @@ import { provideRouter } from '@angular/router';
 import { environment } from '../../environments/environment';
 import { ArrivalChecklist } from './arrival-checklist';
 import { progressPercent, progressStorageKey } from './arrival-progress';
-import type { ArrivalChecklistItem, ArrivalChecklistResponse } from './arrival.service';
+import type { ArrivalChecklistItem, ArrivalChecklistResponse, ArrivalTransportResponse } from './arrival.service';
 
 function item(partial: Partial<ArrivalChecklistItem> & Pick<ArrivalChecklistItem, 'id' | 'title'>): ArrivalChecklistItem {
   return {
@@ -18,6 +18,10 @@ function item(partial: Partial<ArrivalChecklistItem> & Pick<ArrivalChecklistItem
   };
 }
 
+function emptyTransport(airportCode: ArrivalChecklistResponse['airportCode'] = 'KUL'): ArrivalTransportResponse {
+  return { airportCode, options: [] };
+}
+
 function body(items: ArrivalChecklistItem[], extra: Partial<ArrivalChecklistResponse> = {}): ArrivalChecklistResponse {
   return {
     airportCode: 'KUL',
@@ -26,6 +30,17 @@ function body(items: ArrivalChecklistItem[], extra: Partial<ArrivalChecklistResp
     items,
     ...extra,
   };
+}
+
+function flushChecklist(
+  http: HttpTestingController,
+  payload: ArrivalChecklistResponse,
+  transportAirport: ArrivalChecklistResponse['airportCode'] = payload.airportCode,
+): void {
+  http.expectOne((request) => request.url === `${environment.apiBaseUrl}/arrival-checklist`).flush(payload);
+  http
+    .expectOne((request) => request.url === `${environment.apiBaseUrl}/arrival-transport`)
+    .flush(emptyTransport(transportAirport));
 }
 
 describe('arrival progress helpers', () => {
@@ -68,10 +83,12 @@ describe('ArrivalChecklist', () => {
         item({ id: 'kul-baggage-carousel', title: 'Collect bags at the KLIA carousel', stage: 'baggage', sortOrder: 1 }),
       ]),
     );
+    http.expectOne((request) => request.url === `${environment.apiBaseUrl}/arrival-transport`).flush(emptyTransport());
     fixture.detectChanges();
 
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('h1')?.textContent).toContain('Arrival checklist');
+    expect(compiled.querySelector('a[href="/arrival/transport"]')?.textContent).toContain('Airport transport guide');
     expect(compiled.textContent).toContain('Complete MDAC before passport control');
     expect(compiled.textContent).toContain('Collect bags at the KLIA carousel');
     expect(compiled.textContent).toContain('0 of 2 steps done (0%)');
@@ -80,9 +97,7 @@ describe('ArrivalChecklist', () => {
 
   it('filters by airport and stage', () => {
     fixture.detectChanges();
-    http
-      .expectOne((request) => request.url === `${environment.apiBaseUrl}/arrival-checklist`)
-      .flush(body([item({ id: 'a', title: 'First' })]));
+    flushChecklist(http, body([item({ id: 'a', title: 'First' })]));
     fixture.detectChanges();
 
     const component = fixture.componentInstance;
@@ -94,6 +109,10 @@ describe('ArrivalChecklist', () => {
         airportCode: 'KLIA2',
       }),
     );
+    fixture.detectChanges();
+    http
+      .expectOne((request) => request.url === `${environment.apiBaseUrl}/arrival-transport`)
+      .flush(emptyTransport('KLIA2'));
     fixture.detectChanges();
     expect((fixture.nativeElement as HTMLElement).textContent).toContain('SIM in Gateway');
 
@@ -113,7 +132,8 @@ describe('ArrivalChecklist', () => {
 
   it('tracks progress locally and restores it', () => {
     fixture.detectChanges();
-    http.expectOne((request) => request.url === `${environment.apiBaseUrl}/arrival-checklist`).flush(
+    flushChecklist(
+      http,
       body([item({ id: 'kul-immigration-mdac', title: 'Complete MDAC before passport control' })]),
     );
     fixture.detectChanges();
@@ -129,6 +149,7 @@ describe('ArrivalChecklist', () => {
     http
       .expectOne((request) => request.url === `${environment.apiBaseUrl}/arrival-checklist`)
       .flush({ error: 'nope' }, { status: 500, statusText: 'Server Error' });
+    http.expectOne((request) => request.url === `${environment.apiBaseUrl}/arrival-transport`).flush(emptyTransport());
     fixture.detectChanges();
 
     expect((fixture.nativeElement as HTMLElement).textContent).toContain('Could not load the arrival checklist');
