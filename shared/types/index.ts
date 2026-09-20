@@ -321,13 +321,85 @@ export interface PlaceDetails extends NearbyPlace {
   actions: PlaceExternalAction[];
 }
 
-export type ProviderCategory =
-  | 'transport'
-  | 'lodging'
-  | 'activity'
-  | 'sim'
-  | 'insurance'
-  | 'other';
+export type ArrivalAirportCode = 'KUL' | 'KLIA2';
+
+/** MVP referral-marketplace partner types (EPIC 07). */
+export const PARTNER_CATEGORIES = [
+  'hotels',
+  'transfers',
+  'tours',
+  'sim',
+  'restaurants',
+  'tourist_services',
+] as const;
+
+export type PartnerCategory = (typeof PARTNER_CATEGORIES)[number];
+
+/** Alias for `providers.category` / partner listings. */
+export type ProviderCategory = PartnerCategory;
+
+export interface PartnerCategoryChip {
+  id: PartnerCategory;
+  label: string;
+}
+
+export const PARTNER_CATEGORY_CHIPS: PartnerCategoryChip[] = [
+  { id: 'hotels', label: 'Hotels' },
+  { id: 'transfers', label: 'Transfers' },
+  { id: 'tours', label: 'Tours' },
+  { id: 'sim', label: 'SIM / eSIM' },
+  { id: 'restaurants', label: 'Restaurants' },
+  { id: 'tourist_services', label: 'Tourist services' },
+];
+
+/** Shown next to every referral CTA (organic and sponsored). */
+export const REFERRAL_DISCLOSURE =
+  'We may earn a commission if you book or buy through this link.';
+
+export const SPONSORED_BADGE_LABEL = 'Sponsored' as const;
+
+/** Stitch secondary gold — Sponsored chip (see `docs/stitch-design.md`). */
+export const SPONSORED_BADGE_COLOR = '#D97706' as const;
+export const SPONSORED_BADGE_TINT = '#FEF3C7' as const;
+
+export const COMMISSION_BASES = ['booking', 'click', 'activation'] as const;
+export type CommissionBasis = (typeof COMMISSION_BASES)[number];
+
+/** Ops-only; omit from tourist API responses. */
+export interface PartnerCommission {
+  /** Fraction 0–1 inclusive (`providers.commission_rate`). */
+  rate: number;
+  currency: 'MYR';
+  basis: CommissionBasis;
+}
+
+export interface PartnerListing {
+  summary: string;
+  city?: string | null;
+  area?: string | null;
+  bookingUrl?: string | null;
+  /** Traveler-visible; default `REFERRAL_DISCLOSURE`. */
+  disclosure: string;
+  /** Paid placement → gold Sponsored badge. */
+  sponsored: boolean;
+  licenseName?: string | null;
+  licenseId?: string | null;
+  typicalMyr?: string | null;
+  languages?: string[];
+  hotelClassHint?: string | null;
+  vehicleClass?: string | null;
+  airportCodes?: ArrivalAirportCode[];
+  meetAndGreet?: boolean | null;
+  durationHint?: string | null;
+  meetingPoint?: string | null;
+  connectivityKind?: 'esim' | 'prepaid_sim' | null;
+  dataAllowance?: string | null;
+  validity?: string | null;
+  passportRequired?: boolean | null;
+  halal?: boolean | null;
+  reservationUrl?: string | null;
+  deskHours?: string | null;
+}
 
 export interface Provider {
   id: ProviderId;
@@ -335,9 +407,13 @@ export interface Provider {
   slug: string;
   category: ProviderCategory;
   isActive: boolean;
+  website?: string | null;
+  /** Partner ops; never render in the tourist app. */
+  contactEmail?: string | null;
+  listing?: PartnerListing;
+  /** Omit on tourist responses. */
+  commission?: PartnerCommission;
 }
-
-export type ArrivalAirportCode = 'KUL' | 'KLIA2';
 
 export type ArrivalStage =
   | 'immigration'
@@ -559,8 +635,6 @@ export interface ConciergeChatResponse {
   };
 }
 
-export type ReferralStatus = 'pending' | 'clicked' | 'converted' | 'expired';
-
 export interface KnowledgePhraseTip {
   phrase: string;
   pronunciation?: string;
@@ -602,7 +676,17 @@ export interface KnowledgeArticle {
   sortOrder: number;
 }
 
-export type ReferralStatus = 'pending' | 'clicked' | 'converted' | 'expired';
+export const REFERRAL_STATUSES = ['pending', 'clicked', 'converted', 'expired'] as const;
+export type ReferralStatus = (typeof REFERRAL_STATUSES)[number];
+
+export const REFERRAL_CHANNELS = [
+  'itinerary',
+  'arrival',
+  'explore',
+  'concierge',
+  'dashboard',
+] as const;
+export type ReferralChannel = (typeof REFERRAL_CHANNELS)[number];
 
 export interface Referral {
   id: ReferralId;
@@ -612,4 +696,6 @@ export interface Referral {
   placeId?: PlaceId;
   referralCode: string;
   status: ReferralStatus;
+  channel?: ReferralChannel;
+  itineraryItemId?: ItineraryItemId | null;
 }
