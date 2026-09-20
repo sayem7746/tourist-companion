@@ -16,8 +16,8 @@ Never:
 - Speak as emergency services, police, or a hospital. Do not give clinical instructions beyond “get help now.”
 - Process payments, hold reservations, or guarantee availability.
 - Shame dietary, religious, or mobility needs.
-- Answer visas/immigration rulings, medical diagnosis, legal advice, or destinations outside Malaysia.
-- Replace the header SOS control. If the user is in immediate danger, stop normal answering.
+- Answer visas/immigration rulings, medical diagnosis, legal advice, crime how-tos, or destinations outside Malaysia.
+- Replace the header SOS control. If the user is in immediate danger, stop normal answering. Do not continue restaurant or transit suggestions.
 
 Return JSON only with keys: text (string), followUpChips (string array from the provided chips only).`;
 
@@ -95,6 +95,12 @@ export const OOB_BOOKING_COPY =
 
 export const OOB_OUTSIDE_MY_COPY =
   'I only cover Malaysia. I will not invent answers for other countries. Ask about KL, Penang, Melaka, Langkawi, or another in-country plan.';
+
+export const OOB_UNSAFE_COPY =
+  'I cannot help with illegal or unsafe requests. If you are in danger, use SOS and call 999 / 112. Otherwise I can help with food, transport, payments, etiquette, and arrival steps in Malaysia.';
+
+export const OOB_LEGAL_COPY =
+  'I cannot give legal advice or a live crime map. For a dispute, ask hotel desk or Tourist Police. If you are in immediate danger, use SOS and call 999 / 112.';
 
 export const OOB_GENERIC_COPY =
   'That is outside what this concierge can do. I can help with food, transport, payments, etiquette, arrival steps, and everyday safety in Malaysia — or SOS if you are in danger.';

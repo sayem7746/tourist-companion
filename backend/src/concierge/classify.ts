@@ -2,23 +2,43 @@ import { MALAYSIA_PROMPT_CHIPS } from '../knowledge/content.js';
 import type { ConciergeCategory } from '../knowledge/types.js';
 import type { ConciergeEscalationLevel } from './types.js';
 
+export type ConciergeOobKind =
+  | 'medical'
+  | 'booking'
+  | 'visa'
+  | 'outside_my'
+  | 'unsafe'
+  | 'legal'
+  | 'unknown';
+
 export interface ClassifiedIntent {
   category: ConciergeCategory;
   escalationLevel: ConciergeEscalationLevel;
   chipId?: string;
   articleHint?: string;
+  oobKind?: ConciergeOobKind;
 }
 
+const GREETING_PATTERN = /^(hi|hello|hey|good (morning|afternoon|evening))[\s!.?]*$/i;
+
+/** Immediate danger: medical, police, fire, assault, missing child, self-harm. */
 const EMERGENCY_PATTERNS: RegExp[] = [
-  /\b(sos|call the police|call police|call 999|call 112)\b/i,
+  /\bsos\b/i,
+  /\b(call|dial)\s*(the )?(police|cops|ambulance|bomba)\b/i,
+  /\b(need|get)\b.{0,24}\b(police|ambulance|firefighter|fire department|bomba)\b/i,
+  /\b(call|dial)\s*(999|112)\b/i,
   /\b(i am|i'm|we are|we're)\s+being followed\b/i,
   /\b(following me|still following)\b/i,
-  /\b(grabbed my (bag|phone|purse)|snatched|mugged|assault|stabbed|gun|robbed me)\b/i,
-  /\b(chest pain|heart attack|can't breathe|cannot breathe|not breathing)\b/i,
-  /\b(suicide|kill myself|self-harm|self harm)\b/i,
-  /\b(fire|flood|earthquake|collapsed)\b/i,
+  /\b(grabbed my (bag|phone|purse)|snatched|mugged|assault|stabbed|robbed me)\b/i,
+  /\b(pointed a gun|gunshot|has a gun)\b/i,
+  /\b(chest pain|heart attack|can't breathe|cannot breathe|not breathing|chok(e|ing)|stroke|overdose|seizure)\b/i,
+  /\b(suicid|kill myself|self-harm|self harm|want to die)\b/i,
+  /\b((hotel|building|room|mall) (is |was )?(on )?fire|on fire|there's a fire|there is a fire)\b/i,
+  /\b(flood(ing|ed)? (here|now|the (hotel|street|mall))|earthquake|building collapsed)\b/i,
   /\b(missing child|lost (my )?child|child is (gone|missing))\b/i,
-  /\b(injured|bleeding badly|unconscious)\b/i,
+  /\b(injured|bleeding( badly)?|unconscious|passed out)\b/i,
+  /\b(child (who )?(cannot|can't|can not) drink)\b/i,
+  /\b(i('m| am) faint(ing|ed)|someone fainted|fainting)\b/i,
 ];
 
 const VISA_PATTERNS = [/\bvisa\b/i, /\benentry\b/i, /\bimmigration ruling\b/i, /\bhow long can i stay\b/i];
@@ -37,6 +57,16 @@ const MEDICAL_PATTERNS = [
 const OUTSIDE_MY_PATTERNS = [
   /\b(singapore|bangkok|phuket|bali|jakarta|tokyo|dubai|paris|london)\b/i,
   /\boutside malaysia\b/i,
+];
+const UNSAFE_PATTERNS = [
+  /\bhow (do i|to) (steal|rob|hack|break in|pick a lock|shoplift)\b/i,
+  /\b(buy|sell) (cocaine|heroin|mdma|meth|illegal drugs)\b/i,
+  /\b(fake passport|counterfeit (money|notes)|smuggle)\b/i,
+  /\b(make|build) a bomb\b/i,
+];
+const LEGAL_PATTERNS = [
+  /\b(should i sue|legal advice|draft a (will|contract)|is this legal)\b/i,
+  /\breal-?time crime maps?\b/i,
 ];
 
 const HANDOFF_PATTERNS: Array<{ re: RegExp; category: ConciergeCategory }> = [
@@ -74,6 +104,14 @@ function matchesAny(text: string, patterns: RegExp[]): boolean {
   return patterns.some((pattern) => pattern.test(text));
 }
 
+function oob(
+  category: ConciergeCategory,
+  kind: ConciergeOobKind,
+  articleHint?: string,
+): ClassifiedIntent {
+  return { category, escalationLevel: 'out_of_bounds', articleHint, oobKind: kind };
+}
+
 export function classifyIntent(message: string, categoryHint?: ConciergeCategory): ClassifiedIntent {
   const text = message.trim();
   const chip = MALAYSIA_PROMPT_CHIPS.find((item) => item.label.toLowerCase() === text.toLowerCase());
@@ -90,17 +128,23 @@ export function classifyIntent(message: string, categoryHint?: ConciergeCategory
     return { category: 'emergency', escalationLevel: 'sos', articleHint: 'my-faq-emergency' };
   }
 
+  if (matchesAny(text, UNSAFE_PATTERNS)) {
+    return oob('safety_non_emergency', 'unsafe', 'my-faq-unsafe');
+  }
   if (matchesAny(text, MEDICAL_PATTERNS)) {
-    return { category: 'safety_non_emergency', escalationLevel: 'out_of_bounds', articleHint: 'my-faq-pharmacy' };
+    return oob('safety_non_emergency', 'medical', 'my-faq-pharmacy');
   }
   if (matchesAny(text, BOOKING_PATTERNS)) {
-    return { category: 'itinerary_plan', escalationLevel: 'out_of_bounds', articleHint: 'my-faq-booking-oob' };
+    return oob('itinerary_plan', 'booking', 'my-faq-booking-oob');
   }
   if (matchesAny(text, VISA_PATTERNS)) {
-    return { category: 'arrival_ops', escalationLevel: 'out_of_bounds', articleHint: 'my-faq-visa-oob' };
+    return oob('arrival_ops', 'visa', 'my-faq-visa-oob');
   }
   if (matchesAny(text, OUTSIDE_MY_PATTERNS)) {
-    return { category: 'itinerary_plan', escalationLevel: 'out_of_bounds', articleHint: 'my-attr-beyond-kl' };
+    return oob('itinerary_plan', 'outside_my', 'my-attr-beyond-kl');
+  }
+  if (matchesAny(text, LEGAL_PATTERNS)) {
+    return oob('safety_non_emergency', 'legal', 'my-faq-oob');
   }
 
   for (const item of HANDOFF_PATTERNS) {
@@ -133,5 +177,9 @@ export function classifyIntent(message: string, categoryHint?: ConciergeCategory
     }
   }
 
-  return { category: 'nearby_dining', escalationLevel: 'none' };
+  if (GREETING_PATTERN.test(text)) {
+    return { category: 'nearby_dining', escalationLevel: 'none' };
+  }
+
+  return oob('safety_non_emergency', 'unknown', 'my-faq-oob');
 }

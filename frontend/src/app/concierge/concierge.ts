@@ -6,6 +6,7 @@ import {
   DEFAULT_LIVE_CONTEXT,
   DEFAULT_LIVE_CONTEXT_LABEL,
   SOS_COLOR,
+  SOS_NUMBERS,
   SUGGESTED_CHIPS,
   type ConciergeCategory,
   type ConciergeChatResponse,
@@ -32,6 +33,7 @@ export class Concierge {
   readonly chips = SUGGESTED_CHIPS;
   readonly liveContextLabel = DEFAULT_LIVE_CONTEXT_LABEL;
   readonly sosColor = SOS_COLOR;
+  readonly sosNumbers = SOS_NUMBERS;
 
   draft = '';
   conversationId: string | undefined;
@@ -67,6 +69,10 @@ export class Concierge {
 
   openSos(): void {
     this.sosOpen.set(true);
+  }
+
+  closeSos(): void {
+    this.sosOpen.set(false);
   }
 
   private send(raw: string, categoryHint?: ConciergeCategory): void {

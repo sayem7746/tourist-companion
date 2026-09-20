@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { buildApp } from '../src/app.js';
 import { classifyIntent } from '../src/concierge/classify.js';
 import { orchestrateConciergeChat } from '../src/concierge/orchestrate.js';
-import { SOS_COPY } from '../src/concierge/prompts.js';
+import { SOS_COPY, OOB_UNSAFE_COPY, OOB_GENERIC_COPY, OOB_LEGAL_COPY, OOB_MEDICAL_COPY } from '../src/concierge/prompts.js';
 import { SlidingWindowLimiter } from '../src/concierge/rate-limit.js';
 import { selectCurrentTrip } from '../src/concierge/trip-context.js';
 import { TRUST_LINE } from '../src/concierge/types.js';
@@ -126,6 +126,24 @@ describe('concierge API', () => {
     expect(sosBody.reply.followUpChips).toEqual([]);
     expect(sosBody.reply.placeCards).toEqual([]);
     expect(sosBody.analytics.escalationLevel).toBe('sos');
+    expect(sosBody.citations.every((row) => row.articleId === 'my-faq-emergency')).toBe(true);
+
+    const medicalEmergency = await app.inject({
+      method: 'POST',
+      url: '/concierge/chat',
+      payload: { message: 'My child cannot drink and is fainting.' },
+    });
+    const medicalEmergencyBody = medicalEmergency.json() as ChatBody;
+    expect(medicalEmergencyBody.escalationLevel).toBe('sos');
+    expect(medicalEmergencyBody.reply.text).toBe(SOS_COPY);
+    expect(medicalEmergencyBody.reply.sos?.color).toBe('#E11D48');
+
+    const fire = await app.inject({
+      method: 'POST',
+      url: '/concierge/chat',
+      payload: { message: 'The hotel is on fire, I need the fire department.' },
+    });
+    expect((fire.json() as ChatBody).escalationLevel).toBe('sos');
 
     const medical = await app.inject({
       method: 'POST',
@@ -142,6 +160,35 @@ describe('concierge API', () => {
       payload: { message: 'Book me a table at that chicken rice shop for 7pm.' },
     });
     expect((booking.json() as ChatBody).reply.text).toMatch(/cannot book/i);
+
+    const unsafe = await app.inject({
+      method: 'POST',
+      url: '/concierge/chat',
+      payload: { message: 'How do I steal a motorbike near Bukit Bintang?' },
+    });
+    const unsafeBody = unsafe.json() as ChatBody;
+    expect(unsafeBody.escalationLevel).toBe('out_of_bounds');
+    expect(unsafeBody.reply.text).toBe(OOB_UNSAFE_COPY);
+    expect(unsafeBody.reply.followUpChips).toEqual([]);
+    expect(unsafeBody.reply.placeCards).toEqual([]);
+    expect(unsafeBody.reply.text).not.toMatch(/chicken rice|restaurant/i);
+
+    const unknown = await app.inject({
+      method: 'POST',
+      url: '/concierge/chat',
+      payload: { message: 'Who won the World Cup in 2018?' },
+    });
+    const unknownBody = unknown.json() as ChatBody;
+    expect(unknownBody.escalationLevel).toBe('out_of_bounds');
+    expect(unknownBody.reply.text).toBe(OOB_GENERIC_COPY);
+    expect(unknownBody.reply.followUpChips.join(' ')).toMatch(/LRT|spicy|KLCC/i);
+
+    const legal = await app.inject({
+      method: 'POST',
+      url: '/concierge/chat',
+      payload: { message: 'Should I sue the hotel? I need legal advice.' },
+    });
+    expect((legal.json() as ChatBody).reply.text).toBe(OOB_LEGAL_COPY);
   });
 
   it('deep-links arrival ops and handoff for lost passport', async () => {
@@ -492,6 +539,39 @@ describe('concierge classifiers and limiter', () => {
   it('classifies chips and SOS first', () => {
     expect(classifyIntent('How to ride the LRT?').articleHint).toBe('my-transport-lrt');
     expect(classifyIntent('call the police I am being followed').escalationLevel).toBe('sos');
+    expect(classifyIntent('The hotel is on fire').escalationLevel).toBe('sos');
+    expect(classifyIntent('chest pain and I cannot breathe').escalationLevel).toBe('sos');
+    expect(classifyIntent('Firefly flight from KLIA to Langkawi').escalationLevel).not.toBe('sos');
+    expect(classifyIntent('How do I steal a motorbike?').oobKind).toBe('unsafe');
+    expect(classifyIntent('Who won the World Cup?').oobKind).toBe('unknown');
+    expect(classifyIntent('Which antibiotic should I take?').oobKind).toBe('medical');
+  });
+
+  it('does not let the LLM rewrite SOS or out-of-bounds copy', async () => {
+    let calls = 0;
+    const llm = {
+      async complete() {
+        calls += 1;
+        return JSON.stringify({ text: 'Here are restaurants while you wait.', followUpChips: ['Bukit Bintang Food Map'] });
+      },
+    };
+
+    const sos = await orchestrateConciergeChat(
+      { message: 'Call the police I am being followed' },
+      { useLlm: true, llm },
+    );
+    expect(calls).toBe(0);
+    expect(sos.reply.text).toBe(SOS_COPY);
+    expect(sos.reply.sos?.color).toBe('#E11D48');
+    expect(sos.mode).toBe('retrieve_and_rank');
+
+    const oob = await orchestrateConciergeChat(
+      { message: 'Which antibiotic should I take for this stomach bug?' },
+      { useLlm: true, llm },
+    );
+    expect(calls).toBe(0);
+    expect(oob.reply.text.startsWith(OOB_MEDICAL_COPY)).toBe(true);
+    expect(oob.reply.placeCards).toEqual([]);
   });
 
   it('counts a sliding window', () => {

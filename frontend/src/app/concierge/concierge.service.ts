@@ -115,6 +115,11 @@ export const DEFAULT_LIVE_CONTEXT_LABEL = 'Bukit Bintang, KL • Family trip';
 
 export const SOS_COLOR = '#E11D48';
 
+export const SOS_NUMBERS = [
+  { code: '999', label: 'Police, fire, ambulance' },
+  { code: '112', label: 'Mobile networks' },
+] as const;
+
 @Injectable({ providedIn: 'root' })
 export class ConciergeService {
   private readonly url = `${environment.apiBaseUrl}/concierge/chat`;

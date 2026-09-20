@@ -21,15 +21,25 @@
   </p>
 
   @if (sosOpen()) {
-    <aside id="emergency-help" class="sos-panel" data-path="emergency-help" role="alert">
-      <p class="sos-title">Emergency help</p>
-      <p>Stay safe. Call now and share your location if you can.</p>
-      <p>
-        <a class="sos-dial" href="tel:999">999 — Police, fire, ambulance</a>
-      </p>
-      <p>
-        <a class="sos-dial" href="tel:112">112 — Mobile networks</a>
-      </p>
+    <aside
+      id="emergency-help"
+      class="sos-panel"
+      data-path="emergency-help"
+      role="alertdialog"
+      aria-labelledby="sos-sheet-title"
+      aria-describedby="sos-sheet-copy"
+      [style.background]="sosColor"
+    >
+      <div class="sos-sheet-head">
+        <p id="sos-sheet-title" class="sos-title">Emergency help</p>
+        <button type="button" class="sos-close" (click)="closeSos()">Close</button>
+      </div>
+      <p id="sos-sheet-copy">Stay safe. Call now and share your location if you can.</p>
+      @for (number of sosNumbers; track number.code) {
+        <p>
+          <a class="sos-dial" [href]="'tel:' + number.code">{{ number.code }} — {{ number.label }}</a>
+        </p>
+      }
     </aside>
   }
 

@@ -102,6 +102,7 @@ describe('Concierge', () => {
     expect(sos.textContent).toContain('SOS');
     expect(normalizedColor(sos.style.background)).toBe('rgb(225, 29, 72)');
     expect(SOS_COLOR).toBe('#E11D48');
+    expect(compiled().querySelector('#emergency-help')).toBeNull();
   });
 
   it('POSTs a suggestion chip to /concierge/chat with credentials', () => {
@@ -163,8 +164,17 @@ describe('Concierge', () => {
     const sosBtn = compiled().querySelector('.sos-btn') as HTMLButtonElement;
     sosBtn.click();
     fixture.detectChanges();
-    expect(compiled().querySelector('#emergency-help')?.textContent).toContain('999');
+    const sheet = compiled().querySelector('#emergency-help') as HTMLElement;
+    expect(sheet.getAttribute('data-path')).toBe('emergency-help');
+    expect(normalizedColor(sheet.style.background)).toBe('rgb(225, 29, 72)');
+    expect(sheet.textContent).toContain('999');
     expect(compiled().querySelector('a[href="tel:112"]')?.textContent).toContain('112');
+    expect(compiled().querySelector('.sos-btn')?.textContent).toContain('SOS');
+
+    (compiled().querySelector('.sos-close') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(compiled().querySelector('#emergency-help')).toBeNull();
+    expect(compiled().querySelector('.sos-btn')?.textContent).toContain('SOS');
 
     fixture.componentInstance.draft = 'Someone grabbed my bag and I think they are still following me.';
     fixture.componentInstance.submitDraft();
@@ -201,5 +211,7 @@ describe('Concierge', () => {
     expect(normalizedColor(card.style.background)).toBe('rgb(225, 29, 72)');
     expect(card.textContent).toContain('999');
     expect(card.textContent).not.toContain('Bukit Bintang Food Map');
+    expect(compiled().querySelector('#emergency-help')).not.toBeNull();
+    expect(compiled().querySelector('.sos-btn')?.textContent).toContain('SOS');
   });
 });

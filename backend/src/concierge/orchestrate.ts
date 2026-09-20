@@ -1,14 +1,17 @@
 import { randomUUID } from 'node:crypto';
 import type { KnowledgeArticle, KnowledgePhraseTip, KnowledgePlaceCard } from '../knowledge/types.js';
-import { classifyIntent } from './classify.js';
+import { classifyIntent, type ConciergeOobKind } from './classify.js';
+import { MALAYSIA_PROMPT_CHIPS } from '../knowledge/content.js';
 import { parseLlmJson, type LlmClient } from './llm.js';
 import {
   contextBlock,
   groundingBlock,
   OOB_BOOKING_COPY,
   OOB_GENERIC_COPY,
+  OOB_LEGAL_COPY,
   OOB_MEDICAL_COPY,
   OOB_OUTSIDE_MY_COPY,
+  OOB_UNSAFE_COPY,
   OOB_VISA_COPY,
   SOS_COPY,
   SYSTEM_PROMPT,
@@ -93,20 +96,38 @@ function sentences(text: string, max: number): string {
   return parts.slice(0, max).join(' ');
 }
 
-function outOfBoundsCopy(message: string): string {
-  if (/\b(antibiotic|diagnos|prescribe|medicine|pill)\b/i.test(message)) {
-    return OOB_MEDICAL_COPY;
+function cannedSosReply(): ConciergeReply {
+  return {
+    text: SOS_COPY,
+    placeCards: [],
+    phraseTips: [],
+    followUpChips: [],
+    trustLine: null,
+    sos: SOS_CARD,
+  };
+}
+
+function outOfBoundsCopy(kind?: ConciergeOobKind): string {
+  switch (kind) {
+    case 'medical':
+      return OOB_MEDICAL_COPY;
+    case 'booking':
+      return OOB_BOOKING_COPY;
+    case 'visa':
+      return OOB_VISA_COPY;
+    case 'outside_my':
+      return OOB_OUTSIDE_MY_COPY;
+    case 'unsafe':
+      return OOB_UNSAFE_COPY;
+    case 'legal':
+      return OOB_LEGAL_COPY;
+    default:
+      return OOB_GENERIC_COPY;
   }
-  if (/\b(book|reserve|table|ticket|pay for me)\b/i.test(message)) {
-    return OOB_BOOKING_COPY;
-  }
-  if (/\bvisa|immigration ruling|how long can i stay\b/i.test(message)) {
-    return OOB_VISA_COPY;
-  }
-  if (/\b(singapore|bangkok|phuket|bali|jakarta|tokyo|dubai|paris|london|outside malaysia)\b/i.test(message)) {
-    return OOB_OUTSIDE_MY_COPY;
-  }
-  return OOB_GENERIC_COPY;
+}
+
+function cannedEscalation(level: ConciergeChatResponse['escalationLevel']): boolean {
+  return level === 'sos' || level === 'out_of_bounds';
 }
 
 function collectCards(articles: KnowledgeArticle[]): KnowledgePlaceCard[] {
@@ -153,32 +174,33 @@ function trustLineFor(articles: KnowledgeArticle[], escalation: ConciergeChatRes
 }
 
 function composeRetrieveReply(
-  message: string,
   intent: ReturnType<typeof classifyIntent>,
   context: ConciergeLiveContext,
   articles: KnowledgeArticle[],
 ): ConciergeReply {
   if (intent.escalationLevel === 'sos') {
-    return {
-      text: SOS_COPY,
-      placeCards: [],
-      phraseTips: [],
-      followUpChips: [],
-      trustLine: null,
-      sos: SOS_CARD,
-    };
+    return cannedSosReply();
   }
 
   if (intent.escalationLevel === 'out_of_bounds') {
-    const primary = articles[0];
+    const kind = intent.oobKind;
+    const refuseOnly = kind === 'unsafe' || kind === 'unknown' || kind === 'legal';
+    const primary = refuseOnly ? undefined : articles[0];
+    const inBoundsChips = MALAYSIA_PROMPT_CHIPS.map((chip) => chip.label);
+    const followUpChips =
+      kind === 'unsafe'
+        ? []
+        : kind === 'unknown' || kind === 'legal'
+          ? filterFamilySafeChips(inBoundsChips, context.tripMode).slice(0, 5)
+          : collectChips(articles, [], context.tripMode);
     return {
-      text: [outOfBoundsCopy(message), primary ? sentences(primary.body, 2) : undefined].filter(Boolean).join(' '),
+      text: [outOfBoundsCopy(kind), primary ? sentences(primary.body, 2) : undefined].filter(Boolean).join(' '),
       placeCards: [],
-      phraseTips: collectPhrases(articles).slice(0, 2),
-      followUpChips: collectChips(articles, [], context.tripMode),
+      phraseTips: refuseOnly ? [] : collectPhrases(articles).slice(0, 2),
+      followUpChips,
       deepLink: primary?.deepLink,
       trustLine: null,
-      sos: /\b(bleeding|faint|chest pain|cannot drink|can't drink)\b/i.test(message) ? SOS_CARD : null,
+      sos: null,
     };
   }
 
@@ -246,7 +268,7 @@ export async function orchestrateConciergeChat(
   const { articles, citations } = retrieveAndRank(request.message, intent, context);
   const conversationId = request.conversationId?.trim() || randomUUID();
 
-  const base = composeRetrieveReply(request.message, intent, context, articles);
+  const base = composeRetrieveReply(intent, context, articles);
 
   let mode: ConciergeMode = 'retrieve_and_rank';
   let fallbackReason: ConciergeChatResponse['fallbackReason'];
@@ -255,7 +277,7 @@ export async function orchestrateConciergeChat(
   const canLlm =
     deps.useLlm &&
     deps.llm &&
-    intent.escalationLevel !== 'sos';
+    !cannedEscalation(intent.escalationLevel);
 
   if (canLlm && deps.llm) {
     try {
@@ -290,16 +312,15 @@ export async function orchestrateConciergeChat(
     }
   }
 
-  if (intent.escalationLevel === 'sos') {
-    reply = {
-      text: SOS_COPY,
-      placeCards: [],
-      phraseTips: [],
-      followUpChips: [],
-      trustLine: null,
-      sos: SOS_CARD,
-    };
+  if (cannedEscalation(intent.escalationLevel)) {
+    reply = base;
+    mode = 'retrieve_and_rank';
   }
+
+  const sosCitations =
+    intent.escalationLevel === 'sos'
+      ? citations.filter((row) => row.articleId === 'my-faq-emergency').slice(0, 1)
+      : citations;
 
   return {
     conversationId,
@@ -308,7 +329,7 @@ export async function orchestrateConciergeChat(
     mode,
     fallbackReason,
     reply,
-    citations,
+    citations: sosCitations,
     analytics: {
       category: intent.category,
       escalationLevel: intent.escalationLevel,

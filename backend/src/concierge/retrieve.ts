@@ -106,7 +106,11 @@ export function retrieveAndRank(
     picked.push({ article: hinted, score: 1000 });
   }
 
-  if (picked.length === 0) {
+  if (
+    picked.length === 0 &&
+    intent.escalationLevel !== 'sos' &&
+    intent.escalationLevel !== 'out_of_bounds'
+  ) {
     const fallback = queryKnowledge({ category: intent.category }).articles.slice(0, limit);
     for (const article of fallback) {
       picked.push({ article, score: 1 });
