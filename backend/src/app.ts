@@ -8,6 +8,10 @@ import { createMemoryProfileStore } from './profile/memory-store.js';
 import { createPgProfileStore } from './profile/pg-store.js';
 import { registerProfileRoutes } from './profile/routes.js';
 import type { ProfileStore } from './profile/types.js';
+import { createMemoryArrivalStore } from './arrival/memory-store.js';
+import { createPgArrivalStore } from './arrival/pg-store.js';
+import { registerArrivalRoutes } from './arrival/routes.js';
+import type { ArrivalChecklistStore } from './arrival/types.js';
 import { createMemoryTripStore } from './trips/memory-store.js';
 import { createPgTripStore } from './trips/pg-store.js';
 import { registerTripRoutes } from './trips/routes.js';
@@ -160,6 +164,7 @@ export function buildApp(config: AppConfig): FastifyInstance {
   let memoryAuthStore: AuthStore | undefined;
   let memoryProfileStore: ProfileStore | undefined;
   let memoryTripStore: TripStore | undefined;
+  let memoryArrivalStore: ArrivalChecklistStore | undefined;
 
   const resolveAuthStore = (): AuthStore | undefined => {
     if (app.db) {
@@ -194,6 +199,17 @@ export function buildApp(config: AppConfig): FastifyInstance {
     if (config.NODE_ENV === 'test') {
       memoryTripStore ??= createMemoryTripStore();
       return memoryTripStore;
+    }
+    return undefined;
+  });
+
+  void registerArrivalRoutes(app, config, () => {
+    if (app.db) {
+      return createPgArrivalStore(app.db);
+    }
+    if (config.NODE_ENV === 'test') {
+      memoryArrivalStore ??= createMemoryArrivalStore();
+      return memoryArrivalStore;
     }
     return undefined;
   });

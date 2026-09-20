@@ -102,6 +102,27 @@ export interface Provider {
   isActive: boolean;
 }
 
+export type ArrivalAirportCode = 'KUL' | 'KLIA2';
+
+export type ArrivalStage =
+  | 'immigration'
+  | 'baggage'
+  | 'customs'
+  | 'sim'
+  | 'money'
+  | 'transport'
+  | 'first_steps';
+
+export interface ArrivalChecklistItem {
+  id: string;
+  airportCode: ArrivalAirportCode;
+  stage: ArrivalStage;
+  title: string;
+  body: string;
+  sortOrder: number;
+  estimatedMinutes?: number;
+}
+
 export type ReferralStatus = 'pending' | 'clicked' | 'converted' | 'expired';
 
 export interface Referral {

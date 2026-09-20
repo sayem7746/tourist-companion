@@ -31,7 +31,7 @@ Migrations live in `backend/migrations/` and are applied with [node-pg-migrate](
 
 ## Seed
 
-Development seed is **idempotent** (`ON CONFLICT` / existence checks). It creates one demo user, KL trip, KLIA place, Grab provider, trip-place link, and referral.
+Development seed is **idempotent** (`ON CONFLICT` / existence checks). It creates one demo user, KL trip, KLIA place, Grab provider, trip-place link, referral, and KLIA/KLIA2 arrival checklist items. JSON copy: `db/arrival-checklist.json`.
 
 ```bash
 npm run db:seed
@@ -50,5 +50,6 @@ SQL source of truth: `db/seed.sql`. Do not run seed in production.
 | `trip_places` | Itinerary links between trips and places |
 | `providers` | Partner businesses used for referrals |
 | `referrals` | Attribution codes from a user/trip to a provider |
+| `arrival_checklist_items` | CMS-ready airport arrival steps by traveler stage (KLIA / KLIA2) |
 
-The API opens a `pg` pool (optional `DATABASE_URL`), reports DB status on `GET /health?verbose=true`, exposes `GET /metrics`, serves tourist auth under `/auth/*`, tourist profile under authenticated `GET`/`PATCH /profile`, and trip CRUD under authenticated `/trips`. See `docs/observability.md`.
+The API opens a `pg` pool (optional `DATABASE_URL`), reports DB status on `GET /health?verbose=true`, exposes `GET /metrics`, serves tourist auth under `/auth/*`, tourist profile under authenticated `GET`/`PATCH /profile`, trip CRUD under authenticated `/trips`, and public `GET /arrival-checklist?airport=&stage=`. See `docs/observability.md`.
