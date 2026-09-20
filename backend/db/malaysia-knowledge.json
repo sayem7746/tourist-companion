@@ -1,0 +1,913 @@
+{
+  "country": "MY",
+  "destination": "Malaysia",
+  "version": "2026-09-mvp",
+  "chips": [
+    {
+      "id": "chip-spice",
+      "label": "Is this food spicy?",
+      "category": "food_spice_diet",
+      "articleId": "my-food-spice"
+    },
+    {
+      "id": "chip-lrt",
+      "label": "How to ride the LRT?",
+      "category": "local_transport",
+      "articleId": "my-transport-lrt"
+    },
+    {
+      "id": "chip-dinner-klcc",
+      "label": "Best dinner near KLCC?",
+      "category": "nearby_dining",
+      "articleId": "my-food-klcc-dinner"
+    },
+    {
+      "id": "chip-night-market-cash",
+      "label": "Do I need cash for night market?",
+      "category": "money_payments",
+      "articleId": "my-pay-night-market"
+    },
+    {
+      "id": "chip-batu-caves-dress",
+      "label": "Dress code for Batu Caves?",
+      "category": "culture_etiquette",
+      "articleId": "my-etiq-batu-caves"
+    }
+  ],
+  "articles": [
+    {
+      "id": "my-transport-lrt",
+      "topic": "transport",
+      "category": "local_transport",
+      "title": "How to ride the LRT, MRT, and monorail",
+      "summary": "Tap in with Touch ’n Go or a QR ticket, ride Rapid KL rail, tap out at your stop.",
+      "body": "Kuala Lumpur’s urban rail is Rapid KL: LRT (Kelana Jaya and Ampang/Sri Petaling), MRT (Kajang and Putrajaya lines), and the KL Monorail. Buy a stored-value Touch ’n Go card at station counters or use the Rapid KL / Touch ’n Go eWallet QR where gates support it. Tap in, ride, tap out — unpaid exit fees apply if you forget. First and last trains are posted on station screens; first-car cars on some LRT/MRT trains are reserved for women. Wheelchair lifts and staff help are available at major stations if you ask. Estimates only — check the official Rapid KL app for live disruptions.",
+      "tags": [
+        "lrt",
+        "mrt",
+        "monorail",
+        "touch-n-go",
+        "rapid-kl"
+      ],
+      "area": "Kuala Lumpur",
+      "typicalMyr": "RM 1.20–6.50 per ride in central KL",
+      "phraseTips": [
+        {
+          "phrase": "Stesen mana?",
+          "pronunciation": "stuh-sen MAH-nah",
+          "meaning": "Which station?"
+        }
+      ],
+      "followUpChips": [
+        "Nearest station to me",
+        "Directions to Jalan Alor",
+        "Airport train instead?"
+      ],
+      "deepLink": "/arrival/transport",
+      "trustLineEligible": true,
+      "escalation": "none",
+      "sortOrder": 1
+    },
+    {
+      "id": "my-transport-grab",
+      "topic": "transport",
+      "category": "local_transport",
+      "title": "Grab and e-hailing in Malaysia",
+      "summary": "Book Grab or AirAsia Ride in the app; ignore touts; pin the official pickup.",
+      "body": "Grab is the usual door-to-door option in KL, Penang, and Johor Bahru. Set pickup on the in-app pin, confirm the plate, and pay in-app with Visa/Mastercard or cash if the driver agrees. AirAsia Ride is similar at KLIA. Do not follow unofficial drivers in hotel or mall lobbies. Fares are estimates that rise in rain and late night. For airport pins, KLIA (main) and KLIA2 are different terminals.",
+      "tags": [
+        "grab",
+        "e-hailing",
+        "taxi",
+        "night"
+      ],
+      "typicalMyr": "Short KL hop ~RM 8–18; KLIA to city ~RM 65–85 + toll",
+      "followUpChips": [
+        "How to ride the LRT?",
+        "Airport transfer options"
+      ],
+      "deepLink": "/arrival/transport",
+      "trustLineEligible": true,
+      "escalation": "none",
+      "sortOrder": 2
+    },
+    {
+      "id": "my-transport-last-mile",
+      "topic": "transport",
+      "category": "local_transport",
+      "title": "Walking last mile: Bukit Bintang and Jalan Alor",
+      "summary": "From Bukit Bintang Monorail, Jalan Alor is a short walk; use covered mall links in the rain.",
+      "body": "Bukit Bintang Monorail and Raja Chulan / Bukit Bintang MRT put you in the Golden Triangle. Jalan Alor sits a few minutes on foot from the monorail, with covered walkways through Pavilion and Lot 10 if it is pouring. Sidewalks can be uneven; use Grab for limited walking or after midnight. Cross at lights — motorbikes use the left of the lane.",
+      "tags": [
+        "walking",
+        "bukit-bintang",
+        "jalan-alor",
+        "last-mile"
+      ],
+      "area": "Bukit Bintang",
+      "followUpChips": [
+        "Bukit Bintang Food Map",
+        "Do I need cash for night market?"
+      ],
+      "placeCards": [
+        {
+          "name": "Jalan Alor",
+          "area": "Bukit Bintang",
+          "badge": "Night food street",
+          "distanceHint": "~5 min walk from Bukit Bintang Monorail",
+          "priceBandMyr": "RM 15–40 per stall plate",
+          "why": "Open-air satay, seafood, and fruit — cash-friendly after dark."
+        }
+      ],
+      "trustLineEligible": true,
+      "escalation": "none",
+      "sortOrder": 3
+    },
+    {
+      "id": "my-transport-airport",
+      "topic": "transport",
+      "category": "arrival_ops",
+      "title": "KLIA and KLIA2 into the city",
+      "summary": "Use KLIA Ekspres, airport bus, Grab, or a private car — full steps live in Arrival.",
+      "body": "KLIA (main) and KLIA2 are separate terminals. KLIA Ekspres is the non-stop train to KL Sentral (~28–33 minutes). Buses are cheaper to Sentral. Grab and coupon taxis are door-to-hotel. This concierge does not duplicate the full airport checklist — open Arrival for boarding pins, costs, and when-to-use.",
+      "tags": [
+        "klia",
+        "klia2",
+        "ekspres",
+        "arrival"
+      ],
+      "typicalMyr": "Bus ~RM 12–15 · Ekspres ~RM 55 · Grab ~RM 65–85 + toll",
+      "followUpChips": [
+        "How to ride the LRT?",
+        "SIM after landing"
+      ],
+      "deepLink": "/arrival/transport",
+      "escalation": "none",
+      "sortOrder": 4
+    },
+    {
+      "id": "my-etiq-batu-caves",
+      "topic": "etiquette",
+      "category": "culture_etiquette",
+      "title": "Dress code for Batu Caves",
+      "summary": "Cover shoulders and knees for the temple; shoes off in designated prayer areas.",
+      "body": "Batu Caves is a Hindu temple complex. Wear clothing that covers shoulders and knees before you climb the 272 steps to the Temple Cave. Sarongs are sometimes offered at the base if you arrive in shorts. Remove shoes where signs or staff indicate. Photography is usually fine outdoors; skip flash and photos of people praying. This is practical temple etiquette, not a lecture.",
+      "tags": [
+        "batu-caves",
+        "temple",
+        "dress",
+        "hindu"
+      ],
+      "area": "Batu Caves, Selangor",
+      "phraseTips": [
+        {
+          "phrase": "Boleh masuk?",
+          "pronunciation": "BOH-leh MAH-sook",
+          "meaning": "May I enter?"
+        }
+      ],
+      "followUpChips": [
+        "How to get to Batu Caves",
+        "Mosque dress code"
+      ],
+      "placeCards": [
+        {
+          "name": "Batu Caves (Sri Subramaniar Swamy Temple)",
+          "area": "Batu Caves",
+          "badge": "Iconic temple",
+          "distanceHint": "KTM Komuter to Batu Caves station, then a short walk",
+          "why": "Rainbow staircase, limestone caves, and an active temple — modest dress required."
+        }
+      ],
+      "trustLineEligible": true,
+      "escalation": "none",
+      "sortOrder": 1
+    },
+    {
+      "id": "my-etiq-mosque",
+      "topic": "etiquette",
+      "category": "culture_etiquette",
+      "title": "Visiting mosques",
+      "summary": "Modest clothing, shoes off, speak softly; some prayer halls are off-limits during prayers.",
+      "body": "The National Mosque (Masjid Negara) and many city mosques welcome respectful visitors outside prayer times. Cover shoulders, cleavage, and knees; women may be asked to wear a robe or scarf from the visitor desk. Remove shoes, keep voices low, and do not walk in front of people praying. Friday midday prayers are busy — come later if you only want to look around.",
+      "tags": [
+        "mosque",
+        "islam",
+        "dress",
+        "friday"
+      ],
+      "area": "Kuala Lumpur",
+      "phraseTips": [
+        {
+          "phrase": "Assalamualaikum",
+          "pronunciation": "ah-sah-LAH-mu-ah-LAY-koom",
+          "meaning": "Peace be upon you (common greeting)."
+        }
+      ],
+      "followUpChips": [
+        "Dress code for Batu Caves?",
+        "National Mosque hours"
+      ],
+      "trustLineEligible": true,
+      "escalation": "none",
+      "sortOrder": 2
+    },
+    {
+      "id": "my-etiq-greetings",
+      "topic": "etiquette",
+      "category": "culture_etiquette",
+      "title": "Greetings, names, and ordering phrases",
+      "summary": "English is widely understood in tourist KL; a few Malay phrases still help.",
+      "body": "A smile and “hello” work in hotels and malls. Malay (Bahasa Malaysia) is the national language; Mandarin, Tamil, and English are common in cities. A light handshake is fine with many people; some Muslims prefer a nod instead of touching. Use your right hand to pass money or food. Staff will not be offended if you ask for milder food.",
+      "tags": [
+        "phrases",
+        "greeting",
+        "malay",
+        "english"
+      ],
+      "phraseTips": [
+        {
+          "phrase": "Terima kasih",
+          "pronunciation": "tuh-REE-mah KAH-seh",
+          "meaning": "Thank you."
+        },
+        {
+          "phrase": "Tak pedas",
+          "pronunciation": "tahk puh-DAS",
+          "meaning": "Not spicy."
+        },
+        {
+          "phrase": "Kurang manis",
+          "pronunciation": "KOO-rahng MAH-nees",
+          "meaning": "Less sweet."
+        }
+      ],
+      "followUpChips": [
+        "Is this food spicy?",
+        "Vegetarian options"
+      ],
+      "escalation": "none",
+      "sortOrder": 3
+    },
+    {
+      "id": "my-etiq-rail",
+      "topic": "etiquette",
+      "category": "local_transport",
+      "title": "Train and lift etiquette",
+      "summary": "Let people off first; some leading cars are women-only; keep bags off seats.",
+      "body": "Stand aside as doors open. Priority seats and the first carriage on some Rapid KL trains are reserved for women, children, and people who need them — follow the pink signage. Keep backpacks in front in crowds. Eating on trains is discouraged. Escalators: stand on the left, walk on the right is common but not a rule.",
+      "tags": [
+        "lrt",
+        "etiquette",
+        "women-only",
+        "accessibility"
+      ],
+      "trustLineEligible": true,
+      "escalation": "none",
+      "sortOrder": 4
+    },
+    {
+      "id": "my-weather-basics",
+      "topic": "weather",
+      "category": "safety_non_emergency",
+      "title": "Malaysia weather basics",
+      "summary": "Hot and humid year-round; short, heavy afternoon storms are normal.",
+      "body": "Peninsular Malaysia sits near the equator. Expect 26–33°C and high humidity most days. Rain can arrive in 20-minute bursts, often mid-afternoon — a compact umbrella or mall-hopping walkway is enough. East-coast monsoon (roughly Nov–Mar) is wetter on the South China Sea side; west-coast KL still rains but stays visitable. These are climate patterns, not a live forecast.",
+      "tags": [
+        "weather",
+        "rain",
+        "humidity",
+        "monsoon"
+      ],
+      "followUpChips": [
+        "What to pack",
+        "Haze season"
+      ],
+      "trustLineEligible": true,
+      "escalation": "none",
+      "sortOrder": 1
+    },
+    {
+      "id": "my-weather-heat",
+      "topic": "weather",
+      "category": "safety_non_emergency",
+      "title": "Heat, hydration, and indoor breaks",
+      "summary": "Plan outdoor sights early; duck into malls and MRT stations in the midday heat.",
+      "body": "Midday sun plus humidity is tiring, especially with children or limited walking. Start Batu Caves or KLCC Park before 10:00 or after 16:00. Carry bottled water (tap water is not the usual visitor default). Shopping malls, Suria KLCC, and rail stations are reliable air-conditioned pauses. If someone faints, feels chest pain, or a child cannot drink, use SOS — this is not medical advice.",
+      "tags": [
+        "heat",
+        "family",
+        "hydration",
+        "klcc"
+      ],
+      "followUpChips": [
+        "KLCC Park",
+        "Is tap water safe?"
+      ],
+      "escalation": "none",
+      "sortOrder": 2
+    },
+    {
+      "id": "my-weather-haze",
+      "topic": "weather",
+      "category": "safety_non_emergency",
+      "title": "Haze can happen in dry months",
+      "summary": "Seasonal smoke sometimes lowers air quality; check a public AQI if skies look milky.",
+      "body": "In some dry periods (often around June–October, not every year), regional haze can make the sky grey. Sensitive travelers may prefer indoor malls and shorter outdoor walks. This seed cannot give a live air-quality reading — use a public AQI source or hotel desk. Severe breathing distress is SOS, not a concierge weather tip.",
+      "tags": [
+        "haze",
+        "aqi",
+        "health"
+      ],
+      "escalation": "handoff",
+      "sortOrder": 3
+    },
+    {
+      "id": "my-pay-night-market",
+      "topic": "payments",
+      "category": "money_payments",
+      "title": "Cash for night markets and hawkers",
+      "summary": "Pasar malam and many stalls want small MYR notes; cards are uneven.",
+      "body": "Night markets, Jalan Alor satay stalls, and wet-market fruit sellers usually take cash only. Keep RM 1, RM 5, and RM 10 notes — RM 50 and RM 100 are hard to change. Some stalls now take Touch ’n Go eWallet QR, but do not count on it. Malls, hotels, and Grab still take cards. For ATMs and first ringgit after landing, use the Arrival money guide.",
+      "tags": [
+        "cash",
+        "pasar-malam",
+        "hawker",
+        "myr"
+      ],
+      "typicalMyr": "Street plate RM 8–25 · satay stick ~RM 1–2 · fresh juice RM 6–10",
+      "phraseTips": [
+        {
+          "phrase": "Berapa harga?",
+          "pronunciation": "buh-RAH-pah HAR-gah",
+          "meaning": "How much?"
+        }
+      ],
+      "followUpChips": [
+        "ATMs nearby",
+        "Typical meal prices"
+      ],
+      "deepLink": "/arrival/money",
+      "trustLineEligible": true,
+      "escalation": "none",
+      "sortOrder": 1
+    },
+    {
+      "id": "my-pay-cards",
+      "topic": "payments",
+      "category": "money_payments",
+      "title": "Cards, contactless, and e-wallets",
+      "summary": "Visa and Mastercard work in malls, hotels, and most chains; pay in MYR.",
+      "body": "Contactless Visa/Mastercard, Apple Pay, and Google Wallet are common in Suria KLCC, Pavilion, hotels, and 7-Eleven. Decline DCC (charging in your home currency). American Express is patchy. Touch ’n Go eWallet is the local QR you will see at parking and some hawkers. Always carry a little cash as backup.",
+      "tags": [
+        "cards",
+        "ewallet",
+        "touch-n-go",
+        "dcc"
+      ],
+      "followUpChips": [
+        "Do I need cash for night market?",
+        "Tipping"
+      ],
+      "deepLink": "/arrival/money",
+      "escalation": "none",
+      "sortOrder": 2
+    },
+    {
+      "id": "my-pay-price-bands",
+      "topic": "payments",
+      "category": "money_payments",
+      "title": "Typical MYR costs (estimates)",
+      "summary": "Hawker meals are cheap; mall restaurants and towers cost more. Not a live FX quote.",
+      "body": "Rough KL bands for planning: bottled water RM 2–3; mamak roti canai set RM 5–10; hawker rice plate RM 8–18; casual mall meal RM 25–50; Petronas Skybridge tickets are a separate attraction price (check official site). Grab short hops often beat a taxi flag-fall. These figures drift — treat them as bands, not bookings.",
+      "tags": [
+        "prices",
+        "budget",
+        "myr"
+      ],
+      "typicalMyr": "Low ~RM 40–70/day food · medium ~RM 100–180/day food",
+      "followUpChips": [
+        "Best dinner near KLCC?",
+        "Do I need cash for night market?"
+      ],
+      "escalation": "none",
+      "sortOrder": 3
+    },
+    {
+      "id": "my-pay-tipping",
+      "topic": "payments",
+      "category": "money_payments",
+      "title": "Tipping is optional",
+      "summary": "Many restaurant bills already include service charge and SST; rounding up is enough.",
+      "body": "Sit-down restaurants often add ~10% service charge plus SST. You do not need a second tip. Rounding up a hawker or Grab fare for excellent help is appreciated, not expected. Hotel porters: a few ringgit is fine. Never let a “service fee” be invented on the street — walk away and use SOS or Tourist Police if someone becomes aggressive.",
+      "tags": [
+        "tipping",
+        "sst",
+        "service-charge"
+      ],
+      "escalation": "none",
+      "sortOrder": 4
+    },
+    {
+      "id": "my-food-spice",
+      "topic": "food",
+      "category": "food_spice_diet",
+      "title": "Is this food spicy?",
+      "summary": "Chili is common but often on the side; ask for tak pedas. Curry is not always chili-hot.",
+      "body": "Sambal, chili padi, and pickled bird’s-eye chili appear with nasi lemak, laksa, and many Malay/Indian dishes. Coconut curries and Hainanese chicken rice can be mild. “Curry” in Malaysia is not automatically fiery. Say tak pedas when ordering and keep sambal on the side. This guide cannot certify a specific stall’s kitchen without live data.",
+      "tags": [
+        "spice",
+        "sambal",
+        "kids",
+        "ordering"
+      ],
+      "phraseTips": [
+        {
+          "phrase": "Tak pedas",
+          "pronunciation": "tahk puh-DAS",
+          "meaning": "Not spicy / no chili heat."
+        },
+        {
+          "phrase": "Sambal asing",
+          "pronunciation": "SAHM-bahl ah-SING",
+          "meaning": "Sambal on the side."
+        }
+      ],
+      "followUpChips": [
+        "Ask about vegetarian options",
+        "Kid-friendly dishes"
+      ],
+      "escalation": "none",
+      "sortOrder": 1
+    },
+    {
+      "id": "my-food-kids",
+      "topic": "food",
+      "category": "food_spice_diet",
+      "title": "Kid-friendly Malaysian plates",
+      "summary": "Hainanese chicken rice and roti canai with mild dhal are reliable family starts.",
+      "body": "Hainanese chicken rice is gently seasoned, usually with chili in a dish on the side. Roti canai or murtabak with dhal can be ordered without sambal. Fresh mango or watermelon at fruit stalls is an easy share. Avoid unknown heat for small children until you taste. Family trip mode: skip unsolicited alcohol lists.",
+      "tags": [
+        "family",
+        "kids",
+        "chicken-rice",
+        "roti-canai"
+      ],
+      "typicalMyr": "Chicken rice RM 10–18 · roti canai RM 2–4 per piece",
+      "phraseTips": [
+        {
+          "phrase": "Kurang manis",
+          "pronunciation": "KOO-rahng MAH-nees",
+          "meaning": "Less sweet (drinks and desserts)."
+        }
+      ],
+      "followUpChips": [
+        "Best dinner near KLCC?",
+        "Vegetarian options"
+      ],
+      "placeCards": [
+        {
+          "name": "Hainanese chicken rice (hawker or food court)",
+          "area": "KLCC / Bukit Bintang food courts",
+          "badge": "Kid Favorite",
+          "priceBandMyr": "RM 10–18",
+          "why": "Poached chicken, rice, cucumber — chili on the side so kids can skip heat."
+        }
+      ],
+      "escalation": "none",
+      "sortOrder": 2
+    },
+    {
+      "id": "my-food-diet",
+      "topic": "food",
+      "category": "food_spice_diet",
+      "title": "Halal, vegetarian, and allergies",
+      "summary": "Halal is widespread; vegetarian is easy if you ask; allergies need clear phrases.",
+      "body": "Most Malay and many Indian-Muslim (mamak) kitchens are halal. Chinese pork and non-halal stalls exist — look for halal signage if that matters. Vegetarian: Indian banana-leaf and Indian-Muslim spots often have meatless curries; say no ikan bilis (anchovy) in nasi lemak sambal and no shrimp paste (belacan). For nuts, shellfish, or gluten, state the allergen; this product cannot diagnose a reaction. Severe breathing trouble is SOS.",
+      "tags": [
+        "halal",
+        "vegetarian",
+        "vegan",
+        "allergy"
+      ],
+      "phraseTips": [
+        {
+          "phrase": "Saya vegetarian",
+          "pronunciation": "SAH-yah veh-jeh-TEH-ree-un",
+          "meaning": "I am vegetarian."
+        },
+        {
+          "phrase": "Tiada kacang / tiada udang",
+          "pronunciation": "TEE-ah-dah KAH-chang / TEE-ah-dah OO-dang",
+          "meaning": "No peanuts / no prawn."
+        }
+      ],
+      "followUpChips": [
+        "Is this food spicy?",
+        "Mamak stalls"
+      ],
+      "escalation": "none",
+      "sortOrder": 3
+    },
+    {
+      "id": "my-food-klcc-dinner",
+      "topic": "food",
+      "category": "nearby_dining",
+      "title": "Dinner near KLCC",
+      "summary": "Food courts in Suria KLCC for easy family meals; walk or short Grab to Bukit Bintang for street food.",
+      "body": "If you are at Petronas Twin Towers / KLCC Park, Suria KLCC’s food courts and casual restaurants cover chicken rice, noodles, and international chains with air-con and toilets — good with kids. For open-air dinner, Bukit Bintang and Jalan Alor are a short walk or one monorail/MRT hop. Prices and wait times are estimates. This product cannot book a table.",
+      "tags": [
+        "klcc",
+        "dinner",
+        "family",
+        "suria"
+      ],
+      "area": "KLCC",
+      "typicalMyr": "Food court RM 15–35 · mall restaurant RM 40–80",
+      "followUpChips": [
+        "Bukit Bintang Food Map",
+        "Directions to Jalan Alor",
+        "Ask about vegetarian options"
+      ],
+      "placeCards": [
+        {
+          "name": "Suria KLCC food court",
+          "area": "KLCC",
+          "badge": "Kid Favorite",
+          "distanceHint": "Inside the mall under the towers",
+          "priceBandMyr": "RM 15–35",
+          "why": "Air-conditioned trays of local and simple plates next to KLCC Park."
+        },
+        {
+          "name": "Jalan Alor",
+          "area": "Bukit Bintang",
+          "badge": "Night food street",
+          "distanceHint": "Short Grab or monorail from KLCC",
+          "priceBandMyr": "RM 15–40",
+          "why": "Outdoor satay and seafood when the family wants atmosphere, not a mall."
+        }
+      ],
+      "escalation": "none",
+      "sortOrder": 4
+    },
+    {
+      "id": "my-food-mamak",
+      "topic": "food",
+      "category": "nearby_dining",
+      "title": "Mamak stalls: 24-hour roti and teh tarik",
+      "summary": "Indian-Muslim coffee shops serve roti canai, nasi kandar, and pulled tea around the clock.",
+      "body": "A mamak is the reliable late-night table: roti canai, maggi goreng, tandoori, and teh tarik. Many are halal. Ask for less sweet drinks (kurang manis) and sambal on the side. They are social, fluorescent, and family-common until late. Card acceptance varies — keep small notes.",
+      "tags": [
+        "mamak",
+        "roti",
+        "teh-tarik",
+        "late-night"
+      ],
+      "typicalMyr": "Roti + teh RM 5–12",
+      "phraseTips": [
+        {
+          "phrase": "Teh tarik kurang manis",
+          "pronunciation": "teh TAH-rik KOO-rahng MAH-nees",
+          "meaning": "Pulled milk tea, less sweet."
+        }
+      ],
+      "followUpChips": [
+        "Is this food spicy?",
+        "Do I need cash for night market?"
+      ],
+      "escalation": "none",
+      "sortOrder": 5
+    },
+    {
+      "id": "my-attr-klcc",
+      "topic": "attractions",
+      "category": "itinerary_plan",
+      "title": "Petronas Twin Towers and KLCC Park",
+      "summary": "The towers are the landmark; the park and Suria mall are the easy family half-day.",
+      "body": "Petronas Twin Towers (KLCC) are the city’s postcard. Skybridge and observation deck tickets are sold by the official operator — this app cannot book or guarantee slots. KLCC Park is free, with a playground, evening fountain, and lake views. Aquaria KLCC (paid, in the convention centre) is a common kid stop. Combine with Suria KLCC for heat breaks.",
+      "tags": [
+        "klcc",
+        "petronas",
+        "park",
+        "family"
+      ],
+      "area": "KLCC",
+      "followUpChips": [
+        "Add to Plan",
+        "Best dinner near KLCC?",
+        "Aquaria KLCC"
+      ],
+      "placeCards": [
+        {
+          "name": "Petronas Twin Towers",
+          "area": "KLCC",
+          "badge": "Landmark",
+          "why": "The defining KL skyline — book official deck tickets yourself if you want to go up."
+        },
+        {
+          "name": "KLCC Park",
+          "area": "KLCC",
+          "badge": "Kid Favorite",
+          "why": "Free lawns, playground, and tower views; go late afternoon to dodge heat."
+        }
+      ],
+      "escalation": "none",
+      "sortOrder": 1
+    },
+    {
+      "id": "my-attr-batu-caves",
+      "topic": "attractions",
+      "category": "itinerary_plan",
+      "title": "Batu Caves as a half-day",
+      "summary": "KTM to Batu Caves station, modest dress, early start to beat heat and crowds.",
+      "body": "Take KTM Komuter to Batu Caves (not LRT). The 272 steps are steep and exposed — limited-walking travelers may prefer the lower caves and temple grounds. Monkeys snatch food; keep bottles zipped. Combine dress rules from the etiquette article. Avoid claiming festival-day crowd sizes; Thaipusam is exceptionally busy if it falls during your trip.",
+      "tags": [
+        "batu-caves",
+        "ktm",
+        "temple",
+        "day-trip"
+      ],
+      "area": "Batu Caves",
+      "followUpChips": [
+        "Dress code for Batu Caves?",
+        "How to ride KTM",
+        "Add to Plan"
+      ],
+      "deepLink": "/explore",
+      "escalation": "none",
+      "sortOrder": 2
+    },
+    {
+      "id": "my-attr-bukit-bintang",
+      "topic": "attractions",
+      "category": "itinerary_plan",
+      "title": "Bukit Bintang Golden Triangle",
+      "summary": "Malls, monorail, and Jalan Alor in one walkable cluster.",
+      "body": "Bukit Bintang is shopping (Pavilion KL, Fahrenheit, Lot 10) plus evening food streets. Change Alley and covered links help in rain. It is lively at night; keep bags zipped and use Grab after late drinks. Family trips: malls and Jalan Alor early evening work well; skip adult nightlife lists.",
+      "tags": [
+        "bukit-bintang",
+        "shopping",
+        "pavilion"
+      ],
+      "area": "Bukit Bintang",
+      "followUpChips": [
+        "Bukit Bintang Food Map",
+        "Directions to Jalan Alor",
+        "Add to Plan"
+      ],
+      "placeCards": [
+        {
+          "name": "Pavilion KL",
+          "area": "Bukit Bintang",
+          "badge": "Shopping",
+          "why": "Covered mall hub with a monorail/MRT-friendly location."
+        }
+      ],
+      "escalation": "none",
+      "sortOrder": 3
+    },
+    {
+      "id": "my-attr-heritage",
+      "topic": "attractions",
+      "category": "itinerary_plan",
+      "title": "Merdeka Square, Central Market, and Chinatown",
+      "summary": "Colonial padang, handicraft hall, and Petaling Street in a compact walk.",
+      "body": "Merdeka Square (Dataran Merdeka) is the colonial cricket green and flagpole. Central Market is a heritage building with crafts — prices are negotiable, cash helps. Petaling Street (Chinatown) is a covered bazaar; bargain politely and watch copies vs genuine goods. Kwai Chai Hong is a nearby restored alley for photos. Pasar Seni LRT/MRT is the rail stop.",
+      "tags": [
+        "merdeka",
+        "central-market",
+        "chinatown",
+        "petaling-street"
+      ],
+      "area": "Old KL",
+      "followUpChips": [
+        "Show on Map",
+        "Do I need cash for night market?",
+        "Add to Plan"
+      ],
+      "placeCards": [
+        {
+          "name": "Central Market",
+          "area": "Pasar Seni",
+          "why": "Air-conditioned craft hall next to the river and Chinatown."
+        },
+        {
+          "name": "Petaling Street",
+          "area": "Chinatown",
+          "why": "Bazaar street for souvenirs; cash and bargaining are normal."
+        }
+      ],
+      "escalation": "none",
+      "sortOrder": 4
+    },
+    {
+      "id": "my-attr-beyond-kl",
+      "topic": "attractions",
+      "category": "itinerary_plan",
+      "title": "Beyond KL: still Malaysia, still in scope",
+      "summary": "Penang, Melaka, and Langkawi are in-country; this seed stays high-level.",
+      "body": "Penang (George Town) is a UNESCO food-and-heritage island about 4 hours by road or a short flight from KL. Melaka is a common day or overnight heritage town to the south. Langkawi is a duty-free island in the northwest. This MVP does not invent opening hours or ferry times — say so and point to official tourism or Explore. Destinations outside Malaysia are out of product scope.",
+      "tags": [
+        "penang",
+        "melaka",
+        "langkawi",
+        "day-trip"
+      ],
+      "followUpChips": [
+        "Add to Plan",
+        "KL-only itinerary"
+      ],
+      "deepLink": "/explore",
+      "escalation": "none",
+      "sortOrder": 5
+    },
+    {
+      "id": "my-faq-water",
+      "topic": "faq",
+      "category": "safety_non_emergency",
+      "title": "Is tap water safe to drink?",
+      "summary": "Visitors usually drink bottled or boiled water; ice in busy restaurants is commonly filtered.",
+      "body": "Hotels and locals may drink treated tap water, but the visitor default is bottled water from 7-Eleven or the hotel. Ice in established restaurants is usually from filtered plants; street ice is a judgment call. Buy sealed bottles. This is not medical advice.",
+      "tags": [
+        "water",
+        "health",
+        "hotel"
+      ],
+      "typicalMyr": "1.5 L bottle ~RM 2–3",
+      "followUpChips": [
+        "Heat and hydration",
+        "Pharmacies"
+      ],
+      "escalation": "none",
+      "sortOrder": 1
+    },
+    {
+      "id": "my-faq-plugs",
+      "topic": "faq",
+      "category": "safety_non_emergency",
+      "title": "Power plugs and voltage",
+      "summary": "Type G (UK-style) plugs, 240 V, 50 Hz.",
+      "body": "Malaysia uses the three-rectangular-pin Type G plug. Voltage is 240 V. US and EU travelers need an adapter; many hotel desks lend one. USB outlets are common in newer hotels and KLIA gates.",
+      "tags": [
+        "plugs",
+        "type-g",
+        "voltage"
+      ],
+      "escalation": "none",
+      "sortOrder": 2
+    },
+    {
+      "id": "my-faq-language",
+      "topic": "faq",
+      "category": "culture_etiquette",
+      "title": "Do people speak English?",
+      "summary": "Yes in tourist KL, hotels, malls, and Grab; Malay phrases still help at markets.",
+      "body": "English is widely used in Kuala Lumpur hospitality. Outside tourist belts, Bahasa Malaysia is the default. Chinese dialects and Tamil appear in many neighborhoods. Time zone is Malaysia Time (MYT, UTC+8) with no daylight saving.",
+      "tags": [
+        "english",
+        "malay",
+        "timezone"
+      ],
+      "followUpChips": [
+        "Useful phrases",
+        "How to ride the LRT?"
+      ],
+      "escalation": "none",
+      "sortOrder": 3
+    },
+    {
+      "id": "my-faq-scams",
+      "topic": "faq",
+      "category": "safety_non_emergency",
+      "title": "Everyday scams and touts",
+      "summary": "Ignore unsolicited gem, tailoring, and “closed temple” stories; use official apps and booths.",
+      "body": "Common annoyances: someone claiming your intended attraction is closed and offering a taxi tour; unofficial airport greeters; inflated “tourist price” without a meter. Walk on, use Grab or a posted coupon-taxi booth, and agree prices before handicraft purchases. Disputed Grab fares: screenshot the trip and use in-app help or the hotel desk. This is not a live crime map. If you are being followed or threatened, use SOS (999 / 112) instead of this article.",
+      "tags": [
+        "scam",
+        "touts",
+        "pickpocket",
+        "grab"
+      ],
+      "followUpChips": [
+        "Tourist Police",
+        "Airport transfer options"
+      ],
+      "trustLineEligible": true,
+      "escalation": "handoff",
+      "sortOrder": 4
+    },
+    {
+      "id": "my-faq-emergency",
+      "topic": "faq",
+      "category": "emergency",
+      "title": "Emergency numbers (use SOS)",
+      "summary": "999 police/fire/ambulance; 112 from mobile. Chat must not replace the rose SOS control.",
+      "body": "If you are in immediate danger, stop using this knowledge article as a guide. Call 999 (police, fire, ambulance) or 112 from a mobile network. Tourist Police in KL: 03-2115 9999 for non-emergency tourist help. The concierge header SOS (#E11D48) must stay visible and should open emergency-help. One line only in an SOS turn: stay safe, call now, share location if you can.",
+      "tags": [
+        "999",
+        "112",
+        "sos",
+        "tourist-police"
+      ],
+      "followUpChips": [
+        "Open SOS"
+      ],
+      "trustLineEligible": false,
+      "escalation": "sos",
+      "sortOrder": 5
+    },
+    {
+      "id": "my-faq-passport",
+      "topic": "faq",
+      "category": "safety_non_emergency",
+      "title": "Lost passport or customs trouble",
+      "summary": "Hotel desk plus your embassy; this product is not a lawyer or immigration officer.",
+      "body": "Lost passport: file a police report, then contact your embassy or high commission. Keep a photo of the biodata page separately. Customs or MDAC questions belong to official immigration channels — the Arrival checklist explains the usual airport path but does not rule on visas. This concierge will not invent immigration law.",
+      "tags": [
+        "passport",
+        "embassy",
+        "customs",
+        "mdac"
+      ],
+      "deepLink": "/arrival",
+      "escalation": "handoff",
+      "sortOrder": 6
+    },
+    {
+      "id": "my-faq-visa-oob",
+      "topic": "faq",
+      "category": "arrival_ops",
+      "title": "Visas and immigration rulings are out of scope",
+      "summary": "We do not decide if you need a visa or how long you may stay.",
+      "body": "Visa eligibility, eNTRI/eVisa, and length of stay are official immigration matters. This product will not invent a ruling. Use the Malaysian Immigration Department or your airline. MDAC and queue tips for KLIA live under Arrival operations.",
+      "tags": [
+        "visa",
+        "immigration",
+        "out-of-bounds"
+      ],
+      "deepLink": "/arrival",
+      "escalation": "out_of_bounds",
+      "sortOrder": 7
+    },
+    {
+      "id": "my-faq-booking-oob",
+      "topic": "faq",
+      "category": "itinerary_plan",
+      "title": "We cannot book tables or tickets",
+      "summary": "Show on Map and Add to Plan only — no reservations or payments on your behalf.",
+      "body": "The concierge cannot hold a restaurant table, buy tower tickets, or charge your card. Use Show on Map, Add to Plan, or ask in person. A useful phrase: “Ada meja untuk empat orang?” (Is there a table for four?).",
+      "tags": [
+        "booking",
+        "reservations",
+        "out-of-bounds"
+      ],
+      "phraseTips": [
+        {
+          "phrase": "Ada meja untuk empat orang?",
+          "pronunciation": "AH-dah muh-JUH oon-took em-PAHT OR-ang",
+          "meaning": "Is there a table for four?"
+        }
+      ],
+      "followUpChips": [
+        "Add to Plan",
+        "Show on Map"
+      ],
+      "escalation": "out_of_bounds",
+      "sortOrder": 8
+    },
+    {
+      "id": "my-faq-pharmacy",
+      "topic": "faq",
+      "category": "safety_non_emergency",
+      "title": "Pharmacies and mild illness",
+      "summary": "7-Eleven and chain pharmacies sell basic care; we do not prescribe.",
+      "body": "For sunscreen, plasters, oral rehydration, or simple cold tablets, Watson’s, Guardian, and many 7-Elevens are in malls. Name the symptom to the pharmacist; this product will not choose an antibiotic or diagnose a stomach bug. Bleeding, fainting, chest pain, or a child who cannot drink: SOS.",
+      "tags": [
+        "pharmacy",
+        "clinic",
+        "medical"
+      ],
+      "followUpChips": [
+        "Open SOS if severe"
+      ],
+      "escalation": "handoff",
+      "sortOrder": 9
+    },
+    {
+      "id": "my-faq-sim",
+      "topic": "faq",
+      "category": "arrival_ops",
+      "title": "Local SIM and eSIM",
+      "summary": "Buy after customs at KLIA or install an eSIM before you fly — details in Arrival.",
+      "body": "Prepaid tourist SIMs (CelcomDigi, Maxis, U Mobile) are sold landside after customs. Passport is required. Airport Wi-Fi covers the wait. Do not duplicate the full connectivity guide in chat; send travelers to Arrival SIM.",
+      "tags": [
+        "sim",
+        "esim",
+        "wifi"
+      ],
+      "deepLink": "/arrival/sim",
+      "escalation": "none",
+      "sortOrder": 10
+    }
+  ]
+}

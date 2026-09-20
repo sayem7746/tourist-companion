@@ -22,6 +22,7 @@ import { AppError, NotFoundError } from './errors.js';
 import { serializeErrorForLog } from './observability/error-log.js';
 import { createMetricsCollector } from './observability/metrics.js';
 import { REQUEST_ID_HEADER, resolveRequestId } from './observability/request-id.js';
+import { registerKnowledgeRoutes } from './knowledge/routes.js';
 import { registerHealthRoutes } from './routes/health.js';
 import { registerMetricsRoutes } from './routes/metrics.js';
 
@@ -160,6 +161,7 @@ export function buildApp(config: AppConfig): FastifyInstance {
 
   void registerHealthRoutes(app);
   void registerMetricsRoutes(app);
+  void registerKnowledgeRoutes(app, config);
 
   let memoryAuthStore: AuthStore | undefined;
   let memoryProfileStore: ProfileStore | undefined;

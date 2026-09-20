@@ -31,7 +31,7 @@ Migrations live in `backend/migrations/` and are applied with [node-pg-migrate](
 
 ## Seed
 
-Development seed is **idempotent** (`ON CONFLICT` / existence checks). It creates one demo user, KL trip, KLIA place, Grab provider, trip-place link, referral, and KLIA/KLIA2 arrival checklist items. JSON copy: `db/arrival-checklist.json`.
+Development seed is **idempotent** (`ON CONFLICT` / existence checks). It creates one demo user, KL trip, KLIA place, Grab provider, trip-place link, referral, and KLIA/KLIA2 arrival checklist items. JSON copies: `db/arrival-checklist.json` and `db/malaysia-knowledge.json` (concierge MVP articles).
 
 ```bash
 npm run db:seed
@@ -52,4 +52,4 @@ SQL source of truth: `db/seed.sql`. Do not run seed in production.
 | `referrals` | Attribution codes from a user/trip to a provider |
 | `arrival_checklist_items` | CMS-ready airport arrival steps by traveler stage (KLIA / KLIA2) |
 
-The API opens a `pg` pool (optional `DATABASE_URL`), reports DB status on `GET /health?verbose=true`, exposes `GET /metrics`, serves tourist auth under `/auth/*`, tourist profile under authenticated `GET`/`PATCH /profile`, trip CRUD under authenticated `/trips`, and public `GET /arrival-checklist?airport=&stage=`, `GET /arrival-transport?airport=`, `GET /arrival-connectivity?airport=`, `GET /arrival-currency?airport=`, and `GET /arrival-transfer?airport=&destination=`. See `docs/observability.md`.
+The API opens a `pg` pool (optional `DATABASE_URL`), reports DB status on `GET /health?verbose=true`, exposes `GET /metrics`, serves tourist auth under `/auth/*`, tourist profile under authenticated `GET`/`PATCH /profile`, trip CRUD under authenticated `/trips`, public `GET /knowledge?topic=&category=&q=` (Malaysia concierge seed: transport, etiquette, weather, payments, food, attractions, FAQ), and public `GET /arrival-checklist?airport=&stage=`, `GET /arrival-transport?airport=`, `GET /arrival-connectivity?airport=`, `GET /arrival-currency?airport=`, and `GET /arrival-transfer?airport=&destination=`. See `docs/observability.md`.
