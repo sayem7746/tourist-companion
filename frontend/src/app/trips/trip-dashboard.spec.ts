@@ -101,6 +101,7 @@ describe('TripDashboard', () => {
     expect(compiled.textContent).toContain('Saved places will appear');
     expect(compiled.textContent).toContain('Partner referrals will appear');
     expect(compiled.querySelector('a[href="/trips/new"]')?.textContent).toContain('Plan a trip');
+    expect(compiled.querySelector('a[href="/arrival"]')?.textContent).toContain('Arrival checklist');
     expect(localTodayIso().length).toBe(10);
   });
 

@@ -6,11 +6,13 @@ import { authGuard } from './auth/auth.guard';
 import { Preferences } from './profile/preferences';
 import { TripOnboarding } from './trips/trip-onboarding';
 import { TripDashboard } from './trips/trip-dashboard';
+import { ArrivalChecklist } from './arrival/arrival-checklist';
 
 export const routes: Routes = [
   { path: '', component: Home, title: 'Tourist Companion' },
   { path: 'login', component: Login, title: 'Sign in' },
   { path: 'signup', component: Signup, title: 'Create account' },
+  { path: 'arrival', component: ArrivalChecklist, title: 'Arrival checklist' },
   {
     path: 'trips',
     component: TripDashboard,

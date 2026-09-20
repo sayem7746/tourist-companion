@@ -1,0 +1,76 @@
+<section>
+  <h1>Arrival checklist</h1>
+  <p class="lede">Step through KLIA or KLIA2 after you land. Tick items as you go — progress stays on this device.</p>
+
+  <div class="filters">
+    <label>
+      Airport
+      <select
+        name="airport"
+        [ngModel]="airport"
+        (ngModelChange)="onAirportChange($event)"
+        [disabled]="pending()"
+      >
+        @for (code of airports; track code) {
+          <option [value]="code">{{ airportLabels[code] }}</option>
+        }
+      </select>
+    </label>
+    <label>
+      Stage
+      <select
+        name="stage"
+        [ngModel]="stageFilter"
+        (ngModelChange)="onStageChange($event)"
+        [disabled]="pending()"
+      >
+        <option value="">All stages</option>
+        @for (stage of stages; track stage) {
+          <option [value]="stage">{{ stageLabels[stage] }}</option>
+        }
+      </select>
+    </label>
+  </div>
+
+  @if (pending()) {
+    <p class="meta" aria-live="polite">Loading arrival checklist…</p>
+  }
+
+  @if (loadError()) {
+    <p class="error" role="alert">{{ loadError() }}</p>
+    <button type="button" (click)="load()">Retry</button>
+  }
+
+  @if (!pending() && !loadError()) {
+    <div class="progress" aria-live="polite">
+      <p class="meta">{{ doneCount() }} of {{ items().length }} steps done ({{ percent() }}%)</p>
+      <div class="bar" role="progressbar" [attr.aria-valuenow]="percent()" aria-valuemin="0" aria-valuemax="100">
+        <span class="fill" [style.width.%]="percent()"></span>
+      </div>
+    </div>
+
+    @if (!items().length) {
+      <p>No checklist items for this filter.</p>
+    }
+
+    @for (stage of groupedStages(); track stage) {
+      <h2>{{ stageLabels[stage] }}</h2>
+      @for (item of itemsForStage(stage); track item.id) {
+        <article class="card" [class.done]="isDone(item.id)">
+          <label class="check-row">
+            <input type="checkbox" [checked]="isDone(item.id)" (change)="toggleDone(item.id)" />
+            <span>
+              <strong>{{ item.title }}</strong>
+              @if (item.estimatedMinutes) {
+                <span class="meta"> · ~{{ item.estimatedMinutes }} min</span>
+              }
+            </span>
+          </label>
+          <p>{{ item.body }}</p>
+        </article>
+      }
+    }
+  }
+
+  <p class="meta"><a routerLink="/trips">Back to dashboard</a></p>
+</section>

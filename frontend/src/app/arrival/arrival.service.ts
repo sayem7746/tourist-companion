@@ -1,0 +1,67 @@
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
+
+export const ARRIVAL_AIRPORTS = ['KUL', 'KLIA2'] as const;
+export const DEFAULT_ARRIVAL_AIRPORT = 'KUL' as const;
+
+export const ARRIVAL_STAGES = [
+  'immigration',
+  'baggage',
+  'customs',
+  'sim',
+  'money',
+  'transport',
+  'first_steps',
+] as const;
+
+export type ArrivalAirportCode = (typeof ARRIVAL_AIRPORTS)[number];
+export type ArrivalStage = (typeof ARRIVAL_STAGES)[number];
+
+export interface ArrivalChecklistItem {
+  id: string;
+  airportCode: ArrivalAirportCode;
+  stage: ArrivalStage;
+  title: string;
+  body: string;
+  sortOrder: number;
+  estimatedMinutes?: number;
+}
+
+export interface ArrivalChecklistResponse {
+  airportCode: ArrivalAirportCode;
+  stage: ArrivalStage | null;
+  stages: ArrivalStage[];
+  items: ArrivalChecklistItem[];
+}
+
+export const STAGE_LABELS: Record<ArrivalStage, string> = {
+  immigration: 'Immigration',
+  baggage: 'Baggage',
+  customs: 'Customs',
+  sim: 'SIM / eSIM',
+  money: 'Money',
+  transport: 'Transport',
+  first_steps: 'First steps',
+};
+
+export const AIRPORT_LABELS: Record<ArrivalAirportCode, string> = {
+  KUL: 'KLIA (main)',
+  KLIA2: 'KLIA2',
+};
+
+@Injectable({ providedIn: 'root' })
+export class ArrivalService {
+  private readonly base = `${environment.apiBaseUrl}/arrival-checklist`;
+
+  constructor(private readonly http: HttpClient) {}
+
+  list(airport: ArrivalAirportCode = DEFAULT_ARRIVAL_AIRPORT, stage?: ArrivalStage | ''): Observable<ArrivalChecklistResponse> {
+    let params = new HttpParams().set('airport', airport);
+    if (stage) {
+      params = params.set('stage', stage);
+    }
+    return this.http.get<ArrivalChecklistResponse>(this.base, { params });
+  }
+}

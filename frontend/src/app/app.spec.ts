@@ -35,4 +35,10 @@ describe('App', () => {
     const settings = routes.find((route) => route.path === 'settings');
     expect(settings?.canActivate).toEqual([authGuard]);
   });
+
+  it('should expose a public arrival checklist route', () => {
+    const arrival = routes.find((route) => route.path === 'arrival');
+    expect(arrival?.component).toBeTruthy();
+    expect(arrival?.canActivate).toBeUndefined();
+  });
 });
