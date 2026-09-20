@@ -17,43 +17,21 @@
       </a>
     </div>
     <div class="header-actions">
-      <button
-        type="button"
+      <a
+        routerLink="/emergency"
         class="sos-btn"
         data-path="emergency-help"
+        aria-label="Emergency help"
         [style.background]="sosColor"
-        (click)="openSos()"
       >
         <span class="material-symbols-outlined">e911_emergency</span>
         SOS
-      </button>
+      </a>
       <a routerLink="/settings" class="avatar-link" aria-label="Profile">
         <img class="avatar" [src]="avatarUrl" alt="" />
       </a>
     </div>
   </header>
-
-  @if (sosOpen()) {
-    <aside
-      id="emergency-help"
-      class="sos-panel"
-      data-path="emergency-help"
-      role="alertdialog"
-      aria-labelledby="app-sos-title"
-      [style.background]="sosColor"
-    >
-      <div class="sos-sheet-head">
-        <p id="app-sos-title" class="sos-title">Emergency help</p>
-        <button type="button" class="sos-close" (click)="closeSos()">Close</button>
-      </div>
-      <p>Stay safe. Call now and share your location if you can.</p>
-      @for (number of sosNumbers; track number.code) {
-        <p>
-          <a class="sos-dial" [href]="'tel:' + number.code">{{ number.code }} — {{ number.label }}</a>
-        </p>
-      }
-    </aside>
-  }
 
   <main class="content">
     <router-outlet />

@@ -65,9 +65,12 @@
       <p id="sos-sheet-copy">Stay safe. Call now and share your location if you can.</p>
       @for (number of sosNumbers; track number.code) {
         <p>
-          <a class="sos-dial" [href]="'tel:' + number.code">{{ number.code }} — {{ number.label }}</a>
+          <a class="sos-dial" [href]="'tel:' + number.code"
+            >{{ number.code }} — {{ number.label }}</a
+          >
         </p>
       }
+      <p><a class="sos-dial" routerLink="/emergency">Open emergency help</a></p>
     </aside>
   }
 
@@ -104,9 +107,12 @@
               <p class="sos-title">SOS / Emergency help</p>
               @for (number of sos.numbers; track number.code) {
                 <p>
-                  <a class="sos-dial" [href]="'tel:' + number.code">{{ number.code }} — {{ number.label }}</a>
+                  <a class="sos-dial" [href]="'tel:' + number.code"
+                    >{{ number.code }} — {{ number.label }}</a
+                  >
                 </p>
               }
+              <p><a class="sos-dial" routerLink="/emergency">Open emergency help</a></p>
             </div>
           }
 
@@ -165,7 +171,12 @@
           @if (turn.reply?.followUpChips?.length) {
             <div class="follow-ups">
               @for (chip of turn.reply!.followUpChips; track chip) {
-                <button type="button" class="chip" [disabled]="pending()" (click)="sendFollowUp(chip)">
+                <button
+                  type="button"
+                  class="chip"
+                  [disabled]="pending()"
+                  (click)="sendFollowUp(chip)"
+                >
                   {{ chip }}
                 </button>
               }

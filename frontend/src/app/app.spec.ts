@@ -25,6 +25,8 @@ describe('App', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('.brand-name')?.textContent).toContain('Malaysia Companion');
     expect(compiled.querySelector('.sos-btn')?.textContent).toContain('SOS');
+    expect(compiled.querySelector('.sos-btn')?.getAttribute('href')).toBe('/emergency');
+    expect(compiled.querySelector('.sos-btn')?.getAttribute('data-path')).toBe('emergency-help');
   });
 
   it('should guard the trip dashboard', () => {
@@ -59,6 +61,13 @@ describe('App', () => {
     const sim = routes.find((route) => route.path === 'arrival/sim');
     expect(sim?.component).toBeTruthy();
     expect(sim?.canActivate).toBeUndefined();
+  });
+
+  it('should expose a public emergency help route', () => {
+    const emergency = routes.find((route) => route.path === 'emergency');
+    expect(emergency?.component).toBeTruthy();
+    expect(emergency?.canActivate).toBeUndefined();
+    expect(emergency?.title).toBe('Emergency help');
   });
 
   it('should expose a public Malaysia AI Concierge route', () => {

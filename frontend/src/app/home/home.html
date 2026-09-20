@@ -33,14 +33,22 @@
     <div class="banner-body">
       <div class="banner-top">
         <p class="welcome"><span aria-hidden="true">🇲🇾</span> Welcome to Malaysia</p>
-        <span class="done-pill">{{ arrivalDoneCount() }} of {{ arrivalItems().length || 5 }} Done</span>
+        <span class="done-pill"
+          >{{ arrivalDoneCount() }} of {{ arrivalItems().length || 5 }} Done</span
+        >
       </div>
       <p class="banner-copy">
         Arrival checklist:
-        {{ arrivalItems().length ? arrivalPercent() + '% completed' : 'open the KLIA guide' }}. Let's finish your setup
-        for seamless exploring.
+        {{ arrivalItems().length ? arrivalPercent() + '% completed' : 'open the KLIA guide' }}.
+        Let's finish your setup for seamless exploring.
       </p>
-      <div class="meter" role="progressbar" [attr.aria-valuenow]="arrivalPercent()" aria-valuemin="0" aria-valuemax="100">
+      <div
+        class="meter"
+        role="progressbar"
+        [attr.aria-valuenow]="arrivalPercent()"
+        aria-valuemin="0"
+        aria-valuemax="100"
+      >
         <span [style.width.%]="arrivalPercent()"></span>
       </div>
       <div class="next-step">
@@ -81,7 +89,7 @@
       <h3>Getting Around</h3>
       <p>LRT, MRT, Grab &amp; Monorail</p>
     </a>
-    <a routerLink="/concierge" class="quick-card" fragment="emergency-help">
+    <a routerLink="/emergency" class="quick-card">
       <div class="quick-icon sos">
         <span class="material-symbols-outlined">local_police</span>
       </div>
@@ -96,7 +104,9 @@
         <h2>Today's Plan</h2>
         <p class="lede">
           @if (selectedDay(); as day) {
-            {{ formatDate(day.date) }} • {{ highlights() }} highlight{{ highlights() === 1 ? '' : 's' }}
+            {{ formatDate(day.date) }} • {{ highlights() }} highlight{{
+              highlights() === 1 ? '' : 's'
+            }}
           } @else {
             Open Plan to generate a day-by-day itinerary.
           }
@@ -110,7 +120,9 @@
 
     <div class="plan-card">
       @if (planEmpty()) {
-        <p class="placeholder">No timed stops yet. Generate a draft from your trip dates and interests.</p>
+        <p class="placeholder">
+          No timed stops yet. Generate a draft from your trip dates and interests.
+        </p>
       }
       @for (row of timeline(); track $index) {
         @if (row.type === 'commute') {
@@ -121,7 +133,9 @@
             <p>
               {{ row.minutes }} min travel time
               @if (row.directionsHref) {
-                <a class="directions" [href]="row.directionsHref" target="_blank" rel="noreferrer">Directions →</a>
+                <a class="directions" [href]="row.directionsHref" target="_blank" rel="noreferrer"
+                  >Directions →</a
+                >
               }
             </p>
           </div>
@@ -185,7 +199,9 @@
               <span class="lede">{{ distance(place) }}</span>
             }
           </div>
-          <h4><a [routerLink]="['/explore', place.id]">{{ place.name }}</a></h4>
+          <h4>
+            <a [routerLink]="['/explore', place.id]">{{ place.name }}</a>
+          </h4>
           <p>{{ place.description || place.area || place.city }}</p>
         </div>
       </article>
@@ -208,13 +224,15 @@
     <div>
       <h3>Local Travel Tip of the Day</h3>
       <p>
-        Tipping is not customary in Malaysia, but rounding up for great service is appreciated. While most city vendors
-        accept cashless <strong>DuitNow QR</strong> or credit cards, carry <strong>RM20–RM50 cash</strong> for hawker
-        stall treats and local fruit markets.
+        Tipping is not customary in Malaysia, but rounding up for great service is appreciated.
+        While most city vendors accept cashless <strong>DuitNow QR</strong> or credit cards, carry
+        <strong>RM20–RM50 cash</strong> for hawker stall treats and local fruit markets.
       </p>
       <p class="tip-foot">
         <span>Tipping &amp; Payment Customs</span>
-        <a routerLink="/arrival/money">Read Guide <span class="material-symbols-outlined">chevron_right</span></a>
+        <a routerLink="/arrival/money"
+          >Read Guide <span class="material-symbols-outlined">chevron_right</span></a
+        >
       </p>
     </div>
   </aside>
@@ -240,9 +258,8 @@
 
   <p class="account-links sr-only">
     <a routerLink="/arrival">Arrival checklist</a>
-    · <a routerLink="/arrival/sim">SIM &amp; connectivity</a>
-    · <a routerLink="/arrival/money">Currency &amp; payments</a>
-    · <a routerLink="/login">Sign in</a>
-    · <a routerLink="/signup">create an account</a>
+    · <a routerLink="/arrival/sim">SIM &amp; connectivity</a> ·
+    <a routerLink="/arrival/money">Currency &amp; payments</a> ·
+    <a routerLink="/login">Sign in</a> · <a routerLink="/signup">create an account</a>
   </p>
 </section>

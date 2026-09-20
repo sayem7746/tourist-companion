@@ -1,0 +1,133 @@
+<section class="emergency">
+  <h1>Emergency help</h1>
+  <p class="lede">{{ lede }}</p>
+
+  @let sos = directory()?.sos ?? fallbackSos;
+
+  <aside
+    id="emergency-help"
+    class="sos-hero"
+    [attr.data-path]="sos.path"
+    [style.background]="sos.color"
+    role="region"
+    aria-labelledby="sos-hero-title"
+  >
+    <div class="sos-hero-head">
+      <span class="sos-icon" aria-hidden="true">
+        <span class="material-symbols-outlined fill">e911_emergency</span>
+      </span>
+      <div>
+        <h2 id="sos-hero-title">Call now</h2>
+        <p>Direct connection to Malaysian emergency dispatchers</p>
+      </div>
+    </div>
+    <div class="sos-dials">
+      @for (number of sos.numbers; track number.code; let first = $first) {
+        <a
+          class="dial"
+          [class.dial-hero-primary]="first"
+          [class.dial-hero-outline]="!first"
+          [href]="tel(number.code)"
+        >
+          <span class="material-symbols-outlined">{{ first ? 'call' : 'cell_tower' }}</span>
+          {{ number.code }} — {{ number.label }}
+        </a>
+      }
+    </div>
+  </aside>
+
+  <article class="card context">
+    <div class="context-head">
+      <span class="material-symbols-outlined" aria-hidden="true">pin_drop</span>
+      <h2>Share your location</h2>
+    </div>
+    <ul>
+      <li>
+        Tell 999 you are an international visitor in {{ directory()?.destination || 'Malaysia' }}.
+      </li>
+      <li>Name your current city or area (e.g., {{ contextArea }}), hotel, or nearest landmark.</li>
+      <li>Stay on the line until the dispatcher confirms.</li>
+    </ul>
+    <p class="context-note">
+      <span class="material-symbols-outlined" aria-hidden="true">info</span>
+      This app cannot dispatch emergency vehicles or share GPS automatically.
+    </p>
+  </article>
+
+  @if (pending()) {
+    <p class="meta" aria-live="polite">Loading emergency help…</p>
+  }
+
+  @if (loadError()) {
+    <p class="error" role="alert">{{ loadError() }}</p>
+    <button type="button" class="btn" (click)="load()">Retry</button>
+  }
+
+  <div class="chip-row" role="tablist" aria-label="Emergency directory filters">
+    @for (chip of chips; track chip.id) {
+      <button
+        type="button"
+        class="chip"
+        [class.selected]="filter === chip.id"
+        [attr.aria-pressed]="filter === chip.id"
+        [disabled]="pending()"
+        (click)="onFilter(chip.id)"
+      >
+        {{ chip.label }}
+      </button>
+    }
+  </div>
+
+  @if (directory(); as dir) {
+    @if (!pending() && !loadError()) {
+      @if (dir.contacts.length === 0) {
+        <p class="meta">No contacts in this filter. Try All or SOS.</p>
+      }
+      <div class="contact-list">
+        @for (contact of dir.contacts; track contact.id) {
+          <article class="card contact">
+            <div class="contact-head">
+              <div>
+                <div class="meta-row">
+                  <span class="urgency" [class.sos]="contact.urgency === 'sos'">
+                    {{ urgencyLabels[contact.urgency] }}
+                  </span>
+                  <span class="meta"
+                    >{{ categoryLabels[contact.category] }} · {{ contact.area }} ·
+                    {{ contact.hours }}</span
+                  >
+                </div>
+                <h3>{{ contact.name }}</h3>
+              </div>
+              @if (contact.englishSpoken) {
+                <span class="chip chip-english">English spoken</span>
+              }
+            </div>
+            <p class="summary">{{ contact.summary }}</p>
+            <p class="when"><strong>When to use:</strong> {{ contact.whenToUse }}</p>
+            <div class="dials">
+              @for (number of contact.numbers; track number.code + number.label) {
+                <a [class]="dialClass(contact)" [href]="tel(number.code)">
+                  <span class="material-symbols-outlined">call</span>
+                  Call {{ shown(number) }}
+                </a>
+              }
+            </div>
+            @if (contact.sourceUrl) {
+              <p class="source">
+                Source:
+                <a [href]="contact.sourceUrl" target="_blank" rel="noreferrer">{{
+                  contact.source
+                }}</a>
+              </p>
+            } @else {
+              <p class="source">Source: {{ contact.source }}</p>
+            }
+          </article>
+        }
+      </div>
+    }
+
+    <p class="disclaimer">{{ dir.disclaimer }}</p>
+  }
+</section>

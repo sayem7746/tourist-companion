@@ -77,7 +77,7 @@ Evaluate every user turn in this order. First match wins.
 
 1. Stop normal concierge answering.
 2. Show a full-width SOS card using rose **`#E11D48`** (same token as `docs/stitch-design.md` and the header chip).
-3. Primary CTA: **SOS / Emergency help** → in-app `emergency-help` (Stitch `data-path="emergency-help"`), which must surface Malaysia emergency numbers and a one-tap dialer where the OS allows it.
+3. Primary CTA: **SOS / Emergency help** → in-app `emergency-help` (Stitch `data-path="emergency-help"`, route `/emergency`), which must surface Malaysia emergency numbers and a one-tap dialer where the OS allows it.
    - **999** — police, fire, ambulance
    - **112** — mobile networks
 4. One line of copy only: stay safe, call now, share location if you can. Do not continue restaurant or transit suggestions on the same turn.

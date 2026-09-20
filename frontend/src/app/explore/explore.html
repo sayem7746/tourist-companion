@@ -26,9 +26,12 @@
       <p>Stay safe. Call now and share your location if you can.</p>
       @for (number of sosNumbers; track number.code) {
         <p>
-          <a class="sos-dial" [href]="'tel:' + number.code">{{ number.code }} — {{ number.label }}</a>
+          <a class="sos-dial" [href]="'tel:' + number.code"
+            >{{ number.code }} — {{ number.label }}</a
+          >
         </p>
       }
+      <p><a class="sos-dial" routerLink="/emergency">Open emergency help</a></p>
     </aside>
   }
 
@@ -85,12 +88,19 @@
         <p class="radar-kicker">Radar active</p>
         <p class="radar-title">{{ places().length }} curated gems around you</p>
       </div>
-      <button type="button" class="full-map" (click)="setView(view === 'map' ? 'list' : 'map')">Full Map</button>
+      <button type="button" class="full-map" (click)="setView(view === 'map' ? 'list' : 'map')">
+        Full Map
+      </button>
     </div>
     <div class="pin-field" aria-hidden="true">
       <span class="you-pin" title="You"></span>
       @for (pin of pins(); track pin.id) {
-        <span class="place-pin" [style.left.%]="pin.left" [style.top.%]="pin.top" [title]="pin.name"></span>
+        <span
+          class="place-pin"
+          [style.left.%]="pin.left"
+          [style.top.%]="pin.top"
+          [title]="pin.name"
+        ></span>
       }
     </div>
   </div>
@@ -134,7 +144,11 @@
 
   <div class="place-list">
     @for (place of places(); track place.id) {
-      <article class="place-card" [attr.data-cat]="place.nearbyCategory" [attr.data-place-id]="place.id">
+      <article
+        class="place-card"
+        [attr.data-cat]="place.nearbyCategory"
+        [attr.data-place-id]="place.id"
+      >
         <div class="place-media" [style.background]="mediaTone(place)">
           <span class="media-label">{{ place.nearbyCategory.replace('_', ' ') }}</span>
           @if (distanceLabel(place)) {
@@ -150,7 +164,9 @@
             [disabled]="bookmarkBusy().has(place.id)"
             (click)="toggleBookmark(place.id)"
           >
-            <span class="material-symbols-outlined" [class.fill]="isBookmarked(place.id)">bookmark</span>
+            <span class="material-symbols-outlined" [class.fill]="isBookmarked(place.id)"
+              >bookmark</span
+            >
           </button>
         </div>
         <div class="place-body">

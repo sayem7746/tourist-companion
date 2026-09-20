@@ -13,6 +13,7 @@ import { ArrivalCurrency } from './arrival/arrival-currency';
 import { Explore } from './explore/explore';
 import { PlaceDetailsPage } from './explore/place-details';
 import { Concierge } from './concierge/concierge';
+import { Emergency } from './emergency/emergency';
 
 export const routes: Routes = [
   { path: '', component: Home, title: 'Malaysia Companion' },
@@ -25,6 +26,7 @@ export const routes: Routes = [
   { path: 'explore', component: Explore, title: 'Explore' },
   { path: 'explore/:id', component: PlaceDetailsPage, title: 'Place details' },
   { path: 'concierge', component: Concierge, title: 'Malaysia AI Concierge' },
+  { path: 'emergency', component: Emergency, title: 'Emergency help' },
   {
     path: 'trips',
     component: TripDashboard,

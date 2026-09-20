@@ -2,7 +2,7 @@ import { Location } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
-import { SOS_COLOR, SOS_NUMBERS } from './explore/explore.service';
+import { SOS_COLOR } from './explore/explore.service';
 import { STITCH_AVATAR_URL, STITCH_HEADER_WEATHER, STITCH_LOGO_URL } from './stitch-assets';
 
 const MAIN_TABS = new Set(['/', '/explore', '/trips', '/plan', '/concierge', '/settings']);
@@ -22,23 +22,15 @@ export class App {
   readonly avatarUrl = STITCH_AVATAR_URL;
   readonly weatherLine = STITCH_HEADER_WEATHER;
   readonly sosColor = SOS_COLOR;
-  readonly sosNumbers = SOS_NUMBERS;
-  readonly sosOpen = signal(false);
   readonly showBack = signal(false);
 
   constructor() {
-    this.router.events.pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd)).subscribe((event) => {
-      const path = event.urlAfterRedirects.split('?')[0];
-      this.showBack.set(!MAIN_TABS.has(path));
-    });
-  }
-
-  openSos(): void {
-    this.sosOpen.set(true);
-  }
-
-  closeSos(): void {
-    this.sosOpen.set(false);
+    this.router.events
+      .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
+      .subscribe((event) => {
+        const path = event.urlAfterRedirects.split('?')[0];
+        this.showBack.set(!MAIN_TABS.has(path));
+      });
   }
 
   goBack(): void {

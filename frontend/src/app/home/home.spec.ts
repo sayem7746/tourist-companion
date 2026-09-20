@@ -34,26 +34,30 @@ describe('Home', () => {
     component = fixture.componentInstance;
     http = TestBed.inject(HttpTestingController);
     fixture.detectChanges();
-    http.expectOne((request) => request.url === `${environment.apiBaseUrl}/arrival-checklist`).flush({
-      airportCode: 'KUL',
-      stage: null,
-      stages: [],
-      items: [],
-    });
-    http.expectOne((request) => request.url === `${environment.apiBaseUrl}/places/nearby`).flush({
-      provider: 'seed',
-      fallback: false,
-      origin: { latitude: 3.15, longitude: 101.71 },
-      areaId: 'klcc',
-      areaLabel: 'KLCC Precinct',
-      radiusMeters: 2000,
-      category: 'all',
-      q: null,
-      quickFilters: [],
-      chips: [],
-      counts: {},
-      places: [],
-    });
+    http
+      .expectOne((request) => request.url === `${environment.apiBaseUrl}/arrival-checklist`)
+      .flush({
+        airportCode: 'KUL',
+        stage: null,
+        stages: [],
+        items: [],
+      });
+    http
+      .expectOne((request) => request.url === `${environment.apiBaseUrl}/places/nearby`)
+      .flush({
+        provider: 'seed',
+        fallback: false,
+        origin: { latitude: 3.15, longitude: 101.71 },
+        areaId: 'klcc',
+        areaLabel: 'KLCC Precinct',
+        radiusMeters: 2000,
+        category: 'all',
+        q: null,
+        quickFilters: [],
+        chips: [],
+        counts: {},
+        places: [],
+      });
     http
       .expectOne(`${environment.apiBaseUrl}/auth/me`)
       .flush({ error: 'unauthenticated' }, { status: 401, statusText: 'Unauthorized' });
@@ -75,8 +79,17 @@ describe('Home', () => {
     expect(compiled.textContent).toContain('Welcome to Malaysia');
     expect(compiled.textContent).toContain('Explore Nearby');
     expect(compiled.textContent).toContain("Today's Plan");
-    expect(compiled.querySelector('.account-links a[href="/arrival"]')?.textContent).toContain('Arrival checklist');
-    expect(compiled.querySelector('.account-links a[href="/arrival/sim"]')?.textContent).toContain('SIM');
-    expect(compiled.querySelector('.account-links a[href="/arrival/money"]')?.textContent).toContain('Currency');
+    expect(compiled.querySelector('.account-links a[href="/arrival"]')?.textContent).toContain(
+      'Arrival checklist',
+    );
+    expect(compiled.querySelector('.account-links a[href="/arrival/sim"]')?.textContent).toContain(
+      'SIM',
+    );
+    expect(
+      compiled.querySelector('.account-links a[href="/arrival/money"]')?.textContent,
+    ).toContain('Currency');
+    expect(compiled.querySelector('a.quick-card[href="/emergency"]')?.textContent).toContain(
+      'Emergency',
+    );
   });
 });
