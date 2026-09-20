@@ -12,8 +12,11 @@
       <span class="role">{{ session.role }}</span>
     </p>
     <p class="meta">
-      This JWT authorizes partner admin APIs. Scripts may still send
+      This JWT authorizes partner and content admin APIs. Scripts may still send
       <code>X-Admin-Token</code> or a Bearer <code>ADMIN_TOKEN</code>.
+    </p>
+    <p class="nav">
+      <a routerLink="/admin/content">Manage content</a>
     </p>
     <button type="button" (click)="logout()">Sign out</button>
   }

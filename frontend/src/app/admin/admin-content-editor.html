@@ -1,0 +1,107 @@
+<section class="admin-content">
+  <p class="crumb"><a routerLink="/admin/content">Content</a> / {{ isNew() ? 'New' : 'Edit' }}</p>
+  <h1>{{ isNew() ? 'New article' : 'Edit article' }}</h1>
+  <p class="lede">Admin-only CMS for arrival, FAQ, etiquette, payment, and safety copy.</p>
+
+  @if (loadError()) {
+    <p class="error" role="alert">{{ loadError() }}</p>
+  }
+  @if (saveError()) {
+    <p class="error" role="alert">{{ saveError() }}</p>
+  }
+
+  <form (ngSubmit)="submit()">
+    <label>
+      Kind
+      <select name="kind" [ngModel]="kind" (ngModelChange)="onKindChange($event)" required>
+        @for (option of kinds; track option) {
+          <option [value]="option">{{ labels[option] }}</option>
+        }
+      </select>
+    </label>
+    <label>
+      Title
+      <input name="title" type="text" [(ngModel)]="title" required maxlength="160" />
+    </label>
+    <label>
+      Slug
+      <input
+        name="slug"
+        type="text"
+        [(ngModel)]="slug"
+        maxlength="80"
+        placeholder="optional-kebab-case"
+      />
+    </label>
+    <label>
+      Summary
+      <input name="summary" type="text" [(ngModel)]="summary" maxlength="500" />
+    </label>
+    <label>
+      Body
+      <textarea name="body" rows="8" [(ngModel)]="body" required maxlength="20000"></textarea>
+    </label>
+    <label>
+      Tags
+      <input name="tags" type="text" [(ngModel)]="tagsText" placeholder="comma or line separated" />
+    </label>
+    @if (showArea()) {
+      <label>
+        Area
+        <input name="area" type="text" [(ngModel)]="area" maxlength="240" />
+      </label>
+    }
+    @if (showAirport()) {
+      <label>
+        Airport
+        <select name="airportCode" [(ngModel)]="airportCode">
+          <option value="">None</option>
+          @for (code of airports; track code) {
+            <option [value]="code">{{ code }}</option>
+          }
+        </select>
+      </label>
+    }
+    @if (topicOptions().length) {
+      <label>
+        Topic
+        <select name="topic" [(ngModel)]="topic">
+          <option value="">None</option>
+          @for (option of topicOptions(); track option.id) {
+            <option [value]="option.id">{{ option.label }}</option>
+          }
+        </select>
+      </label>
+    }
+    <label>
+      When to use
+      <textarea name="whenToUse" rows="3" [(ngModel)]="whenToUse" maxlength="800"></textarea>
+    </label>
+    @if (showSteps()) {
+      <label>
+        Steps
+        <textarea
+          name="steps"
+          rows="5"
+          [(ngModel)]="stepsText"
+          placeholder="One step per line"
+        ></textarea>
+      </label>
+      <label>
+        Icon
+        <input name="icon" type="text" [(ngModel)]="icon" maxlength="80" />
+      </label>
+    }
+    <label>
+      Sort order
+      <input name="sortOrder" type="number" min="0" max="9999" [(ngModel)]="sortOrder" />
+    </label>
+    <label class="check">
+      <input name="published" type="checkbox" [(ngModel)]="published" />
+      Published
+    </label>
+    <button type="submit" class="btn" [disabled]="pending()">
+      {{ isNew() ? 'Create' : 'Save' }}
+    </button>
+  </form>
+</section>

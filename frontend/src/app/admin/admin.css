@@ -44,6 +44,15 @@ button {
   cursor: pointer;
 }
 
+.nav {
+  margin: 0 0 1rem;
+}
+
+.nav a {
+  font-weight: 700;
+  text-decoration: none;
+}
+
 code {
   font-size: 0.85em;
 }

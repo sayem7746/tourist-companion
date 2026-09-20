@@ -34,6 +34,10 @@ import { registerEmbassyRoutes } from './embassies/routes.js';
 import { registerEmergencyRoutes } from './emergency/routes.js';
 import { registerSafetyRoutes } from './safety/routes.js';
 import { registerKnowledgeRoutes } from './knowledge/routes.js';
+import { registerContentAdminRoutes } from './content/routes.js';
+import { createMemoryContentStore } from './content/memory-store.js';
+import { createPgContentStore } from './content/pg-store.js';
+import type { ContentStore } from './content/types.js';
 import { registerPartnerAdminRoutes, registerPartnerPublicRoutes } from './partners/routes.js';
 import { registerReferralRoutes } from './partners/referral-routes.js';
 import { createMemoryPartnerStore } from './partners/memory-store.js';
@@ -191,6 +195,7 @@ export function buildApp(config: AppConfig): FastifyInstance {
   let memoryArrivalStore: ArrivalChecklistStore | undefined;
   let memoryHistoryStore: ConciergeHistoryStore | undefined;
   let memoryPartnerStore: PartnerStore | undefined;
+  let memoryContentStore: ContentStore | undefined;
 
   const resolveAuthStore = (): AuthStore | undefined => {
     if (app.db) {
@@ -262,6 +267,17 @@ export function buildApp(config: AppConfig): FastifyInstance {
     return undefined;
   };
 
+  const resolveContentStore = (): ContentStore | undefined => {
+    if (app.db) {
+      return createPgContentStore(app.db);
+    }
+    if (config.NODE_ENV === 'test') {
+      memoryContentStore ??= createMemoryContentStore();
+      return memoryContentStore;
+    }
+    return undefined;
+  };
+
   app.decorate('getAuthStore', resolveAuthStore);
 
   void registerAuthRoutes(app, config, resolveAuthStore);
@@ -288,6 +304,7 @@ export function buildApp(config: AppConfig): FastifyInstance {
   void registerPartnerPublicRoutes(app, config, resolvePartnerStore);
   void registerPartnerAdminRoutes(app, config, resolvePartnerStore);
   void registerReferralRoutes(app, config, resolvePartnerStore);
+  void registerContentAdminRoutes(app, config, resolveContentStore);
 
   return app;
 }

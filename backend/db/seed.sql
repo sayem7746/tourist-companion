@@ -262,3 +262,115 @@ ON CONFLICT (id) DO UPDATE SET
   body = EXCLUDED.body,
   sort_order = EXCLUDED.sort_order,
   estimated_minutes = EXCLUDED.estimated_minutes;
+
+-- Ops CMS copies of arrival, FAQ, etiquette, payment, and safety seed articles.
+INSERT INTO content_items (
+  id, slug, kind, title, summary, body, tags, area, airport_code, topic,
+  when_to_use, icon, steps, sort_order, published
+)
+VALUES
+(
+  'aaaaaaaa-1111-4111-8111-000000000001',
+  'kul-immigration-mdac',
+  'arrival_guide',
+  'Complete MDAC before passport control',
+  'Fill the Malaysia Digital Arrival Card before you reach KLIA immigration.',
+  'Fill the Malaysia Digital Arrival Card (MDAC) online before you reach KLIA immigration. Have your passport, flight number, and Malaysian address ready. Follow signs for Arrivals / Immigration after leaving the aircraft.',
+  ARRAY['mdac', 'immigration', 'klia']::text[],
+  NULL,
+  'KUL',
+  'immigration',
+  'Use this as soon as you land at KLIA (main), before passport control.',
+  NULL,
+  '{}'::text[],
+  1,
+  TRUE
+),
+(
+  'aaaaaaaa-1111-4111-8111-000000000002',
+  'is-tap-water-safe',
+  'faq',
+  'Is tap water safe to drink?',
+  'Visitors usually drink bottled or boiled water; ice in busy restaurants is commonly filtered.',
+  'Hotels and locals may drink treated tap water, but the visitor default is bottled water from 7-Eleven or the hotel. Ice in established restaurants is usually from filtered plants; street ice is a judgment call. Buy sealed bottles. This is not medical advice.',
+  ARRAY['water', 'health', 'hotel']::text[],
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  '{}'::text[],
+  1,
+  TRUE
+),
+(
+  'aaaaaaaa-1111-4111-8111-000000000003',
+  'dress-code-for-batu-caves',
+  'etiquette',
+  'Dress code for Batu Caves',
+  'Cover shoulders and knees for the temple; shoes off in designated prayer areas.',
+  'Batu Caves is a Hindu temple complex. Wear clothing that covers shoulders and knees before you climb the 272 steps to the Temple Cave. Sarongs are sometimes offered at the base if you arrive in shorts. Remove shoes where signs or staff indicate. Photography is usually fine outdoors; skip flash and photos of people praying. This is practical temple etiquette, not a lecture.',
+  ARRAY['batu-caves', 'temple', 'dress']::text[],
+  'Batu Caves, Selangor',
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  '{}'::text[],
+  1,
+  TRUE
+),
+(
+  'aaaaaaaa-1111-4111-8111-000000000004',
+  'cash-for-night-markets',
+  'payment',
+  'Cash for night markets and hawkers',
+  'Pasar malam and many stalls want small MYR notes; cards are uneven.',
+  'Night markets, Jalan Alor satay stalls, and wet-market fruit sellers usually take cash only. Keep RM 1, RM 5, and RM 10 notes — RM 50 and RM 100 are hard to change. Some stalls now take Touch ’n Go eWallet QR, but do not count on it. Malls, hotels, and Grab still take cards.',
+  ARRAY['cash', 'pasar-malam', 'hawker']::text[],
+  NULL,
+  'KUL',
+  'cash',
+  'Use cash at night markets and hawkers; cards cover malls and Grab.',
+  NULL,
+  '{}'::text[],
+  1,
+  TRUE
+),
+(
+  'aaaaaaaa-1111-4111-8111-000000000005',
+  'lost-phone-wallet-or-bag',
+  'safety',
+  'Lost phone, wallet, or bag',
+  'Retrace your last stops, tell the hotel or venue, then file a police report if the item is still missing.',
+  'Stay put if it is safe and retrace your last stops (hotel, Grab drop-off, mall desk). Ask the venue lost-and-found and your hotel concierge. Freeze cards and change passwords from another device. File a police report with Tourist Police for insurance or replacement IDs.',
+  ARRAY['lost-items', 'police']::text[],
+  NULL,
+  NULL,
+  'lost_items',
+  'Use after a phone, wallet, or bag goes missing and you are not in immediate danger.',
+  'inventory_2',
+  ARRAY[
+    'Stay put if it is safe and retrace your last stops (hotel, Grab drop-off, mall desk).',
+    'Ask the venue lost-and-found and your hotel concierge.',
+    'Freeze cards and change passwords from another device.',
+    'File a police report with Tourist Police for insurance or replacement IDs.',
+    'If you are being followed or threatened, stop searching and call 999 or 112.'
+  ]::text[],
+  1,
+  TRUE
+)
+ON CONFLICT (slug) DO UPDATE SET
+  kind = EXCLUDED.kind,
+  title = EXCLUDED.title,
+  summary = EXCLUDED.summary,
+  body = EXCLUDED.body,
+  tags = EXCLUDED.tags,
+  area = EXCLUDED.area,
+  airport_code = EXCLUDED.airport_code,
+  topic = EXCLUDED.topic,
+  when_to_use = EXCLUDED.when_to_use,
+  icon = EXCLUDED.icon,
+  steps = EXCLUDED.steps,
+  sort_order = EXCLUDED.sort_order,
+  published = EXCLUDED.published;

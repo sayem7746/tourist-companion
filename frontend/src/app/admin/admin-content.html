@@ -1,0 +1,75 @@
+<section class="admin-content">
+  <p class="crumb"><a routerLink="/admin">Operations</a> / Content</p>
+  <h1>Content</h1>
+  <p class="lede">
+    Arrival guides, FAQs, etiquette, payment guidance, and safety copy. Published rows stay in this
+    CMS until tourist surfaces are wired to it.
+  </p>
+
+  <p class="toolbar">
+    <a routerLink="/admin/content/new" class="btn">New article</a>
+  </p>
+
+  <div class="chips" role="list">
+    @for (chip of chips; track chip.id) {
+      <button
+        type="button"
+        class="chip"
+        [class.selected]="kind === chip.id"
+        (click)="filterKind(chip.id)"
+      >
+        {{ chip.label }}
+      </button>
+    }
+  </div>
+
+  <form class="filters" (ngSubmit)="load()">
+    <label>
+      Status
+      <select name="published" [(ngModel)]="published" (ngModelChange)="setPublished($event)">
+        <option value="all">All</option>
+        <option value="published">Published</option>
+        <option value="draft">Draft</option>
+      </select>
+    </label>
+    <label class="search">
+      Search
+      <input name="q" type="search" [(ngModel)]="q" minlength="2" maxlength="80" />
+    </label>
+    <button type="submit" class="btn btn-secondary">Search</button>
+  </form>
+
+  @if (pending()) {
+    <p class="meta" aria-live="polite">Loading content…</p>
+  }
+  @if (loadError()) {
+    <p class="error" role="alert">{{ loadError() }}</p>
+    <button type="button" class="btn" (click)="load()">Retry</button>
+  }
+  @if (actionError()) {
+    <p class="error" role="alert">{{ actionError() }}</p>
+  }
+
+  @if (!pending() && !loadError()) {
+    @if (items().length === 0) {
+      <p class="meta">No articles match these filters.</p>
+    }
+    <ul class="list">
+      @for (item of items(); track item.id) {
+        <li>
+          <a [routerLink]="['/admin/content', item.id]" class="card">
+            <span class="kind">{{ labels[item.kind] }}</span>
+            <strong>{{ item.title }}</strong>
+            <span class="meta">{{ item.published ? 'Published' : 'Draft' }} · {{ item.slug }}</span>
+          </a>
+          <div class="row-actions">
+            <button type="button" class="btn btn-secondary" (click)="togglePublished(item)">
+              {{ item.published ? 'Unpublish' : 'Publish' }}
+            </button>
+            <button type="button" class="btn btn-danger" (click)="remove(item)">Delete</button>
+          </div>
+        </li>
+      }
+    </ul>
+  }
+</section>

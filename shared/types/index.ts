@@ -886,3 +886,36 @@ export interface ReferralAnalytics {
   partners: PartnerPerformance[];
   channels: ReferralChannelPerformance[];
 }
+
+export const CONTENT_KINDS = [
+  'arrival_guide',
+  'faq',
+  'etiquette',
+  'payment',
+  'safety',
+] as const;
+
+export type ContentKind = (typeof CONTENT_KINDS)[number];
+
+export const CONTENT_AIRPORTS = ['KUL', 'KLIA2'] as const;
+export type ContentAirportCode = (typeof CONTENT_AIRPORTS)[number];
+
+export interface ContentItem {
+  id: string;
+  slug: string;
+  kind: ContentKind;
+  title: string;
+  summary: string;
+  body: string;
+  tags: string[];
+  area: string | null;
+  airportCode: ContentAirportCode | null;
+  topic: string | null;
+  whenToUse: string | null;
+  icon: string | null;
+  steps: string[];
+  sortOrder: number;
+  published: boolean;
+  createdAt: string;
+  updatedAt: string;
+}

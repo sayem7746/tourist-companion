@@ -55,7 +55,18 @@ describe('App', () => {
     expect(login?.title).toBe('Admin sign in');
     expect(isAdminPath('/admin')).toBeTrue();
     expect(isAdminPath('/admin/login')).toBeTrue();
+    expect(isAdminPath('/admin/content')).toBeTrue();
     expect(isAdminPath('/')).toBeFalse();
+  });
+
+  it('should guard admin content CMS pages', () => {
+    const list = routes.find((route) => route.path === 'admin/content');
+    expect(list?.canActivate).toEqual([adminGuard]);
+    expect(list?.title).toBe('Content');
+    const create = routes.find((route) => route.path === 'admin/content/new');
+    expect(create?.canActivate).toEqual([adminGuard]);
+    const edit = routes.find((route) => route.path === 'admin/content/:id');
+    expect(edit?.canActivate).toEqual([adminGuard]);
   });
 
   it('should expose a public arrival checklist route', () => {

@@ -18,6 +18,8 @@ import { Embassies } from './embassies/embassies';
 import { Safety } from './safety/safety';
 import { AdminHome } from './admin/admin';
 import { AdminLogin } from './admin/admin-login';
+import { AdminContent } from './admin/admin-content';
+import { AdminContentEditor } from './admin/admin-content-editor';
 import { adminGuard } from './admin/admin.guard';
 
 export const routes: Routes = [
@@ -63,6 +65,24 @@ export const routes: Routes = [
     component: AdminHome,
     canActivate: [adminGuard],
     title: 'Operations',
+  },
+  {
+    path: 'admin/content',
+    component: AdminContent,
+    canActivate: [adminGuard],
+    title: 'Content',
+  },
+  {
+    path: 'admin/content/new',
+    component: AdminContentEditor,
+    canActivate: [adminGuard],
+    title: 'New content',
+  },
+  {
+    path: 'admin/content/:id',
+    component: AdminContentEditor,
+    canActivate: [adminGuard],
+    title: 'Edit content',
   },
   { path: '**', redirectTo: '' },
 ];
