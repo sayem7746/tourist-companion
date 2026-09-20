@@ -1,0 +1,67 @@
+@if (pending() && !partners().length) {
+  <p class="meta" aria-live="polite">Loading partner services…</p>
+}
+
+@if (loadError()) {
+  <p class="error" role="alert">{{ loadError() }}</p>
+  <button type="button" class="btn btn-secondary" (click)="load(true)">Retry</button>
+}
+
+@if (!pending() && !loadError() && partners().length) {
+  <section class="partner-listings" [class.compact]="compact" [attr.data-channel]="channel">
+    @if (heading && !compact) {
+      <h2>{{ heading }}</h2>
+    }
+    @for (partner of partners(); track partner.id) {
+      <article
+        class="partner-card"
+        [class.sponsored]="partner.listing?.sponsored"
+        [attr.data-partner-id]="partner.id"
+        [attr.data-sponsored]="partner.listing?.sponsored ? 'true' : 'false'"
+      >
+        <div class="partner-head">
+          <div>
+            <h3>{{ partner.name }}</h3>
+            <p class="meta">{{ categoryLabel(partner.category) }}</p>
+          </div>
+          <div class="badges">
+            @if (partner.listing?.sponsored) {
+              <span
+                class="chip chip-gold sponsored-badge"
+                role="status"
+                [style.color]="sponsoredColor"
+                [style.background]="sponsoredTint"
+              >
+                {{ sponsoredLabel }}
+              </span>
+            }
+          </div>
+        </div>
+        @if (!compact && partner.listing?.summary) {
+          <p class="summary">{{ partner.listing?.summary }}</p>
+        }
+        @if (!compact && location(partner)) {
+          <p class="meta">{{ location(partner) }}</p>
+        }
+        @if (!compact && facts(partner).length) {
+          <ul class="facts">
+            @for (fact of facts(partner); track fact) {
+              <li>{{ fact }}</li>
+            }
+          </ul>
+        }
+        @if (outbound(partner)) {
+          <button
+            type="button"
+            class="btn"
+            [disabled]="openingId() === partner.id"
+            (click)="open(partner)"
+          >
+            {{ ctaLabel(partner) }}
+          </button>
+        }
+        <p class="disclosure">{{ disclosure(partner) }}</p>
+      </article>
+    }
+  </section>
+}

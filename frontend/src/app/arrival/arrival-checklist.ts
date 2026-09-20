@@ -93,12 +93,40 @@ export class ArrivalChecklist implements OnInit {
     return progressPercent(this.doneCount(), this.items().length);
   }
 
-  groupedStages(): ArrivalStage[] {
-    const present = new Set(this.items().map((item) => item.stage));
-    return ARRIVAL_STAGES.filter((stage) => present.has(stage));
+  numberedItems(): Array<{ n: number; item: ArrivalChecklistItem }> {
+    return this.items().map((item, index) => ({ n: index + 1, item }));
   }
 
-  itemsForStage(stage: ArrivalStage): ArrivalChecklistItem[] {
-    return this.items().filter((item) => item.stage === stage);
+  currentItem(): ArrivalChecklistItem | undefined {
+    return this.items().find((item) => !this.doneIds().has(item.id));
+  }
+
+  isCurrent(item: ArrivalChecklistItem): boolean {
+    return this.currentItem()?.id === item.id;
+  }
+
+  stepIndex(): number {
+    if (!this.items().length) {
+      return 0;
+    }
+    const current = this.currentItem();
+    if (!current) {
+      return this.items().length;
+    }
+    return this.items().findIndex((item) => item.id === current.id) + 1;
+  }
+
+  currentFocus(): string {
+    if (this.loadError()) {
+      return 'Checklist unavailable — retry below';
+    }
+    if (this.pending()) {
+      return 'Loading checklist';
+    }
+    const current = this.currentItem();
+    if (!current) {
+      return this.items().length ? 'Arrival complete' : 'Open the KLIA guide';
+    }
+    return this.stageLabels[current.stage];
   }
 }

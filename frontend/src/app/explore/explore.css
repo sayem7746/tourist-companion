@@ -113,9 +113,14 @@ h2 {
   border: 0;
   border-radius: 50%;
   background: transparent;
-  font-size: 1.25rem;
   cursor: pointer;
   color: var(--color-text-muted);
+  display: grid;
+  place-items: center;
+}
+
+.clear-search .material-symbols-outlined {
+  font-size: 18px;
 }
 
 .scope-row {
@@ -129,24 +134,37 @@ h2 {
 .area-field {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.25rem;
   min-width: 0;
+  padding: 0.25rem 0.55rem 0.25rem 0.6rem;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-low);
+}
+
+.near-icon {
+  font-size: 18px;
+  color: var(--color-primary);
+}
+
+.expand-icon {
+  font-size: 16px;
+  color: var(--color-text-faint);
 }
 
 .area-field select {
   font: inherit;
   font-weight: 600;
-  font-size: 0.8rem;
-  padding: 0.4rem 0.65rem;
+  font-size: 12px;
+  padding: 0.2rem 0;
   border: 0;
-  border-radius: var(--radius-pill);
-  background: color-mix(in srgb, var(--color-primary) 8%, white);
-  max-width: 11rem;
+  background: transparent;
+  max-width: 9.5rem;
+  appearance: none;
 }
 
 .radius-chip {
   color: var(--color-primary);
-  font-size: 0.75rem;
+  font-size: 11px;
   font-weight: 700;
   white-space: nowrap;
 }
@@ -160,15 +178,22 @@ h2 {
 }
 
 .view-toggle button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
   border: 0;
   background: transparent;
   font: inherit;
-  font-size: 0.75rem;
+  font-size: 12px;
   font-weight: 600;
   padding: 0.35rem 0.7rem;
   border-radius: var(--radius-pill);
   color: var(--color-text-muted);
   cursor: pointer;
+}
+
+.view-toggle .material-symbols-outlined {
+  font-size: 16px;
 }
 
 .view-toggle button.active {
@@ -199,7 +224,8 @@ h2 {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, rgba(19, 27, 46, 0.7), rgba(19, 27, 46, 0.3), transparent);
+  z-index: 2;
+  background: linear-gradient(90deg, rgba(19, 27, 46, 0.78), rgba(19, 27, 46, 0.28), transparent);
 }
 
 .mini-map.expanded {
@@ -208,12 +234,41 @@ h2 {
 
 .radar-copy {
   position: absolute;
-  left: 1rem;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 2;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0 1rem;
   color: #fff;
-  pointer-events: none;
+}
+
+.radar-icon {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--color-primary);
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.radar-icon .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.full-map {
+  margin-left: auto;
+  padding: 0.25rem 0.75rem;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--color-surface) 95%, transparent);
+  color: var(--color-primary);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
 }
 
 .radar-kicker {
@@ -234,7 +289,7 @@ h2 {
 .pin-field {
   position: absolute;
   inset: 0;
-  z-index: 2;
+  z-index: 1;
 }
 
 .you-pin,
@@ -339,8 +394,13 @@ h2 {
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.92);
   color: var(--color-text);
-  font-size: 1.05rem;
+  display: grid;
+  place-items: center;
   cursor: pointer;
+}
+
+.bookmark .material-symbols-outlined {
+  font-size: 18px;
 }
 
 .bookmark.on {
@@ -396,6 +456,16 @@ h2 {
   flex-wrap: wrap;
   gap: 0.5rem;
   margin-top: 0.75rem;
+}
+
+.place-actions .btn {
+  flex: 1;
+  min-height: 2.5rem;
+  padding: 0.35rem 0.85rem;
+}
+
+.place-actions .material-symbols-outlined {
+  font-size: 16px;
 }
 
 .error {

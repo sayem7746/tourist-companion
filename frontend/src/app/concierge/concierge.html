@@ -197,8 +197,21 @@
       maxlength="2000"
       [disabled]="pending()"
     />
+    <span class="material-symbols-outlined mic" aria-hidden="true">mic</span>
     <button type="submit" class="send" [disabled]="pending() || !draft.trim()" aria-label="Send">
       <span class="material-symbols-outlined">arrow_upward</span>
     </button>
   </form>
+  <p class="composer-trust">
+    <span class="material-symbols-outlined">verified_user</span>
+    Verified cultural etiquette &amp; local transport safety checked
+  </p>
+
+  <app-partner-listings
+    heading="Partner services nearby"
+    channel="concierge"
+    [categories]="partnerCategories"
+    [tripId]="tripId ?? null"
+    [limit]="3"
+  />
 </section>

@@ -14,8 +14,12 @@
       </select>
     </label>
   } @else {
-    <h2>Airport transit options</h2>
-    <p class="lede">Recommended by speed, cost, and pickup zone. Open the full guide for boarding notes.</p>
+    <p class="matrix-kicker">
+      <span class="material-symbols-outlined">compare_arrows</span>
+      Decision Matrix
+    </p>
+    <h2>Airport Transit Options</h2>
+    <p class="lede">Recommended based on your group size, luggage, and timing</p>
   }
 
   <p class="safety-banner">
@@ -39,15 +43,19 @@
       @for (option of options(); track option.id) {
         <article class="card option">
           <div class="option-head">
-            <h3>{{ option.name }}</h3>
-            <span [class]="chipClass(option.badge)">{{ option.badge }}</span>
-          </div>
-          <p class="summary">{{ option.summary }}</p>
-          <dl class="facts">
-            <div>
-              <dt>Cost</dt>
-              <dd>{{ option.cost }}</dd>
+            <div class="mode-icon" aria-hidden="true">
+              <span class="material-symbols-outlined">{{ modeIcon(option.mode) }}</span>
             </div>
+            <div>
+              <div class="name-row">
+                <h3>{{ option.name }}</h3>
+                <span [class]="chipClass(option.badge)">{{ option.badge }}</span>
+              </div>
+              <p class="summary">{{ option.summary }}</p>
+            </div>
+            <p class="cost">{{ option.cost }}</p>
+          </div>
+          <dl class="facts">
             <div>
               <dt>Duration</dt>
               <dd>{{ option.duration }}</dd>
@@ -70,6 +78,13 @@
       }
     </div>
   }
+
+  <app-partner-listings
+    heading="Airport transfer partners"
+    channel="arrival"
+    [categories]="transferCategories"
+    [airport]="airport"
+  />
 
   @if (!embedded) {
     <p class="meta"><a routerLink="/arrival">Back to arrival checklist</a></p>

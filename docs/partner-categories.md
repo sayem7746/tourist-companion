@@ -6,11 +6,11 @@ Asana: [Define partner categories](https://app.asana.com/1/1218080418840809/proj
 
 Shared contract: `PARTNER_CATEGORIES`, `PARTNER_CATEGORY_CHIPS`, `Provider`, `PartnerListing`, `PartnerCommission`, `Referral`, and `REFERRAL_DISCLOSURE` in `shared/types/index.ts`.
 
-This document is the category and compliance model. Partner admin listing CRUD lives at `/admin/partners`. Traveler click, lead, and outbound-redirect tracking lives at `/referrals/*` and `GET /r/:code`.
+This document is the category and compliance model. Traveler listings are `GET /partners` and `GET /partners/:id` (active rows only; no contact email or commission). Partner admin listing CRUD lives at `/admin/partners`. Traveler click, lead, and outbound-redirect tracking lives at `/referrals/*` and `GET /r/:code`.
 
 ## Screen contract
 
-Align partner surfaces with Stitch [TripCompanion — Tropical Sanctuary](https://stitch.withgoogle.com/projects/10046914594084234943) tokens in `docs/stitch-design.md`. There is not yet a dedicated marketplace screen; partners show as outbound booking chips on Plan / itinerary items, Arrival (SIM and transfers), Explore / place details, Concierge place cards, and the trip dashboard **Referrals** section (`/trips`).
+Align partner surfaces with Stitch [TripCompanion — Tropical Sanctuary](https://stitch.withgoogle.com/projects/10046914594084234943) tokens in `docs/stitch-design.md`. There is not a dedicated marketplace screen; `GET /partners` feeds outbound booking cards on Plan / itinerary items, Arrival (SIM and transfers), Explore / place details, Concierge, Home nearby, and the trip dashboard **Referrals** section (`/trips`).
 
 | Surface | Behavior |
 | --- | --- |
@@ -18,7 +18,7 @@ Align partner surfaces with Stitch [TripCompanion — Tropical Sanctuary](https:
 | **Sponsored** | Gold chip when `listing.sponsored` is true — text `#D97706`, fill `#FEF3C7` (same secondary gold as bookmark / Indoor Safe) |
 | Disclosure | Always visible next to a referral link, including organic (non-sponsored) partners |
 | Plan item | `ItineraryItem.bookingUrl` + `referralPartnerId` (`docs/itinerary-data-model.md`) |
-| Dashboard | Later: list of the traveler’s `Referral` rows; placeholder until the API exists |
+| Dashboard | Traveler `Referral` rows plus active partner cards for the trip |
 | SOS | Emergency only (`#E11D48`). Never a partner badge or referral CTA |
 
 Paid placement uses gold, not primary emerald (`#0D7652`). Emerald is for nav, primary actions, and trust — not “this is an ad.”
@@ -257,6 +257,8 @@ Core tables (`backend/migrations/1730000000000_init-core-schema.cjs`) plus marke
 - contact — `website`, `contact_email` (ops only)
 - commission — `commission_rate`, `commission_basis`, `commission_currency` (`MYR`)
 - `referrals` (tracking) — `user_id`, `trip_id`, `provider_id`, `place_id`, `referral_code`, `status`, `channel`, `itinerary_item_id`, `metadata` (click key + events), `converted_at`. Unique click keys: `backend/migrations/1730000009000_referral-click-key.cjs`.
+
+Public tourist API: `GET /partners` (query: `category`, `city`, `airport`) and `GET /partners/:id`. Active listings only, ranked sponsored-first, using the tourist `Provider` view.
 
 Admin API (`ADMIN_TOKEN` or JWT `role: admin`): `GET`/`POST /admin/partners`, `GET`/`PATCH`/`DELETE /admin/partners/:id`, `POST /admin/partners/:id/approve` (sets `is_active`), `POST /admin/partners/:id/pause`. Responses use the ops `Provider` view (contact + commission). Delete fails with 409 when referrals still point at the row — pause instead.
 

@@ -57,6 +57,7 @@ describe('Home', () => {
     http
       .expectOne(`${environment.apiBaseUrl}/auth/me`)
       .flush({ error: 'unauthenticated' }, { status: 401, statusText: 'Unauthorized' });
+    http.expectOne(`${environment.apiBaseUrl}/partners`).flush({ partners: [] });
     fixture.detectChanges();
   });
 

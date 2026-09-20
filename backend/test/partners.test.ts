@@ -12,6 +12,8 @@ import {
   parseCommissionRate,
   slugifyPartnerName,
   toOpsProvider,
+  toPublicPartnerList,
+  toPublicProvider,
   toReferral,
   toTouristProvider,
 } from '../src/partners/map.js';
@@ -69,6 +71,34 @@ describe('partner marketplace model', () => {
     expect(tourist.listing?.airportCodes).toEqual(['KUL', 'KLIA2']);
     expect(tourist.listing?.meetAndGreet).toBe(false);
     expect(tourist.website).toBe('https://www.grab.com/my/');
+  });
+
+  it('strips ops fields on public partner lists and ranks sponsored first', () => {
+    const sponsored: ProviderRow = {
+      ...grabRow,
+      id: '55555555-5555-4555-8555-555555555555',
+      name: 'Klook Malaysia',
+      slug: 'klook-malaysia',
+      category: 'tours',
+      sponsored: true,
+      listingCity: 'Kuala Lumpur',
+      listingArea: 'KLCC',
+      listingExtras: { durationHint: 'Half day' },
+    };
+    const publicGrab = toPublicProvider(toOpsProvider(grabRow));
+    expect(publicGrab.contactEmail).toBeUndefined();
+    expect(publicGrab.commission).toBeUndefined();
+    expect(publicGrab.listing?.sponsored).toBe(false);
+
+    const ranked = toPublicPartnerList([toOpsProvider(grabRow), toOpsProvider(sponsored)]);
+    expect(ranked.map((partner) => partner.slug)).toEqual(['klook-malaysia', 'grab-malaysia']);
+
+    const city = toPublicPartnerList([toOpsProvider(grabRow)], { city: 'Kuala' });
+    expect(city).toHaveLength(1);
+    const airport = toPublicPartnerList([toOpsProvider(grabRow)], { airport: 'KUL' });
+    expect(airport).toHaveLength(1);
+    const otherCity = toPublicPartnerList([toOpsProvider(grabRow)], { city: 'Penang' });
+    expect(otherCity).toHaveLength(0);
   });
 
   it('includes contact and commission on ops provider views', () => {
@@ -143,7 +173,7 @@ const config = loadConfig({
 });
 const app = buildApp(config);
 
-describe('partner admin CRUD', () => {
+describe('partner admin CRUD and public listing', () => {
   beforeAll(async () => {
     await app.ready();
   });
@@ -153,6 +183,44 @@ describe('partner admin CRUD', () => {
   });
 
   const adminHeaders = { 'x-admin-token': ADMIN_TOKEN };
+
+  async function createListedPartner(input: {
+    name: string;
+    slug: string;
+    category: 'hotels' | 'transfers' | 'tours' | 'sim' | 'restaurants' | 'tourist_services';
+    isActive?: boolean;
+    sponsored?: boolean;
+    city?: string;
+    area?: string;
+    airportCodes?: Array<'KUL' | 'KLIA2'>;
+  }) {
+    const created = await app.inject({
+      method: 'POST',
+      url: '/admin/partners',
+      headers: adminHeaders,
+      payload: {
+        name: input.name,
+        slug: input.slug,
+        category: input.category,
+        isActive: input.isActive ?? true,
+        website: 'https://example.com/partner',
+        contactEmail: 'ops@example.com',
+        listing: {
+          summary: `${input.name} listing for travelers.`,
+          city: input.city ?? 'Kuala Lumpur',
+          area: input.area,
+          bookingUrl: 'https://example.com/book',
+          sponsored: input.sponsored ?? false,
+          airportCodes: input.airportCodes,
+        },
+        commission: { rate: 0.1 },
+      },
+    });
+    expect(created.statusCode).toBe(201);
+    return created.json() as {
+      partner: { id: string; slug: string; contactEmail?: string; commission?: unknown };
+    };
+  }
 
   it('rejects anonymous and tourist sessions', async () => {
     const missing = await app.inject({ method: 'GET', url: '/admin/partners' });
@@ -290,6 +358,82 @@ describe('partner admin CRUD', () => {
       headers: adminHeaders,
     });
     expect(removed.statusCode).toBe(204);
+  });
+
+  it('lists active tourist partners without contact or commission', async () => {
+    const slug = `public-${Math.random().toString(36).slice(2, 8)}`;
+    const { partner } = await createListedPartner({
+      name: 'Klook Malaysia',
+      slug,
+      category: 'tours',
+      sponsored: true,
+      city: 'Kuala Lumpur',
+      area: 'KLCC',
+    });
+    const pausedSlug = `paused-${Math.random().toString(36).slice(2, 8)}`;
+    await createListedPartner({
+      name: 'Paused Desk',
+      slug: pausedSlug,
+      category: 'tourist_services',
+      isActive: false,
+    });
+
+    const listed = await app.inject({ method: 'GET', url: '/partners' });
+    expect(listed.statusCode).toBe(200);
+    const body = listed.json() as {
+      partners: Array<{
+        id: string;
+        slug: string;
+        contactEmail?: string;
+        commission?: unknown;
+        listing?: { sponsored?: boolean; disclosure?: string };
+      }>;
+    };
+    const found = body.partners.find((row) => row.id === partner.id);
+    expect(found).toBeTruthy();
+    expect(found?.listing?.sponsored).toBe(true);
+    expect(found?.listing?.disclosure).toBe(REFERRAL_DISCLOSURE);
+    expect(found?.contactEmail).toBeUndefined();
+    expect(found?.commission).toBeUndefined();
+    expect(body.partners.some((row) => row.slug === pausedSlug)).toBe(false);
+    expect(JSON.stringify(body)).not.toContain('ops@example.com');
+    expect(JSON.stringify(body)).not.toContain('"rate"');
+
+    const filtered = await app.inject({ method: 'GET', url: '/partners?category=tours&city=Kuala' });
+    expect(filtered.statusCode).toBe(200);
+    const filteredBody = filtered.json() as { partners: Array<{ id: string }> };
+    expect(filteredBody.partners.some((row) => row.id === partner.id)).toBe(true);
+
+    const fetched = await app.inject({ method: 'GET', url: `/partners/${partner.id}` });
+    expect(fetched.statusCode).toBe(200);
+    expect(fetched.json()).toMatchObject({
+      partner: { id: partner.id, slug, listing: { sponsored: true } },
+    });
+    expect(fetched.json().partner.contactEmail).toBeUndefined();
+    expect(fetched.json().partner.commission).toBeUndefined();
+  });
+
+  it('filters airport-coded partners and hides paused rows on GET /partners/:id', async () => {
+    const slug = `air-${Math.random().toString(36).slice(2, 8)}`;
+    const { partner } = await createListedPartner({
+      name: 'Grab Airport',
+      slug,
+      category: 'transfers',
+      airportCodes: ['KUL'],
+      area: 'KLIA / KLIA2',
+    });
+
+    const kul = await app.inject({ method: 'GET', url: '/partners?category=transfers&airport=KUL' });
+    expect(kul.statusCode).toBe(200);
+    expect(kul.json().partners.some((row: { id: string }) => row.id === partner.id)).toBe(true);
+
+    await app.inject({
+      method: 'POST',
+      url: `/admin/partners/${partner.id}/pause`,
+      headers: adminHeaders,
+    });
+    const hidden = await app.inject({ method: 'GET', url: `/partners/${partner.id}` });
+    expect(hidden.statusCode).toBe(404);
   });
 });
 

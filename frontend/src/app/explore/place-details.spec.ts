@@ -94,6 +94,8 @@ describe('PlaceDetailsPage', () => {
     expect(req.request.method).toBe('GET');
     req.flush(details());
     fixture.detectChanges();
+    http.expectOne(`${environment.apiBaseUrl}/partners`).flush({ partners: [] });
+    fixture.detectChanges();
 
     const text = compiled().textContent ?? '';
     expect(compiled().querySelector('h1')?.textContent).toContain('Petronas Twin Towers');

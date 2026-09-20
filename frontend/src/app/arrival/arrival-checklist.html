@@ -2,6 +2,9 @@
   <h1 class="sr-only">Arrival checklist</h1>
 
   <section class="hero">
+    <span class="hero-deco" aria-hidden="true">
+      <span class="material-symbols-outlined">near_me</span>
+    </span>
     <span class="hero-pill">
       <span class="material-symbols-outlined">flight_land</span>
       KLIA Terminal 1 &amp; 2 Companion
@@ -10,6 +13,19 @@
     <p class="lede">
       Selamat Datang! Let's get you smoothly from touchdown to your stay in Kuala Lumpur with verified transit options.
     </p>
+    <div class="hero-progress">
+      <div class="hero-progress-row">
+        <span>Step {{ stepIndex() }} of {{ items().length || '—' }}</span>
+        <span>Arrival Progression: {{ percent() }}%</span>
+      </div>
+      <div class="bar" role="progressbar" [attr.aria-valuenow]="percent()" aria-valuemin="0" aria-valuemax="100">
+        <span class="fill" [style.width.%]="percent()"></span>
+      </div>
+      <p class="focus">
+        <span class="material-symbols-outlined">verified</span>
+        Current Focus: {{ currentFocus() }}
+      </p>
+    </div>
     <p class="actions hero-actions">
       <a routerLink="/arrival/sim" class="btn btn-secondary">SIM &amp; connectivity</a>
       <a routerLink="/arrival/money" class="btn btn-secondary">Currency &amp; payments</a>
@@ -17,7 +33,7 @@
     </p>
   </section>
 
-  <p class="lede">Step through KLIA or KLIA2 after you land. Tick items as you go — progress stays on this device.</p>
+  <p class="lede">Tap steps to expand detailed terminal tips. Tick items as you go — progress stays on this device.</p>
 
   <div class="filters">
     <label>
@@ -59,12 +75,7 @@
   }
 
   @if (!pending() && !loadError()) {
-    <div class="progress" aria-live="polite">
-      <p class="meta">{{ doneCount() }} of {{ items().length }} steps done ({{ percent() }}%)</p>
-      <div class="bar" role="progressbar" [attr.aria-valuenow]="percent()" aria-valuemin="0" aria-valuemax="100">
-        <span class="fill" [style.width.%]="percent()"></span>
-      </div>
-    </div>
+    <p class="sr-only" aria-live="polite">{{ doneCount() }} of {{ items().length }} steps done ({{ percent() }}%)</p>
 
     <aside class="advisory">
       <span class="advisory-icon">
@@ -80,26 +91,41 @@
       </div>
     </aside>
 
+    <div class="flow-head">
+      <div>
+        <h2>Arrival Flow Checklist</h2>
+        <p class="meta">Tap steps to expand detailed terminal tips</p>
+      </div>
+      <span class="done-pill">{{ doneCount() }} / {{ items().length }} Completed</span>
+    </div>
+
     @if (!items().length) {
       <p>No checklist items for this filter.</p>
     }
 
-    @for (stage of groupedStages(); track stage) {
-      <h2>{{ stageLabels[stage] }}</h2>
-      @for (item of itemsForStage(stage); track item.id) {
-        <article class="card" [class.done]="isDone(item.id)">
-          <label class="check-row">
-            <input type="checkbox" [checked]="isDone(item.id)" (change)="toggleDone(item.id)" />
-            <span>
-              <strong>{{ item.title }}</strong>
-              @if (item.estimatedMinutes) {
-                <span class="meta"> · ~{{ item.estimatedMinutes }} min</span>
-              }
-            </span>
+    @for (row of numberedItems(); track row.item.id) {
+      <details class="step" [class.done]="isDone(row.item.id)" [open]="isCurrent(row.item)">
+        <summary>
+          <label class="step-mark" [class.checked]="isDone(row.item.id)" [class.current]="isCurrent(row.item)">
+            <input type="checkbox" [checked]="isDone(row.item.id)" (click)="$event.stopPropagation()" (change)="toggleDone(row.item.id)" />
+            @if (isDone(row.item.id)) {
+              <span class="material-symbols-outlined">check</span>
+            } @else if (isCurrent(row.item)) {
+              <span class="material-symbols-outlined fill">star</span>
+            } @else {
+              {{ row.n }}
+            }
           </label>
-          <p>{{ item.body }}</p>
-        </article>
-      }
+          <span class="step-copy">
+            <strong>{{ row.n }}. {{ row.item.title }}</strong>
+            @if (row.item.estimatedMinutes) {
+              <span class="meta">~{{ row.item.estimatedMinutes }} min</span>
+            }
+          </span>
+          <span class="material-symbols-outlined chevron">expand_more</span>
+        </summary>
+        <p>{{ row.item.body }}</p>
+      </details>
     }
   }
 

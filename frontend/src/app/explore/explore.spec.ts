@@ -135,6 +135,10 @@ describe('Explore', () => {
       }
     }
     req.flush(payload);
+    for (const partnerReq of http.match(`${environment.apiBaseUrl}/partners`)) {
+      expect(partnerReq.request.method).toBe('GET');
+      partnerReq.flush({ partners: [] });
+    }
     if (session === 'anon') {
       for (const tripReq of http.match(`${environment.apiBaseUrl}/trips`)) {
         expect(tripReq.request.withCredentials).toBeTrue();
@@ -266,6 +270,7 @@ describe('Explore', () => {
     req.flush({ error: 'fail' }, { status: 500, statusText: 'Server Error' });
     const tripsReq = http.expectOne(`${environment.apiBaseUrl}/trips`);
     tripsReq.flush({ error: { code: 'UNAUTHORIZED' } }, { status: 401, statusText: 'Unauthorized' });
+    http.expectOne(`${environment.apiBaseUrl}/partners`).flush({ partners: [] });
     fixture.detectChanges();
     expect(compiled().textContent).toContain('Could not load nearby places');
   });

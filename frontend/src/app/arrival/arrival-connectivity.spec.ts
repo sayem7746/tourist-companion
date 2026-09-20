@@ -62,6 +62,12 @@ function guide(): ArrivalConnectivityResponse {
   };
 }
 
+function flushPartners(http: HttpTestingController, partners: unknown[] = []): void {
+  const req = http.expectOne(`${environment.apiBaseUrl}/partners`);
+  expect(req.request.method).toBe('GET');
+  req.flush({ partners });
+}
+
 describe('ArrivalConnectivity', () => {
   let fixture: ComponentFixture<ArrivalConnectivity>;
   let http: HttpTestingController;
@@ -86,6 +92,7 @@ describe('ArrivalConnectivity', () => {
     expect(req.request.method).toBe('GET');
     expect(req.request.params.get('airport')).toBe('KUL');
     req.flush(guide());
+    flushPartners(http);
     fixture.detectChanges();
 
     const host = fixture.nativeElement as HTMLElement;
@@ -101,6 +108,7 @@ describe('ArrivalConnectivity', () => {
   it('filters by airport', () => {
     fixture.detectChanges();
     http.expectOne((request) => request.url === `${environment.apiBaseUrl}/arrival-connectivity`).flush(guide());
+    flushPartners(http);
     fixture.detectChanges();
 
     fixture.componentInstance.onAirportChange('KLIA2');
@@ -135,6 +143,7 @@ describe('ArrivalConnectivity', () => {
     http
       .expectOne((request) => request.url === `${environment.apiBaseUrl}/arrival-connectivity`)
       .flush({ error: 'nope' }, { status: 500, statusText: 'Server Error' });
+    flushPartners(http);
     fixture.detectChanges();
     expect((fixture.nativeElement as HTMLElement).textContent).toContain('Could not load the SIM and connectivity guide');
   });

@@ -182,7 +182,16 @@
                 @if (row.item.placeId) {
                   <a class="btn btn-secondary" [routerLink]="['/explore', row.item.placeId]">Place</a>
                 }
-                @if (row.item.bookingUrl) {
+                @if (row.item.referralPartnerId) {
+                  <app-partner-listings
+                    channel="itinerary"
+                    [compact]="true"
+                    [partnerIds]="partnerIds(row.item)"
+                    [tripId]="trip.id"
+                    [placeId]="row.item.placeId"
+                    [itineraryItemId]="row.item.id"
+                  />
+                } @else if (row.item.bookingUrl) {
                   <a class="btn" [href]="row.item.bookingUrl" target="_blank" rel="noreferrer">Tickets</a>
                 }
                 <a class="btn btn-secondary" routerLink="/concierge">Ask concierge</a>
@@ -332,7 +341,19 @@
   }
 
   <h2>Referrals</h2>
-  <p class="placeholder">Partner referrals will appear here once that API is ready.</p>
+  @if (referrals().length) {
+    <ul class="referral-status">
+      @for (row of referrals(); track row.id) {
+        <li>{{ referralLabel(row) }}</li>
+      }
+    </ul>
+  }
+  <app-partner-listings
+    heading="Partner services for this trip"
+    channel="dashboard"
+    [categories]="tripPartnerCategories"
+    [tripId]="featured()?.id ?? null"
+  />
 
   <h2>Quick actions</h2>
   <div class="actions">

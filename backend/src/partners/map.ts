@@ -111,6 +111,55 @@ export function toTouristProvider(row: ProviderRow): Provider {
   };
 }
 
+/** Traveler API view: never include ops contact or commission. */
+export function toPublicProvider(provider: Provider): Provider {
+  return {
+    id: provider.id,
+    name: provider.name,
+    slug: provider.slug,
+    category: provider.category,
+    isActive: provider.isActive,
+    website: provider.website ?? null,
+    listing: provider.listing,
+  };
+}
+
+export function publicPartnerMatchesCity(partner: Provider, city?: string): boolean {
+  const needle = city?.trim().toLowerCase();
+  if (!needle) return true;
+  const listing = partner.listing;
+  const haystack = `${listing?.city ?? ''} ${listing?.area ?? ''}`.toLowerCase();
+  return haystack.includes(needle);
+}
+
+export function publicPartnerMatchesAirport(
+  partner: Provider,
+  airport?: ArrivalAirportCode,
+): boolean {
+  if (!airport) return true;
+  const codes = partner.listing?.airportCodes;
+  if (!codes || codes.length === 0) return true;
+  return codes.includes(airport);
+}
+
+export function comparePublicPartners(a: Provider, b: Provider): number {
+  const sponsoredDelta = Number(Boolean(b.listing?.sponsored)) - Number(Boolean(a.listing?.sponsored));
+  if (sponsoredDelta !== 0) return sponsoredDelta;
+  return a.name.localeCompare(b.name);
+}
+
+export function toPublicPartnerList(
+  partners: Provider[],
+  filters?: { city?: string; airport?: ArrivalAirportCode },
+): Provider[] {
+  return partners
+    .filter((partner) => partner.isActive)
+    .filter((partner) => publicPartnerMatchesCity(partner, filters?.city))
+    .filter((partner) => publicPartnerMatchesAirport(partner, filters?.airport))
+    .map(toPublicProvider)
+    .sort(comparePublicPartners);
+}
+
 export function toOpsProvider(row: ProviderRow): Provider {
   return {
     ...toTouristProvider(row),

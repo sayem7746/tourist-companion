@@ -4,7 +4,7 @@ import { requireAdmin } from '../auth/middleware.js';
 import type { AppConfig } from '../config.js';
 import { NotFoundError, ServiceUnavailableError, ValidationError } from '../errors.js';
 import { validateRequest } from '../validate.js';
-import { defaultCommissionBasis, slugifyPartnerName } from './map.js';
+import { defaultCommissionBasis, slugifyPartnerName, toPublicPartnerList, toPublicProvider } from './map.js';
 import {
   COMMISSION_BASES,
   PARTNER_CATEGORIES,
@@ -110,6 +110,48 @@ const listQuery = z
       .optional(),
   })
   .strict();
+
+const publicListQuery = z
+  .object({
+    category: z.enum(PARTNER_CATEGORIES).optional(),
+    city: z.string().trim().min(2).max(80).optional(),
+    airport: z.enum(['KUL', 'KLIA2']).optional(),
+  })
+  .strict();
+
+export async function registerPartnerPublicRoutes(
+  app: FastifyInstance,
+  _config: AppConfig,
+  resolveStore: () => PartnerStore | undefined,
+): Promise<void> {
+  const getStore = (): PartnerStore => {
+    const store = resolveStore();
+    if (!store) {
+      throw new ServiceUnavailableError('Partner store is not configured');
+    }
+    return store;
+  };
+
+  app.get('/partners', async (request) => {
+    const { query } = validateRequest(request, { query: publicListQuery });
+    const partners = await getStore().list({
+      category: query.category,
+      isActive: true,
+    });
+    return {
+      partners: toPublicPartnerList(partners, { city: query.city, airport: query.airport }),
+    };
+  });
+
+  app.get('/partners/:id', async (request) => {
+    const { params } = validateRequest(request, { params: idParams });
+    const partner = await getStore().get(params.id);
+    if (!partner || !partner.isActive) {
+      throw new NotFoundError('Partner not found');
+    }
+    return { partner: toPublicProvider(partner) };
+  });
+}
 
 export async function registerPartnerAdminRoutes(
   app: FastifyInstance,

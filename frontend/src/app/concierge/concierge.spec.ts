@@ -79,6 +79,7 @@ describe('Concierge', () => {
     http
       .expectOne(`${environment.apiBaseUrl}/auth/me`)
       .flush({ error: 'unauthenticated' }, { status: 401, statusText: 'Unauthorized' });
+    http.expectOne(`${environment.apiBaseUrl}/partners`).flush({ partners: [] });
     fixture.detectChanges();
   });
 
@@ -248,6 +249,7 @@ describe('signed-in concierge history', () => {
     http.expectOne(`${environment.apiBaseUrl}/auth/me`).flush({
       user: { id: 'user-1', email: 'a@b.c', displayName: 'Alex' },
     });
+    http.expectOne(`${environment.apiBaseUrl}/partners`).flush({ partners: [] });
     http.expectOne(`${environment.apiBaseUrl}/concierge/history`).flush({
       tripId: '11111111-1111-4111-8111-111111111111',
       conversationId: 'conv-saved',

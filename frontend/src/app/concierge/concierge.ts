@@ -2,6 +2,8 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../auth/auth.service';
+import { PartnerListings } from '../partners/partner-listings';
+import { CONCIERGE_PARTNER_CATEGORIES } from '../partners/partner.service';
 import {
   ConciergeService,
   DEFAULT_LIVE_CONTEXT,
@@ -26,7 +28,7 @@ export interface ThreadTurn {
 
 @Component({
   selector: 'app-concierge',
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, PartnerListings],
   templateUrl: './concierge.html',
   styleUrl: './concierge.css',
 })
@@ -38,6 +40,7 @@ export class Concierge implements OnInit {
   readonly liveContextLabel = DEFAULT_LIVE_CONTEXT_LABEL;
   readonly sosColor = SOS_COLOR;
   readonly sosNumbers = SOS_NUMBERS;
+  readonly partnerCategories = CONCIERGE_PARTNER_CATEGORIES;
 
   draft = '';
   conversationId: string | undefined;

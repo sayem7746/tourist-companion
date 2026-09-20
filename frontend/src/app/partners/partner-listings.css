@@ -1,0 +1,92 @@
+:host {
+  display: block;
+}
+
+.partner-listings h2 {
+  margin: 1.25rem 0 0.5rem;
+  font-size: 1.15rem;
+}
+
+.partner-card {
+  margin: 0.75rem 0;
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+}
+
+.partner-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.65rem;
+}
+
+.partner-head h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.35rem;
+}
+
+.sponsored-badge {
+  color: #d97706;
+  background: #fef3c7;
+  border-color: transparent;
+}
+
+.summary,
+.meta {
+  margin: 0.35rem 0 0;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+.facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0.55rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.facts li {
+  padding: 0.2rem 0.65rem;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-low);
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.btn {
+  margin-top: 0.75rem;
+}
+
+.disclosure {
+  margin: 0.55rem 0 0;
+  color: var(--color-text-faint);
+  font-size: 0.75rem;
+  line-height: 1.35;
+}
+
+.compact .partner-card {
+  margin: 0.45rem 0 0;
+  padding: 0.75rem 0.85rem;
+}
+
+.compact .btn {
+  min-height: 2.5rem;
+  margin-top: 0.5rem;
+}
+
+.error {
+  color: var(--color-sos);
+}

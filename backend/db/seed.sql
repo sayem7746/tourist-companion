@@ -82,6 +82,120 @@ ON CONFLICT (slug) DO UPDATE SET
   languages = EXCLUDED.languages,
   listing_extras = EXCLUDED.listing_extras;
 
+INSERT INTO providers (
+  name,
+  slug,
+  category,
+  website,
+  contact_email,
+  commission_rate,
+  commission_basis,
+  commission_currency,
+  is_active,
+  listing_summary,
+  listing_city,
+  listing_area,
+  booking_url,
+  disclosure,
+  sponsored,
+  typical_myr,
+  languages,
+  listing_extras
+)
+VALUES (
+  'Klook Malaysia',
+  'klook-malaysia',
+  'tours',
+  'https://www.klook.com/',
+  'partners@example.com',
+  0.0600,
+  'booking',
+  'MYR',
+  TRUE,
+  'Day tours, attraction tickets, and hotel pickup across Kuala Lumpur.',
+  'Kuala Lumpur',
+  'KLCC',
+  'https://www.klook.com/',
+  'We may earn a commission if you book or buy through this link.',
+  TRUE,
+  'RM 80–250',
+  ARRAY['en', 'ms']::text[],
+  '{"durationHint": "Half day to full day", "meetingPoint": "KLCC / hotel pickup"}'::jsonb
+)
+ON CONFLICT (slug) DO UPDATE SET
+  name = EXCLUDED.name,
+  category = EXCLUDED.category,
+  website = EXCLUDED.website,
+  contact_email = EXCLUDED.contact_email,
+  commission_rate = EXCLUDED.commission_rate,
+  commission_basis = EXCLUDED.commission_basis,
+  listing_summary = EXCLUDED.listing_summary,
+  listing_city = EXCLUDED.listing_city,
+  listing_area = EXCLUDED.listing_area,
+  booking_url = EXCLUDED.booking_url,
+  disclosure = EXCLUDED.disclosure,
+  sponsored = EXCLUDED.sponsored,
+  typical_myr = EXCLUDED.typical_myr,
+  languages = EXCLUDED.languages,
+  listing_extras = EXCLUDED.listing_extras;
+
+INSERT INTO providers (
+  name,
+  slug,
+  category,
+  website,
+  contact_email,
+  commission_rate,
+  commission_basis,
+  commission_currency,
+  is_active,
+  listing_summary,
+  listing_city,
+  listing_area,
+  booking_url,
+  disclosure,
+  sponsored,
+  typical_myr,
+  languages,
+  listing_extras
+)
+VALUES (
+  'CelcomDigi tourist eSIM',
+  'celcomdigi-esim',
+  'sim',
+  'https://www.celcomdigi.com/',
+  'partners@example.com',
+  0.0800,
+  'activation',
+  'MYR',
+  TRUE,
+  'Airport prepaid SIM and eSIM packs after KLIA and KLIA2 customs. Passport required.',
+  'Sepang',
+  'KLIA / KLIA2',
+  'https://www.celcomdigi.com/',
+  'We may earn a commission if you book or buy through this link.',
+  FALSE,
+  'From RM 30',
+  ARRAY['en', 'ms']::text[],
+  '{"connectivityKind": "esim", "dataAllowance": "10–40 GB", "validity": "7–30 days", "passportRequired": true, "airportCodes": ["KUL", "KLIA2"]}'::jsonb
+)
+ON CONFLICT (slug) DO UPDATE SET
+  name = EXCLUDED.name,
+  category = EXCLUDED.category,
+  website = EXCLUDED.website,
+  contact_email = EXCLUDED.contact_email,
+  commission_rate = EXCLUDED.commission_rate,
+  commission_basis = EXCLUDED.commission_basis,
+  listing_summary = EXCLUDED.listing_summary,
+  listing_city = EXCLUDED.listing_city,
+  listing_area = EXCLUDED.listing_area,
+  booking_url = EXCLUDED.booking_url,
+  disclosure = EXCLUDED.disclosure,
+  sponsored = EXCLUDED.sponsored,
+  typical_myr = EXCLUDED.typical_myr,
+  languages = EXCLUDED.languages,
+  listing_extras = EXCLUDED.listing_extras;
+
 INSERT INTO trip_places (trip_id, place_id, sort_order, notes)
 SELECT t.id, p.id, 0, 'Arrival checkpoint'
 FROM trips t

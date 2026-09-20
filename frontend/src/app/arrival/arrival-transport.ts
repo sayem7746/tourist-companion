@@ -2,6 +2,8 @@ import { Component, Input, OnChanges, OnInit, SimpleChanges, inject, signal } fr
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ArrivalTransferHelper } from './arrival-transfer-helper';
+import { PartnerListings } from '../partners/partner-listings';
+import type { PartnerCategory } from '../partners/partner.service';
 import {
   AIRPORT_LABELS,
   ARRIVAL_AIRPORTS,
@@ -13,7 +15,7 @@ import {
 
 @Component({
   selector: 'app-arrival-transport',
-  imports: [FormsModule, RouterLink, ArrivalTransferHelper],
+  imports: [FormsModule, RouterLink, ArrivalTransferHelper, PartnerListings],
   templateUrl: './arrival-transport.html',
   styleUrl: './arrival-transport.css',
 })
@@ -25,6 +27,7 @@ export class ArrivalTransport implements OnInit, OnChanges {
 
   readonly airports = ARRIVAL_AIRPORTS;
   readonly airportLabels = AIRPORT_LABELS;
+  readonly transferCategories: PartnerCategory[] = ['transfers'];
 
   readonly pending = signal(true);
   readonly loadError = signal('');
@@ -67,5 +70,18 @@ export class ArrivalTransport implements OnInit, OnChanges {
       return 'chip chip-gold';
     }
     return 'chip chip-primary';
+  }
+
+  modeIcon(mode: ArrivalTransportOption['mode']): string {
+    if (mode === 'ekspres') {
+      return 'train';
+    }
+    if (mode === 'bus') {
+      return 'directions_bus';
+    }
+    if (mode === 'e_hail') {
+      return 'local_taxi';
+    }
+    return 'airport_shuttle';
   }
 }

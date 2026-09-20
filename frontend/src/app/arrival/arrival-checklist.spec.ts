@@ -40,6 +40,13 @@ function body(items: ArrivalChecklistItem[], extra: Partial<ArrivalChecklistResp
   };
 }
 
+function flushPartners(http: HttpTestingController, partners: unknown[] = []): void {
+  for (const req of http.match((request) => request.url === `${environment.apiBaseUrl}/partners`)) {
+    expect(req.request.method).toBe('GET');
+    req.flush({ partners });
+  }
+}
+
 function flushChecklist(
   http: HttpTestingController,
   payload: ArrivalChecklistResponse,
@@ -55,6 +62,7 @@ function flushChecklist(
   http
     .expectOne((request) => request.url === `${environment.apiBaseUrl}/arrival-transport`)
     .flush(emptyTransport(nestedAirport));
+  flushPartners(http);
 }
 
 describe('arrival progress helpers', () => {
@@ -100,6 +108,7 @@ describe('ArrivalChecklist', () => {
     http.expectOne((request) => request.url === `${environment.apiBaseUrl}/arrival-connectivity`).flush(emptyConnectivity());
     http.expectOne((request) => request.url === `${environment.apiBaseUrl}/arrival-currency`).flush(emptyCurrency());
     http.expectOne((request) => request.url === `${environment.apiBaseUrl}/arrival-transport`).flush(emptyTransport());
+    flushPartners(http);
     fixture.detectChanges();
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -176,6 +185,7 @@ describe('ArrivalChecklist', () => {
     http.expectOne((request) => request.url === `${environment.apiBaseUrl}/arrival-connectivity`).flush(emptyConnectivity());
     http.expectOne((request) => request.url === `${environment.apiBaseUrl}/arrival-currency`).flush(emptyCurrency());
     http.expectOne((request) => request.url === `${environment.apiBaseUrl}/arrival-transport`).flush(emptyTransport());
+    flushPartners(http);
     fixture.detectChanges();
 
     expect((fixture.nativeElement as HTMLElement).textContent).toContain('Could not load the arrival checklist');

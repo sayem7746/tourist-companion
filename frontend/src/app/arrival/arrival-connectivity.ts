@@ -1,6 +1,7 @@
 import { Component, Input, OnChanges, OnInit, SimpleChanges, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { PartnerListings } from '../partners/partner-listings';
 import {
   AIRPORT_LABELS,
   ARRIVAL_AIRPORTS,
@@ -10,10 +11,11 @@ import {
   ArrivalService,
   DEFAULT_ARRIVAL_AIRPORT,
 } from './arrival.service';
+import type { PartnerCategory } from '../partners/partner.service';
 
 @Component({
   selector: 'app-arrival-connectivity',
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, PartnerListings],
   templateUrl: './arrival-connectivity.html',
   styleUrl: './arrival-connectivity.css',
 })
@@ -25,6 +27,7 @@ export class ArrivalConnectivity implements OnInit, OnChanges {
 
   readonly airports = ARRIVAL_AIRPORTS;
   readonly airportLabels = AIRPORT_LABELS;
+  readonly simCategories: PartnerCategory[] = ['sim'];
 
   readonly pending = signal(true);
   readonly loadError = signal('');

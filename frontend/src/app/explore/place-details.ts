@@ -1,5 +1,7 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, computed, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { PartnerListings } from '../partners/partner-listings';
+import { placePartnerCategories } from '../partners/partner.service';
 import {
   actionButtonClass,
   coverTone,
@@ -12,7 +14,7 @@ import {
 
 @Component({
   selector: 'app-place-details',
-  imports: [RouterLink],
+  imports: [RouterLink, PartnerListings],
   templateUrl: './place-details.html',
   styleUrl: './place-details.css',
 })
@@ -24,6 +26,10 @@ export class PlaceDetailsPage implements OnInit {
   readonly loadError = signal('');
   readonly notFound = signal(false);
   readonly place = signal<PlaceDetails | null>(null);
+  readonly partnerCategories = computed(() => {
+    const venue = this.place();
+    return venue ? placePartnerCategories(venue.nearbyCategory) : [];
+  });
 
   ngOnInit(): void {
     this.load();

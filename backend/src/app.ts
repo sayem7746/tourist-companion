@@ -31,7 +31,7 @@ import { createMemoryConciergeHistoryStore } from './concierge/memory-store.js';
 import { createPgConciergeHistoryStore } from './concierge/pg-store.js';
 import type { ConciergeHistoryStore } from './concierge/history-types.js';
 import { registerKnowledgeRoutes } from './knowledge/routes.js';
-import { registerPartnerAdminRoutes } from './partners/routes.js';
+import { registerPartnerAdminRoutes, registerPartnerPublicRoutes } from './partners/routes.js';
 import { registerReferralRoutes } from './partners/referral-routes.js';
 import { createMemoryPartnerStore } from './partners/memory-store.js';
 import { createPgPartnerStore } from './partners/pg-store.js';
@@ -277,6 +277,7 @@ export function buildApp(config: AppConfig): FastifyInstance {
     return undefined;
   });
 
+  void registerPartnerPublicRoutes(app, config, resolvePartnerStore);
   void registerPartnerAdminRoutes(app, config, resolvePartnerStore);
   void registerReferralRoutes(app, config, resolvePartnerStore);
 

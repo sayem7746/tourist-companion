@@ -2,6 +2,13 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { concat, last } from 'rxjs';
+import { PartnerListings } from '../partners/partner-listings';
+import {
+  PartnerService,
+  TRIP_PARTNER_CATEGORIES,
+  referralStatusLabel,
+  type Referral,
+} from '../partners/partner.service';
 import {
   buildTimeline,
   findTempTimeSlot,
@@ -56,14 +63,16 @@ export function clockValue(value: string): string {
 
 @Component({
   selector: 'app-trip-dashboard',
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, PartnerListings],
   templateUrl: './trip-dashboard.html',
   styleUrl: './trip-dashboard.css',
 })
 export class TripDashboard implements OnInit {
   private readonly tripsApi = inject(TripService);
+  private readonly partnersApi = inject(PartnerService);
 
   readonly kinds = KIND_PILLS;
+  readonly tripPartnerCategories = TRIP_PARTNER_CATEGORIES;
   readonly pending = signal(true);
   readonly loadError = signal('');
   readonly featured = signal<Trip | null>(null);
@@ -80,6 +89,7 @@ export class TripDashboard implements OnInit {
   readonly editError = signal('');
   readonly editorOpen = signal(false);
   readonly editorMode = signal<'add' | 'replace'>('add');
+  readonly referrals = signal<Referral[]>([]);
 
   draftKind: ItineraryItemKind = 'activity';
   draftTitle = '';
@@ -102,6 +112,7 @@ export class TripDashboard implements OnInit {
 
   ngOnInit(): void {
     this.load();
+    this.loadReferrals();
   }
 
   load(): void {
@@ -161,6 +172,14 @@ export class TripDashboard implements OnInit {
 
   itemTitle(item: ItineraryItem): string {
     return item.title?.trim() || 'Planned stop';
+  }
+
+  partnerIds(item: ItineraryItem): string[] {
+    return item.referralPartnerId ? [item.referralPartnerId] : [];
+  }
+
+  referralLabel(row: Referral): string {
+    return `${referralStatusLabel(row.status)} · ${row.referralCode}`;
   }
 
   canMove(item: ItineraryItem, direction: 'up' | 'down'): boolean {
@@ -440,6 +459,13 @@ export class TripDashboard implements OnInit {
       error: () => {
         this.savedError.set('Could not remove that saved place.');
       },
+    });
+  }
+
+  private loadReferrals(): void {
+    this.partnersApi.listReferrals().subscribe({
+      next: (referrals) => this.referrals.set(referrals),
+      error: () => this.referrals.set([]),
     });
   }
 }

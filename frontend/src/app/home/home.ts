@@ -1,6 +1,8 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../auth/auth.service';
+import { PartnerListings } from '../partners/partner-listings';
+import { NEARBY_PARTNER_CATEGORIES, TRIP_PARTNER_CATEGORIES } from '../partners/partner.service';
 import {
   ARRIVAL_STAGES,
   type ArrivalChecklistItem,
@@ -93,7 +95,7 @@ export function planIcon(item: ItineraryItem): string {
 
 @Component({
   selector: 'app-home',
-  imports: [RouterLink],
+  imports: [RouterLink, PartnerListings],
   templateUrl: './home.html',
   styleUrl: './home.css',
 })
@@ -105,6 +107,8 @@ export class Home implements OnInit {
 
   readonly greeting = selamatGreeting();
   readonly stageLabels = STAGE_LABELS;
+  readonly tripPartnerCategories = TRIP_PARTNER_CATEGORIES;
+  readonly nearbyPartnerCategories = NEARBY_PARTNER_CATEGORIES;
   readonly displayName = signal('');
   readonly trip = signal<Trip | null>(null);
   readonly dayCount = signal(0);

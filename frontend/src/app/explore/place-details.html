@@ -75,6 +75,14 @@
       </div>
     </article>
 
+    <app-partner-listings
+      heading="Partner services nearby"
+      channel="explore"
+      [categories]="partnerCategories()"
+      [placeId]="venue.id"
+      [limit]="3"
+    />
+
     @if (venue.address) {
       <section class="info-card">
         <h2>Address</h2>

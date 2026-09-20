@@ -75,6 +75,12 @@ function guide(): ArrivalTransportResponse {
   };
 }
 
+function flushPartners(http: HttpTestingController, partners: unknown[] = []): void {
+  const req = http.expectOne(`${environment.apiBaseUrl}/partners`);
+  expect(req.request.method).toBe('GET');
+  req.flush({ partners });
+}
+
 describe('ArrivalTransport', () => {
   let fixture: ComponentFixture<ArrivalTransport>;
   let http: HttpTestingController;
@@ -99,6 +105,7 @@ describe('ArrivalTransport', () => {
     expect(req.request.method).toBe('GET');
     expect(req.request.params.get('airport')).toBe('KUL');
     req.flush(guide());
+    flushPartners(http);
     fixture.detectChanges();
 
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
@@ -116,6 +123,7 @@ describe('ArrivalTransport', () => {
   it('filters by airport', () => {
     fixture.detectChanges();
     http.expectOne((request) => request.url === `${environment.apiBaseUrl}/arrival-transport`).flush(guide());
+    flushPartners(http);
     fixture.detectChanges();
 
     fixture.componentInstance.onAirportChange('KLIA2');
@@ -141,6 +149,7 @@ describe('ArrivalTransport', () => {
     http
       .expectOne((request) => request.url === `${environment.apiBaseUrl}/arrival-transport`)
       .flush({ error: 'nope' }, { status: 500, statusText: 'Server Error' });
+    flushPartners(http);
     fixture.detectChanges();
     expect((fixture.nativeElement as HTMLElement).textContent).toContain('Could not load the airport transport guide');
   });

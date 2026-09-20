@@ -156,6 +156,13 @@
       }
       <a class="full-plan" routerLink="/trips">View Full 7-Day Itinerary</a>
     </div>
+    <app-partner-listings
+      heading="Partner services for this trip"
+      channel="itinerary"
+      [categories]="tripPartnerCategories"
+      [tripId]="trip()?.id ?? null"
+      [limit]="3"
+    />
   </section>
 
   <section class="near">
@@ -186,6 +193,12 @@
     @if (!nearby().length) {
       <p class="placeholder">Nearby gems will appear here once Explore is loaded.</p>
     }
+    <app-partner-listings
+      heading="Partner services nearby"
+      channel="explore"
+      [categories]="nearbyPartnerCategories"
+      [limit]="3"
+    />
   </section>
 
   <aside class="tip-card">

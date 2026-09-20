@@ -194,6 +194,18 @@ describe('TripDashboard', () => {
   let fixture: ComponentFixture<TripDashboard>;
   let http: HttpTestingController;
 
+  function flushMarketplace(partners: unknown[] = [], referrals: unknown[] = []): void {
+    for (const req of http.match((request) => request.url === `${environment.apiBaseUrl}/partners`)) {
+      expect(req.request.method).toBe('GET');
+      req.flush({ partners });
+    }
+    for (const req of http.match((request) => request.url === `${environment.apiBaseUrl}/referrals`)) {
+      expect(req.request.method).toBe('GET');
+      expect(req.request.withCredentials).toBeTrue();
+      req.flush({ referrals });
+    }
+  }
+
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [TripDashboard],
@@ -210,6 +222,7 @@ describe('TripDashboard', () => {
 
   it('loads GET /trips with credentials and generates an empty itinerary', () => {
     fixture.detectChanges();
+    flushMarketplace();
     const req = http.expectOne(`${environment.apiBaseUrl}/trips`);
     expect(req.request.method).toBe('GET');
     expect(req.request.withCredentials).toBeTrue();
@@ -280,7 +293,7 @@ describe('TripDashboard', () => {
     expect(compiled.querySelector('.saved-list a[href="/explore/my-food-madam-kwan"]')?.textContent).toContain(
       'Madam Kwan’s (Suria KLCC)',
     );
-    expect(compiled.textContent).toContain('Partner referrals will appear');
+    expect(compiled.textContent).toContain('Referrals');
     expect(compiled.querySelector('a[href="/trips/new"]')?.textContent).toContain('Plan a trip');
     expect(compiled.querySelector('a[href="/arrival"]')?.textContent).toContain('Arrival checklist');
     expect(compiled.textContent).toContain('Add stop');
@@ -295,6 +308,7 @@ describe('TripDashboard', () => {
 
   it('does not generate when the itinerary already has stops', () => {
     fixture.detectChanges();
+    flushMarketplace();
     http.expectOne(`${environment.apiBaseUrl}/trips`).flush({
       trips: [trip({ id: 'trip-2', destination: 'Kuala Lumpur', startDate: '2099-02-01', endDate: '2099-02-07' })],
     });
@@ -311,6 +325,7 @@ describe('TripDashboard', () => {
 
   it('shows an empty state when there is no current or upcoming trip', () => {
     fixture.detectChanges();
+    flushMarketplace();
     http.expectOne(`${environment.apiBaseUrl}/trips`).flush({ trips: [] });
     fixture.detectChanges();
 
@@ -321,6 +336,7 @@ describe('TripDashboard', () => {
 
   it('shows an error when GET /trips fails', () => {
     fixture.detectChanges();
+    flushMarketplace();
     http.expectOne(`${environment.apiBaseUrl}/trips`).flush({ error: 'nope' }, { status: 500, statusText: 'Server Error' });
     fixture.detectChanges();
 
@@ -330,6 +346,7 @@ describe('TripDashboard', () => {
 
   function loadFilledPlan(): HTMLElement {
     fixture.detectChanges();
+    flushMarketplace();
     http.expectOne(`${environment.apiBaseUrl}/trips`).flush({
       trips: [trip({ id: 'trip-2', destination: 'Kuala Lumpur', startDate: '2099-02-01', endDate: '2099-02-07' })],
     });
@@ -514,5 +531,47 @@ describe('TripDashboard', () => {
     req.flush({ itinerary: nextPlan });
     fixture.detectChanges();
     expect(compiled.textContent).toContain('Jalan Alor');
+  });
+
+  it('shows gold Sponsored partner cards and referral status', () => {
+    fixture.detectChanges();
+    flushMarketplace(
+      [
+        {
+          id: 'klook',
+          name: 'Klook Malaysia',
+          slug: 'klook-malaysia',
+          category: 'tours',
+          isActive: true,
+          listing: {
+            summary: 'Day tours and attraction tickets.',
+            city: 'Kuala Lumpur',
+            bookingUrl: 'https://www.klook.com/',
+            disclosure: 'We may earn a commission if you book or buy through this link.',
+            sponsored: true,
+          },
+        },
+      ],
+      [
+        {
+          id: 'ref-1',
+          userId: 'user-1',
+          providerId: 'klook',
+          referralCode: 'DEMO-KLOOK-001',
+          status: 'clicked',
+        },
+      ],
+    );
+    http.expectOne(`${environment.apiBaseUrl}/trips`).flush({ trips: [] });
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain('Klook Malaysia');
+    expect(compiled.textContent).toContain('Sponsored');
+    expect(compiled.textContent).toContain('We may earn a commission if you book or buy through this link.');
+    expect(compiled.textContent).toContain('Opened · DEMO-KLOOK-001');
+    const badge = compiled.querySelector('.sponsored-badge') as HTMLElement;
+    expect(badge.style.color.replace(/\s/g, '').toLowerCase()).toMatch(/#d97706|rgb\(217,119,6\)/);
+    expect(badge.style.background.replace(/\s/g, '').toLowerCase()).toMatch(/#fef3c7|rgb\(254,243,199\)/);
   });
 });

@@ -1,6 +1,8 @@
 import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { PartnerListings } from '../partners/partner-listings';
+import { nearbyPartnerCategories } from '../partners/partner.service';
 import { STITCH_EXPLORE_MAP_URL } from '../stitch-assets';
 import { TripService, localTodayIso, selectFeaturedTrip } from '../trips/trip.service';
 import {
@@ -29,7 +31,7 @@ import {
 
 @Component({
   selector: 'app-explore',
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, PartnerListings],
   templateUrl: './explore.html',
   styleUrl: './explore.css',
 })
@@ -117,6 +119,10 @@ export class Explore implements OnInit, OnDestroy {
 
   mediaTone(place: NearbyPlace): string {
     return coverTone(place.nearbyCategory);
+  }
+
+  partnerCategories() {
+    return nearbyPartnerCategories(this.category);
   }
 
   onSearchInput(value: string): void {

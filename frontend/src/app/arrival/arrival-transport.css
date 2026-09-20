@@ -51,21 +51,68 @@ select {
 
 .option-head {
   display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.mode-icon {
+  width: 3rem;
+  height: 3rem;
+  border-radius: var(--radius-inner);
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--color-primary) 10%, white);
+  color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+.mode-icon .material-symbols-outlined {
+  font-size: 28px;
+}
+
+.option-head > div:nth-child(2) {
+  flex: 1;
+  min-width: 0;
+}
+
+.cost {
+  margin: 0 0 0 auto;
+  color: var(--color-primary);
+  font-weight: 800;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.matrix-kicker {
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
+  gap: 0.25rem;
+  margin: 0 0 0.2rem;
+  color: var(--color-primary);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.matrix-kicker .material-symbols-outlined {
+  font-size: 16px;
 }
 
 .summary {
   color: var(--color-text-muted);
-  margin: 0.35rem 0 0.75rem;
+  margin: 0.2rem 0 0;
 }
 
 .facts {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.5rem 1rem;
-  margin: 0 0 0.75rem;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  margin: 0.85rem 0 0.75rem;
+  padding: 0.65rem;
+  border-radius: var(--radius-inner);
+  background: var(--color-surface-low);
+  text-align: center;
 }
 
 .facts dt {

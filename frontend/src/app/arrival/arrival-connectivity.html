@@ -78,6 +78,13 @@
     </div>
   }
 
+  <app-partner-listings
+    heading="SIM and eSIM partners"
+    channel="arrival"
+    [categories]="simCategories"
+    [airport]="airport"
+  />
+
   @if (!embedded) {
     <p class="meta"><a routerLink="/arrival">Back to arrival checklist</a></p>
   } @else {

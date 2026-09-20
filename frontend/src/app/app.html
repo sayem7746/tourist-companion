@@ -10,7 +10,9 @@
         <img class="logo" [src]="logoUrl" alt="" />
         <span class="brand-copy">
           <span class="brand-name">{{ title }}</span>
-          <span class="brand-meta">{{ weatherLine }}</span>
+          @if (!showBack()) {
+            <span class="brand-meta">{{ weatherLine }}</span>
+          }
         </span>
       </a>
     </div>

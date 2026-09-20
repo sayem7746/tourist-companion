@@ -198,6 +198,13 @@
     }
   </div>
 
+  <app-partner-listings
+    heading="Partner services nearby"
+    channel="explore"
+    [categories]="partnerCategories()"
+    [limit]="4"
+  />
+
   <div class="quick-bar" aria-label="Quick filters">
     <span class="quick-label">Quick</span>
     @for (filter of quickFilters; track filter.id) {
