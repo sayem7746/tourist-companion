@@ -5,6 +5,9 @@ export type TripId = string;
 export type PlaceId = string;
 export type ProviderId = string;
 export type ReferralId = string;
+export type ItineraryId = string;
+export type ItineraryDayId = string;
+export type ItineraryItemId = string;
 
 export interface User {
   id: UserId;
@@ -189,6 +192,65 @@ export interface SavedTripPlace {
   longitude?: number | null;
   notes?: string | null;
   sortOrder: number;
+}
+
+/** MVP itinerary length (EPIC 06). Inclusive trip days are clipped to this range. */
+export const ITINERARY_MIN_DAYS = 1;
+export const ITINERARY_MAX_DAYS = 7;
+
+export const ITINERARY_ITEM_KINDS = ['activity', 'meal', 'travel', 'note'] as const;
+export type ItineraryItemKind = (typeof ITINERARY_ITEM_KINDS)[number];
+
+export const ITINERARY_STATUSES = ['draft', 'active', 'archived'] as const;
+export type ItineraryStatus = (typeof ITINERARY_STATUSES)[number];
+
+/** One generated plan per trip. Day count is 1–7. */
+export interface Itinerary {
+  id: ItineraryId;
+  tripId: TripId;
+  /** Inclusive days covered, 1–7. */
+  dayCount: number;
+  status: ItineraryStatus;
+  days: ItineraryDay[];
+  generatedAt?: string;
+  updatedAt?: string;
+}
+
+/** Calendar day in the Plan tab / Home “Today's Plan” timeline. */
+export interface ItineraryDay {
+  id: ItineraryDayId;
+  itineraryId: ItineraryId;
+  /** 1-based index (Stitch “Day 2 of 7”). */
+  dayNumber: number;
+  /** ISO calendar date `YYYY-MM-DD` in `Asia/Kuala_Lumpur`. */
+  date: string;
+  items: ItineraryItem[];
+}
+
+/**
+ * Timed block on a day. Stitch shows start as `09:30 AM`, inbound commute as
+ * “15 min travel time”, meals as restaurant chips, and booking as an outbound link.
+ */
+export interface ItineraryItem {
+  id: ItineraryItemId;
+  dayId: ItineraryDayId;
+  sortOrder: number;
+  kind: ItineraryItemKind;
+  /** Local 24h `HH:mm` in `Asia/Kuala_Lumpur`. */
+  startTime: string;
+  /** Local 24h `HH:mm`; same calendar day as `ItineraryDay.date`. */
+  endTime: string;
+  placeId?: PlaceId | null;
+  /** Minutes to reach this block (Stitch commute connector) or duration when `kind` is `travel`. */
+  travelTimeMinutes?: number | null;
+  notes?: string | null;
+  bookingUrl?: string | null;
+  /** Partner `Provider.id` for referral attribution; omit when there is no partner. */
+  referralPartnerId?: ProviderId | null;
+  /** When true, regeneration must keep this item. */
+  locked: boolean;
+  /** Display title when there is no place, or a denormalized place name. */
+  title?: string | null;
 }
 
 /** Normalized Explore / nearby POI (provider-agnostic). */

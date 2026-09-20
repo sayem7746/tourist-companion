@@ -19,7 +19,7 @@ Source: https://stitch.withgoogle.com/projects/10046914594084234943
 
 ## Screens in Stitch
 
-- Home — Tourist Dashboard
+- Home — Tourist Dashboard (includes **Today's Plan** timeline; Plan is tab 3 in the bottom nav — itinerary model in `docs/itinerary-data-model.md`)
 - KLIA Arrival & Transportation Guide
 - KLIA Currency & Payment Guide (`screens/a6b6ac0f2aed4cbdb5a9cd9cf428c6d1`)
 - AI Malaysia Concierge
