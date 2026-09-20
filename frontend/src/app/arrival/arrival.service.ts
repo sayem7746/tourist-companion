@@ -99,6 +99,39 @@ export interface ArrivalTransferRecommendation {
   options: ArrivalTransferOptionView[];
 }
 
+export const CONNECTIVITY_KINDS = ['wifi', 'esim', 'prepaid_sim'] as const;
+export type ConnectivityKind = (typeof CONNECTIVITY_KINDS)[number];
+
+export interface ArrivalConnectivityOption {
+  id: string;
+  airportCode: ArrivalAirportCode;
+  kind: ConnectivityKind;
+  name: string;
+  badge: string;
+  summary: string;
+  location: string;
+  cost?: string;
+  dataAllowance?: string;
+  validity?: string;
+  howTo: string;
+  whenToUse: string;
+  sortOrder: number;
+}
+
+export interface ArrivalConnectivityTip {
+  id: string;
+  airportCode: ArrivalAirportCode;
+  title: string;
+  body: string;
+  sortOrder: number;
+}
+
+export interface ArrivalConnectivityResponse {
+  airportCode: ArrivalAirportCode;
+  options: ArrivalConnectivityOption[];
+  tips: ArrivalConnectivityTip[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class ArrivalService {
   private readonly base = `${environment.apiBaseUrl}/arrival-checklist`;
@@ -116,6 +149,11 @@ export class ArrivalService {
   listTransport(airport: ArrivalAirportCode = DEFAULT_ARRIVAL_AIRPORT): Observable<ArrivalTransportResponse> {
     const params = new HttpParams().set('airport', airport);
     return this.http.get<ArrivalTransportResponse>(`${environment.apiBaseUrl}/arrival-transport`, { params });
+  }
+
+  listConnectivity(airport: ArrivalAirportCode = DEFAULT_ARRIVAL_AIRPORT): Observable<ArrivalConnectivityResponse> {
+    const params = new HttpParams().set('airport', airport);
+    return this.http.get<ArrivalConnectivityResponse>(`${environment.apiBaseUrl}/arrival-connectivity`, { params });
   }
 
   recommendTransfer(

@@ -2,6 +2,7 @@
   <h1>Arrival checklist</h1>
   <p class="lede">Step through KLIA or KLIA2 after you land. Tick items as you go — progress stays on this device.</p>
   <p class="actions">
+    <a routerLink="/arrival/sim" class="btn btn-secondary">SIM &amp; connectivity</a>
     <a routerLink="/arrival/transport" class="btn">Airport transport guide</a>
   </p>
 
@@ -75,6 +76,7 @@
     }
   }
 
+  <app-arrival-connectivity [airport]="airport" [embedded]="true" />
   <app-arrival-transport [airport]="airport" [embedded]="true" />
 
   <p class="meta"><a routerLink="/trips">Back to dashboard</a></p>

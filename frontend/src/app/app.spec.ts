@@ -48,6 +48,12 @@ describe('App', () => {
     expect(transport?.canActivate).toBeUndefined();
   });
 
+  it('should expose a public SIM and connectivity guide route', () => {
+    const sim = routes.find((route) => route.path === 'arrival/sim');
+    expect(sim?.component).toBeTruthy();
+    expect(sim?.canActivate).toBeUndefined();
+  });
+
   it('should render Tropical Sanctuary bottom tabs', () => {
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();

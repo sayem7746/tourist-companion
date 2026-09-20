@@ -25,5 +25,6 @@ describe('Home', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('h1')?.textContent).toContain('Tourist Companion');
     expect(compiled.querySelector('a[href="/arrival"]')?.textContent).toContain('Arrival checklist');
+    expect(compiled.querySelector('a[href="/arrival/sim"]')?.textContent).toContain('SIM');
   });
 });

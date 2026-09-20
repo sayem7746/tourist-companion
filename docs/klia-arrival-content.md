@@ -35,3 +35,25 @@ interface ArrivalChecklistItem {
 ```
 
 Content is CMS-ready JSON/SQL seed, not hard-coded only in UI.
+
+## SIM and connectivity guide
+
+Public `GET /arrival-connectivity?airport=` for first-time visitor Wi-Fi, eSIM, and prepaid SIM guidance. Default airport `KUL`. Options are CMS-ready TypeScript seed (`wifi`, `esim`, `prepaid_sim`) plus emerald-stripe tips.
+
+```ts
+interface ArrivalConnectivityOption {
+  id: string;
+  airportCode: string;
+  kind: 'wifi' | 'esim' | 'prepaid_sim';
+  name: string;
+  badge: string;
+  summary: string;
+  location: string;
+  cost?: string;
+  dataAllowance?: string;
+  validity?: string;
+  howTo: string;
+  whenToUse: string;
+  sortOrder: number;
+}
+```

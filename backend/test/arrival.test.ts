@@ -111,6 +111,46 @@ describe('arrival checklist endpoint', () => {
     expect(body.options.find((option) => option.mode === 'e_hail')?.boarding).toContain('Grab');
   });
 
+  it('returns SIM, eSIM, and Wi-Fi guidance with first-timer tips', async () => {
+    const response = await app.inject({ method: 'GET', url: '/arrival-connectivity' });
+    expect(response.statusCode).toBe(200);
+    const body = response.json() as {
+      airportCode: string;
+      options: Array<{ kind: string; name: string; howTo: string; whenToUse: string; location: string }>;
+      tips: Array<{ title: string; body: string }>;
+    };
+    expect(body.airportCode).toBe('KUL');
+    expect(body.options.map((option) => option.kind)).toEqual([
+      'wifi',
+      'esim',
+      'prepaid_sim',
+      'prepaid_sim',
+      'prepaid_sim',
+    ]);
+    expect(body.options[0]).toMatchObject({ name: 'Airport Wi-Fi' });
+    expect(body.options[0].location).toContain('AIRPORT@WIFI');
+    expect(body.options.some((option) => option.name === 'CelcomDigi')).toBe(true);
+    expect(body.options.every((option) => option.howTo.length > 20 && option.whenToUse.length > 20)).toBe(true);
+    expect(body.tips.length).toBeGreaterThan(0);
+    expect(body.tips[0].title).toContain('Passport');
+  });
+
+  it('filters connectivity by airport and rejects unknown codes', async () => {
+    const klia2 = await app.inject({ method: 'GET', url: '/arrival-connectivity?airport=KLIA2' });
+    expect(klia2.statusCode).toBe(200);
+    const body = klia2.json() as {
+      airportCode: string;
+      options: Array<{ location: string }>;
+      tips: Array<{ body: string }>;
+    };
+    expect(body.airportCode).toBe('KLIA2');
+    expect(body.options[0].location).toContain('Gateway@klia2');
+    expect(body.tips.some((tip) => tip.body.includes('KLIA2'))).toBe(true);
+
+    const unknown = await app.inject({ method: 'GET', url: '/arrival-connectivity?airport=PEN' });
+    expect(unknown.statusCode).toBe(400);
+  });
+
   it('filters transport by airport and rejects unknown codes', async () => {
     const klia2 = await app.inject({ method: 'GET', url: '/arrival-transport?airport=KLIA2' });
     expect(klia2.statusCode).toBe(200);

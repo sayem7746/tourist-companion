@@ -71,3 +71,30 @@ export interface ArrivalTransferRecommendation {
   summary: string;
   options: ArrivalTransferOptionView[];
 }
+
+export const CONNECTIVITY_KINDS = ['wifi', 'esim', 'prepaid_sim'] as const;
+export type ConnectivityKind = (typeof CONNECTIVITY_KINDS)[number];
+
+export interface ArrivalConnectivityOption {
+  id: string;
+  airportCode: ArrivalAirportCode;
+  kind: ConnectivityKind;
+  name: string;
+  badge: string;
+  summary: string;
+  location: string;
+  cost?: string;
+  dataAllowance?: string;
+  validity?: string;
+  howTo: string;
+  whenToUse: string;
+  sortOrder: number;
+}
+
+export interface ArrivalConnectivityTip {
+  id: string;
+  airportCode: ArrivalAirportCode;
+  title: string;
+  body: string;
+  sortOrder: number;
+}

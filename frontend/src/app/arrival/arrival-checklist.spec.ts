@@ -5,7 +5,7 @@ import { provideRouter } from '@angular/router';
 import { environment } from '../../environments/environment';
 import { ArrivalChecklist } from './arrival-checklist';
 import { progressPercent, progressStorageKey } from './arrival-progress';
-import type { ArrivalChecklistItem, ArrivalChecklistResponse, ArrivalTransportResponse } from './arrival.service';
+import type { ArrivalChecklistItem, ArrivalChecklistResponse, ArrivalConnectivityResponse, ArrivalTransportResponse } from './arrival.service';
 
 function item(partial: Partial<ArrivalChecklistItem> & Pick<ArrivalChecklistItem, 'id' | 'title'>): ArrivalChecklistItem {
   return {
@@ -22,6 +22,10 @@ function emptyTransport(airportCode: ArrivalChecklistResponse['airportCode'] = '
   return { airportCode, options: [] };
 }
 
+function emptyConnectivity(airportCode: ArrivalChecklistResponse['airportCode'] = 'KUL'): ArrivalConnectivityResponse {
+  return { airportCode, options: [], tips: [] };
+}
+
 function body(items: ArrivalChecklistItem[], extra: Partial<ArrivalChecklistResponse> = {}): ArrivalChecklistResponse {
   return {
     airportCode: 'KUL',
@@ -35,12 +39,15 @@ function body(items: ArrivalChecklistItem[], extra: Partial<ArrivalChecklistResp
 function flushChecklist(
   http: HttpTestingController,
   payload: ArrivalChecklistResponse,
-  transportAirport: ArrivalChecklistResponse['airportCode'] = payload.airportCode,
+  nestedAirport: ArrivalChecklistResponse['airportCode'] = payload.airportCode,
 ): void {
   http.expectOne((request) => request.url === `${environment.apiBaseUrl}/arrival-checklist`).flush(payload);
   http
+    .expectOne((request) => request.url === `${environment.apiBaseUrl}/arrival-connectivity`)
+    .flush(emptyConnectivity(nestedAirport));
+  http
     .expectOne((request) => request.url === `${environment.apiBaseUrl}/arrival-transport`)
-    .flush(emptyTransport(transportAirport));
+    .flush(emptyTransport(nestedAirport));
 }
 
 describe('arrival progress helpers', () => {
@@ -83,11 +90,13 @@ describe('ArrivalChecklist', () => {
         item({ id: 'kul-baggage-carousel', title: 'Collect bags at the KLIA carousel', stage: 'baggage', sortOrder: 1 }),
       ]),
     );
+    http.expectOne((request) => request.url === `${environment.apiBaseUrl}/arrival-connectivity`).flush(emptyConnectivity());
     http.expectOne((request) => request.url === `${environment.apiBaseUrl}/arrival-transport`).flush(emptyTransport());
     fixture.detectChanges();
 
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('h1')?.textContent).toContain('Arrival checklist');
+    expect(compiled.querySelector('a[href="/arrival/sim"]')?.textContent).toContain('SIM & connectivity');
     expect(compiled.querySelector('a[href="/arrival/transport"]')?.textContent).toContain('Airport transport guide');
     expect(compiled.textContent).toContain('Complete MDAC before passport control');
     expect(compiled.textContent).toContain('Collect bags at the KLIA carousel');
@@ -110,6 +119,9 @@ describe('ArrivalChecklist', () => {
       }),
     );
     fixture.detectChanges();
+    http
+      .expectOne((request) => request.url === `${environment.apiBaseUrl}/arrival-connectivity`)
+      .flush(emptyConnectivity('KLIA2'));
     http
       .expectOne((request) => request.url === `${environment.apiBaseUrl}/arrival-transport`)
       .flush(emptyTransport('KLIA2'));
@@ -149,6 +161,7 @@ describe('ArrivalChecklist', () => {
     http
       .expectOne((request) => request.url === `${environment.apiBaseUrl}/arrival-checklist`)
       .flush({ error: 'nope' }, { status: 500, statusText: 'Server Error' });
+    http.expectOne((request) => request.url === `${environment.apiBaseUrl}/arrival-connectivity`).flush(emptyConnectivity());
     http.expectOne((request) => request.url === `${environment.apiBaseUrl}/arrival-transport`).flush(emptyTransport());
     fixture.detectChanges();
 

@@ -8,6 +8,7 @@ import { TripOnboarding } from './trips/trip-onboarding';
 import { TripDashboard } from './trips/trip-dashboard';
 import { ArrivalChecklist } from './arrival/arrival-checklist';
 import { ArrivalTransport } from './arrival/arrival-transport';
+import { ArrivalConnectivity } from './arrival/arrival-connectivity';
 import { Explore } from './explore/explore';
 import { Concierge } from './concierge/concierge';
 
@@ -16,6 +17,7 @@ export const routes: Routes = [
   { path: 'login', component: Login, title: 'Sign in' },
   { path: 'signup', component: Signup, title: 'Create account' },
   { path: 'arrival/transport', component: ArrivalTransport, title: 'Airport transport' },
+  { path: 'arrival/sim', component: ArrivalConnectivity, title: 'SIM and connectivity' },
   { path: 'arrival', component: ArrivalChecklist, title: 'Arrival checklist' },
   { path: 'explore', component: Explore, title: 'Explore' },
   { path: 'concierge', component: Concierge, title: 'Concierge' },
