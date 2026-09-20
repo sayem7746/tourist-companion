@@ -1,6 +1,7 @@
 import type { AppConfig } from '../config.js';
 import { createPlacesProvider } from './factory.js';
 import { assemblePlacesResult } from './filter.js';
+import { approximateLocation } from './geo.js';
 import { createSeedPlacesProvider } from './seed-provider.js';
 import {
   DEFAULT_NEARBY_AREA_ID,
@@ -31,14 +32,16 @@ export async function searchNearbyPlaces(
   input: NearbySearchInput,
   deps: NearbySearchDeps = {},
 ): Promise<PlacesSearchResult> {
+  const hasApproximatePin = input.latitude != null && input.longitude != null;
   const area =
     NEARBY_AREAS.find((item) => item.id === input.areaId) ??
-    (input.latitude == null || input.longitude == null
-      ? NEARBY_AREAS.find((item) => item.id === DEFAULT_NEARBY_AREA_ID)
-      : undefined);
+    (hasApproximatePin ? undefined : NEARBY_AREAS.find((item) => item.id === DEFAULT_NEARBY_AREA_ID));
 
-  const latitude = input.latitude ?? area!.latitude;
-  const longitude = input.longitude ?? area!.longitude;
+  const pin = hasApproximatePin
+    ? approximateLocation({ latitude: input.latitude!, longitude: input.longitude! })
+    : { latitude: area!.latitude, longitude: area!.longitude };
+  const latitude = pin.latitude;
+  const longitude = pin.longitude;
   const radiusMeters = input.radiusMeters ?? area?.radiusMeters ?? 2000;
   const category = input.category ?? 'all';
 

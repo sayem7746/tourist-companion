@@ -2,6 +2,20 @@ import { WALK_METERS_PER_MINUTE, type GeoPoint } from './types.js';
 
 const EARTH_RADIUS_METERS = 6_371_000;
 
+/** ~111 m at the equator — enough for nearby search without storing a precise pin. */
+export const APPROXIMATE_LOCATION_DECIMALS = 3;
+
+export function approximateLocation(
+  point: GeoPoint,
+  decimals = APPROXIMATE_LOCATION_DECIMALS,
+): GeoPoint {
+  const factor = 10 ** decimals;
+  return {
+    latitude: Math.round(point.latitude * factor) / factor,
+    longitude: Math.round(point.longitude * factor) / factor,
+  };
+}
+
 function toRadians(degrees: number): number {
   return (degrees * Math.PI) / 180;
 }

@@ -14,6 +14,7 @@ import {
   nearbyCategoryFromOsmTags,
   overpassElementToNearby,
 } from '../src/places/overpass-provider.js';
+import { approximateLocation } from '../src/places/geo.js';
 import { searchNearbyPlaces } from '../src/places/search.js';
 import { NEARBY_CATEGORIES, type PlacesSearchQuery } from '../src/places/types.js';
 
@@ -201,6 +202,17 @@ describe('searchNearbyPlaces (seed)', () => {
     expect(result.areaLabel).toBe('Batu Caves');
   });
 
+  it('coarsens GPS pins to ~100 m and respects radius', async () => {
+    const pin = { latitude: 3.15785123, longitude: 101.71165987 };
+    const result = await searchNearbyPlaces(config, { ...pin, radiusMeters: 400, now: noonKl });
+    expect(result.origin).toEqual(approximateLocation(pin));
+    expect(result.areaId).toBeNull();
+    expect(result.radiusMeters).toBe(400);
+    expect(result.places.some((place) => place.name === 'Petronas Twin Towers')).toBe(true);
+    expect(result.places.some((place) => place.name === 'Jalan Alor')).toBe(false);
+    expect(result.places.some((place) => place.name === 'Batu Caves')).toBe(false);
+  });
+
   it('falls back to seed when Google errors', async () => {
     const googleConfig = testConfig({
       PLACES_PROVIDER: 'google',
@@ -252,6 +264,48 @@ describe('searchNearbyPlaces (seed)', () => {
     expect(result.places[0]?.halal).toBe(true);
     expect(result.places[0]?.nearbyCategory).toBe('food');
   });
+
+  it('uses Google Text Search for free-text queries', async () => {
+    const googleConfig = testConfig({
+      PLACES_PROVIDER: 'google',
+      GOOGLE_PLACES_API_KEY: 'AIzaSyTestKeyValue',
+    });
+    let calledUrl = '';
+    let calledBody = '';
+    const result = await searchNearbyPlaces(
+      googleConfig,
+      { q: 'Guardian', category: 'pharmacy', openNow: true, now: noonKl },
+      {
+        fetchImpl: async (input, init) => {
+          calledUrl = String(input);
+          calledBody = String(init?.body ?? '');
+          return new Response(
+            JSON.stringify({
+              places: [
+                {
+                  id: 'ChIJ2',
+                  primaryType: 'pharmacy',
+                  types: ['pharmacy'],
+                  displayName: { text: 'Guardian Pharmacy' },
+                  location: { latitude: 3.1579, longitude: 101.7117 },
+                  currentOpeningHours: { openNow: true },
+                },
+              ],
+            }),
+            { status: 200, headers: { 'Content-Type': 'application/json' } },
+          );
+        },
+      },
+    );
+    expect(calledUrl).toContain('/v1/places:searchText');
+    expect(JSON.parse(calledBody)).toMatchObject({
+      textQuery: 'Guardian',
+      includedType: 'pharmacy',
+      openNow: true,
+    });
+    expect(result.provider).toBe('google');
+    expect(result.places[0]?.name).toBe('Guardian Pharmacy');
+  });
 });
 
 describe('GET /places', () => {
@@ -297,5 +351,66 @@ describe('GET /places', () => {
   it('rejects unknown query parameters', async () => {
     const response = await app.inject({ method: 'GET', url: '/places/nearby?foo=1' });
     expect(response.statusCode).toBe(400);
+  });
+
+  it('applies category, radius, open-now, text, and approximate location filters', async () => {
+    const category = await app.inject({ method: 'GET', url: '/places/nearby?category=food' });
+    expect(category.statusCode).toBe(200);
+    const food = category.json() as { places: Array<{ nearbyCategory: string }> };
+    expect(food.places.length).toBeGreaterThan(0);
+    expect(food.places.every((place) => place.nearbyCategory === 'food')).toBe(true);
+
+    const radius = await app.inject({ method: 'GET', url: '/places/nearby?radius=400' });
+    expect(radius.statusCode).toBe(200);
+    const nearby = radius.json() as {
+      radiusMeters: number;
+      places: Array<{ name: string; distanceMeters?: number }>;
+    };
+    expect(nearby.radiusMeters).toBe(400);
+    expect(nearby.places.every((place) => (place.distanceMeters ?? 0) <= 400)).toBe(true);
+    expect(nearby.places.some((place) => place.name === 'Batu Caves')).toBe(false);
+
+    const openNow = await app.inject({ method: 'GET', url: '/places/nearby?openNow=true' });
+    expect(openNow.statusCode).toBe(200);
+    const open = openNow.json() as { places: Array<{ openNow?: boolean | null }>; quickFilters: string[] };
+    expect(open.quickFilters).toContain('open_now');
+    expect(open.places.every((place) => place.openNow === true)).toBe(true);
+
+    const text = await app.inject({ method: 'GET', url: '/places/nearby?q=ATM' });
+    expect(text.statusCode).toBe(200);
+    const searched = text.json() as { q: string | null; places: Array<{ name: string }> };
+    expect(searched.q).toBe('ATM');
+    expect(searched.places.some((place) => /atm|maybank/i.test(place.name))).toBe(true);
+
+    const gps = await app.inject({
+      method: 'GET',
+      url: '/places/nearby?lat=3.23791234&lng=101.68405678&radius=800',
+    });
+    expect(gps.statusCode).toBe(200);
+    const pin = gps.json() as {
+      origin: { latitude: number; longitude: number };
+      areaId: string | null;
+      places: Array<{ name: string }>;
+    };
+    expect(pin.origin).toEqual({ latitude: 3.238, longitude: 101.684 });
+    expect(pin.areaId).toBeNull();
+    expect(pin.places.some((place) => place.name === 'Batu Caves')).toBe(true);
+
+    const area = await app.inject({ method: 'GET', url: '/places/nearby?area=bukit_bintang' });
+    expect(area.statusCode).toBe(200);
+    const named = area.json() as { areaId: string; places: Array<{ name: string }> };
+    expect(named.areaId).toBe('bukit_bintang');
+    expect(named.places.some((place) => place.name === 'Jalan Alor')).toBe(true);
+  });
+
+  it('rejects incomplete or invalid nearby filters', async () => {
+    const missingLng = await app.inject({ method: 'GET', url: '/places/nearby?lat=3.15' });
+    expect(missingLng.statusCode).toBe(400);
+
+    const shortText = await app.inject({ method: 'GET', url: '/places/nearby?q=A' });
+    expect(shortText.statusCode).toBe(400);
+
+    const tinyRadius = await app.inject({ method: 'GET', url: '/places/nearby?radius=50' });
+    expect(tinyRadius.statusCode).toBe(400);
   });
 });

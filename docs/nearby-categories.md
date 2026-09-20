@@ -76,6 +76,25 @@ Do not overload concierge ids (`nearby_dining`, `food_spice_diet`, `local_transp
 
 If Google is selected but the key is missing, placeholder (`CHANGE_ME_*`), or the live call fails, the API falls back to the Malaysia seed. Default pin is **KLCC & Downtown, 2 km**.
 
+## Nearby search API
+
+Public `GET /places/nearby` applies category, radius, open-now, text, and approximate location filters. `GET /places/categories` returns chip, quick-filter, and area catalogs for Explore.
+
+| Query | Required | Meaning |
+| --- | --- | --- |
+| `category` | no | Chip id (`all`, `food`, `attractions`, `transport`, `atm`, `pharmacy`, `convenience`, `tourist_services`). Default `all`. |
+| `radius` | no | Integer meters, 100–20 000. Default is the named area radius, or 2000 m for a GPS pin. |
+| `openNow` | no | `true` / `false`. When true, keep venues known to be open at query time. |
+| `q` | no | Free-text over name, description, address, area, and badges (2–80 characters). Google uses Places Text Search; seed and Overpass filter locally. |
+| `lat`, `lng` | together | Approximate GPS. Values are coarsened to 3 decimal places (~100 m) before search or provider calls. |
+| `area` | no | Named neighborhood pin when GPS is unavailable: `klcc`, `bukit_bintang`, `batu_caves`. |
+| `halalOnly` | no | `true` / `false`. Keep clearly Halal food; other chips yield an empty list. |
+| `walk15` | no | `true` / `false`. Keep places within 1200 m of the pin. |
+
+Unknown query keys are rejected (`400`). Send `lat` and `lng` together. When both `area` and coordinates are present, coordinates set the origin and `area` still labels the neighborhood if it matches a known id.
+
+The JSON body includes `origin`, `radiusMeters`, `category`, `q`, `quickFilters`, chip `counts`, and normalized `places`.
+
 ## Out of scope for MVP chips
 
 Lodging, nightlife-only, shopping malls as a top-level chip, clinics/hospitals (direct to SOS or concierge safety), and destinations outside the selected area.

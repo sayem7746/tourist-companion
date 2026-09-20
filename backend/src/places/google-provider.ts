@@ -132,9 +132,57 @@ export function createGooglePlacesProvider(config: GooglePlacesConfig): PlacesPr
     }
   }
 
+  async function searchText(query: PlacesSearchQuery): Promise<NearbyPlace[]> {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    const payload: Record<string, unknown> = {
+      textQuery: query.q!.trim(),
+      maxResultCount: 20,
+      rankPreference: 'DISTANCE',
+      locationBias: {
+        circle: {
+          center: { latitude: query.latitude, longitude: query.longitude },
+          radius: query.radiusMeters,
+        },
+      },
+    };
+    if (query.category !== 'all') {
+      payload.includedType = GOOGLE_TYPE_BY_NEARBY[query.category][0];
+    }
+    if (query.openNow === true) {
+      payload.openNow = true;
+    }
+    try {
+      const response = await fetchImpl(`${baseUrl}/v1/places:searchText`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Goog-Api-Key': config.apiKey,
+          'X-Goog-FieldMask':
+            'places.id,places.displayName,places.formattedAddress,places.location,places.types,places.primaryType,places.currentOpeningHours',
+        },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      });
+      if (!response.ok) {
+        throw new Error(`Google Places HTTP ${response.status}`);
+      }
+      const data = (await response.json()) as { places?: GooglePlace[] };
+      return (data.places ?? [])
+        .map((place) => googlePlaceToNearby(place, query))
+        .filter((place): place is NearbyPlace => place != null)
+        .filter((place) => (place.distanceMeters ?? Number.POSITIVE_INFINITY) <= query.radiusMeters);
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
   return {
     kind: 'google',
     async search(query) {
+      if (query.q?.trim()) {
+        return searchText(query);
+      }
       const groups = categoriesToQuery(query.category);
       const batches = await Promise.all(
         groups.map((category) => searchOnce(query, GOOGLE_TYPE_BY_NEARBY[category])),
