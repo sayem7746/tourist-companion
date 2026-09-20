@@ -1,0 +1,124 @@
+export const PARTNER_CATEGORIES = [
+  'hotels',
+  'transfers',
+  'tours',
+  'sim',
+  'restaurants',
+  'tourist_services',
+] as const;
+
+export type PartnerCategory = (typeof PARTNER_CATEGORIES)[number];
+export type ProviderCategory = PartnerCategory;
+
+export const REFERRAL_DISCLOSURE =
+  'We may earn a commission if you book or buy through this link.';
+
+export const COMMISSION_BASES = ['booking', 'click', 'activation'] as const;
+export type CommissionBasis = (typeof COMMISSION_BASES)[number];
+
+export const REFERRAL_STATUSES = ['pending', 'clicked', 'converted', 'expired'] as const;
+export type ReferralStatus = (typeof REFERRAL_STATUSES)[number];
+
+export const REFERRAL_CHANNELS = [
+  'itinerary',
+  'arrival',
+  'explore',
+  'concierge',
+  'dashboard',
+] as const;
+export type ReferralChannel = (typeof REFERRAL_CHANNELS)[number];
+
+export type ArrivalAirportCode = 'KUL' | 'KLIA2';
+
+export interface PartnerCommission {
+  rate: number;
+  currency: 'MYR';
+  basis: CommissionBasis;
+}
+
+export interface PartnerListing {
+  summary: string;
+  city?: string | null;
+  area?: string | null;
+  bookingUrl?: string | null;
+  disclosure: string;
+  sponsored: boolean;
+  licenseName?: string | null;
+  licenseId?: string | null;
+  typicalMyr?: string | null;
+  languages?: string[];
+  hotelClassHint?: string | null;
+  vehicleClass?: string | null;
+  airportCodes?: ArrivalAirportCode[];
+  meetAndGreet?: boolean | null;
+  durationHint?: string | null;
+  meetingPoint?: string | null;
+  connectivityKind?: 'esim' | 'prepaid_sim' | null;
+  dataAllowance?: string | null;
+  validity?: string | null;
+  passportRequired?: boolean | null;
+  halal?: boolean | null;
+  reservationUrl?: string | null;
+  deskHours?: string | null;
+}
+
+export interface Provider {
+  id: string;
+  name: string;
+  slug: string;
+  category: ProviderCategory;
+  isActive: boolean;
+  website?: string | null;
+  contactEmail?: string | null;
+  listing?: PartnerListing;
+  commission?: PartnerCommission;
+}
+
+export interface Referral {
+  id: string;
+  userId: string;
+  tripId?: string;
+  providerId: string;
+  placeId?: string;
+  referralCode: string;
+  status: ReferralStatus;
+  channel?: ReferralChannel;
+  itineraryItemId?: string | null;
+}
+
+/** Row shape for `providers` after the partner marketplace migration. */
+export interface ProviderRow {
+  id: string;
+  name: string;
+  slug: string;
+  category: ProviderCategory;
+  isActive: boolean;
+  website: string | null;
+  contactEmail: string | null;
+  commissionRate: string | number;
+  commissionBasis: CommissionBasis;
+  commissionCurrency: 'MYR';
+  listingSummary: string;
+  listingCity: string | null;
+  listingArea: string | null;
+  bookingUrl: string | null;
+  disclosure: string;
+  sponsored: boolean;
+  licenseName: string | null;
+  licenseId: string | null;
+  typicalMyr: string | null;
+  languages: string[] | null;
+  listingExtras: Record<string, unknown> | null;
+}
+
+export interface ReferralRow {
+  id: string;
+  userId: string;
+  tripId: string | null;
+  providerId: string;
+  placeId: string | null;
+  referralCode: string;
+  status: ReferralStatus;
+  channel: ReferralChannel | null;
+  itineraryItemId: string | null;
+}

@@ -28,20 +28,59 @@ INSERT INTO places (name, category, description, city, country, latitude, longit
 SELECT 'KLIA Terminal 1', 'airport', 'Main KLIA arrival terminal', 'Sepang', 'MY', 2.7433, 101.6980
 WHERE NOT EXISTS (SELECT 1 FROM places WHERE name = 'KLIA Terminal 1');
 
-INSERT INTO providers (name, slug, category, website, contact_email, commission_rate, is_active)
+INSERT INTO providers (
+  name,
+  slug,
+  category,
+  website,
+  contact_email,
+  commission_rate,
+  commission_basis,
+  commission_currency,
+  is_active,
+  listing_summary,
+  listing_city,
+  listing_area,
+  booking_url,
+  disclosure,
+  sponsored,
+  languages,
+  listing_extras
+)
 VALUES (
   'Grab Malaysia',
   'grab-malaysia',
-  'transport',
+  'transfers',
   'https://www.grab.com/my/',
   'partners@example.com',
   0.0500,
-  TRUE
+  'booking',
+  'MYR',
+  TRUE,
+  'Licensed e-hailing rides across Malaysia, including airport pickup at KLIA and KLIA2.',
+  'Kuala Lumpur',
+  'KLIA / KLIA2',
+  'https://www.grab.com/my/',
+  'We may earn a commission if you book or buy through this link.',
+  FALSE,
+  ARRAY['en', 'ms']::text[],
+  '{"vehicleClass": "car", "airportCodes": ["KUL", "KLIA2"], "meetAndGreet": false}'::jsonb
 )
 ON CONFLICT (slug) DO UPDATE SET
   name = EXCLUDED.name,
   category = EXCLUDED.category,
-  website = EXCLUDED.website;
+  website = EXCLUDED.website,
+  contact_email = EXCLUDED.contact_email,
+  commission_rate = EXCLUDED.commission_rate,
+  commission_basis = EXCLUDED.commission_basis,
+  listing_summary = EXCLUDED.listing_summary,
+  listing_city = EXCLUDED.listing_city,
+  listing_area = EXCLUDED.listing_area,
+  booking_url = EXCLUDED.booking_url,
+  disclosure = EXCLUDED.disclosure,
+  sponsored = EXCLUDED.sponsored,
+  languages = EXCLUDED.languages,
+  listing_extras = EXCLUDED.listing_extras;
 
 INSERT INTO trip_places (trip_id, place_id, sort_order, notes)
 SELECT t.id, p.id, 0, 'Arrival checkpoint'
@@ -52,7 +91,7 @@ WHERE u.email = 'demo@tourist-companion.local'
   AND t.destination = 'Kuala Lumpur'
 ON CONFLICT (trip_id, place_id) DO NOTHING;
 
-INSERT INTO referrals (user_id, trip_id, provider_id, place_id, referral_code, status, metadata)
+INSERT INTO referrals (user_id, trip_id, provider_id, place_id, referral_code, status, channel, metadata)
 SELECT
   u.id,
   t.id,
@@ -60,7 +99,8 @@ SELECT
   pl.id,
   'DEMO-GRAB-001',
   'pending',
-  '{"channel": "seed"}'::jsonb
+  'arrival',
+  '{"source": "seed"}'::jsonb
 FROM users u
 JOIN trips t ON t.user_id = u.id AND t.destination = 'Kuala Lumpur'
 JOIN providers pr ON pr.slug = 'grab-malaysia'

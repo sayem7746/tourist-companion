@@ -232,12 +232,16 @@ Do not use SOS rose for ads. Do not use the primary emerald fill for Sponsored. 
 
 ## Persistence sketch
 
-Existing tables (`backend/migrations/1730000000000_init-core-schema.cjs`):
+Core tables (`backend/migrations/1730000000000_init-core-schema.cjs`) plus marketplace columns (`backend/migrations/1730000008000_partner-marketplace.cjs`):
 
-- `providers` — `id`, `name`, `slug`, `category`, `website`, `contact_email`, `commission_rate`, `is_active`
-- `referrals` — `user_id`, `trip_id`, `provider_id`, `place_id`, `referral_code`, `status`, `metadata`, `converted_at`
+- `providers` (partner) — `id`, `name`, `slug`, `category` (six MVP ids), `is_active` (status)
+- listing / service — `listing_summary`, `booking_url`, `disclosure`, `sponsored`, `license_name`, `license_id`, `typical_myr`, `languages`, `listing_extras` (category extras JSON)
+- location — `listing_city`, `listing_area`, plus `airportCodes` in extras
+- contact — `website`, `contact_email` (ops only)
+- commission — `commission_rate`, `commission_basis`, `commission_currency` (`MYR`)
+- `referrals` (tracking) — `user_id`, `trip_id`, `provider_id`, `place_id`, `referral_code`, `status`, `channel`, `itinerary_item_id`, `metadata`, `converted_at`
 
-Suggested later columns (no migration in this task): listing JSON or columns for `sponsored`, `disclosure`, `booking_url`, license fields; `referrals.channel`; CHECK list updated to the six MVP ids.
+Legacy `transport` / `lodging` / `activity` rows remap to `transfers` / `hotels` / `tours`. `insurance` / `other` are deactivated and parked as `tourist_services` (off-marketplace).
 
 ## Out of scope
 

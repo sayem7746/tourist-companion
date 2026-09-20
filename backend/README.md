@@ -31,7 +31,7 @@ Migrations live in `backend/migrations/` and are applied with [node-pg-migrate](
 
 ## Seed
 
-Development seed is **idempotent** (`ON CONFLICT` / existence checks). It creates one demo user, KL trip, KLIA place, Grab provider, trip-place link, referral, and KLIA/KLIA2 arrival checklist items. JSON copies: `db/arrival-checklist.json`, `db/malaysia-knowledge.json` (concierge MVP articles), and `db/malaysia-places.json` (Explore nearby seed when no maps API key).
+Development seed is **idempotent** (`ON CONFLICT` / existence checks). It creates one demo user, KL trip, KLIA place, Grab `transfers` provider with listing/location/contact fields, an arrival-channel referral, and KLIA/KLIA2 arrival checklist items. JSON copies: `db/arrival-checklist.json`, `db/malaysia-knowledge.json` (concierge MVP articles), and `db/malaysia-places.json` (Explore nearby seed when no maps API key).
 
 ```bash
 npm run db:seed
@@ -51,8 +51,8 @@ SQL source of truth: `db/seed.sql`. Do not run seed in production.
 | `itineraries` | One plan per trip (1–7 days, draft/active/archived) |
 | `itinerary_days` | Calendar days on a plan |
 | `itinerary_items` | Timed activity / meal / travel / note blocks |
-| `providers` | Partner businesses used for referrals |
-| `referrals` | Attribution codes from a user/trip to a provider |
+| `providers` | Partner businesses: listing, location, contact, commission, and active status |
+| `referrals` | Attribution / click tracking (`status`, `channel`, optional itinerary item) |
 | `arrival_checklist_items` | CMS-ready airport arrival steps by traveler stage (KLIA / KLIA2) |
 | `concierge_messages` | Last N concierge turns per trip for signed-in users, with TTL and delete |
 
