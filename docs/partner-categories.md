@@ -6,7 +6,7 @@ Asana: [Define partner categories](https://app.asana.com/1/1218080418840809/proj
 
 Shared contract: `PARTNER_CATEGORIES`, `PARTNER_CATEGORY_CHIPS`, `Provider`, `PartnerListing`, `PartnerCommission`, `Referral`, `ReferralAnalytics`, and `REFERRAL_DISCLOSURE` in `shared/types/index.ts`.
 
-This document is the category and compliance model. Traveler listings are `GET /partners` and `GET /partners/:id` (active rows only; no contact email or commission). Partner admin listing CRUD lives at `/admin/partners`. Traveler click, lead, and outbound-redirect tracking lives at `/referrals/*` and `GET /r/:code`. Admin click/lead/conversion reporting is `GET /admin/referrals/analytics`.
+This document is the category and compliance model. Traveler listings are `GET /partners` and `GET /partners/:id` (active rows only; no contact email or commission). Partner admin listing CRUD lives at `/admin/partners`. Traveler click, lead, and outbound-redirect tracking lives at `/referrals/*` and `GET /r/:code`. Admin click/lead/conversion reporting is `GET /admin/referrals/analytics`. Operational onboarding (business checks, terms, contacts, payout, go-live gate) is `docs/partner-onboarding.md`.
 
 ## Screen contract
 
