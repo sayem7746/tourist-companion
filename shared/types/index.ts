@@ -244,6 +244,47 @@ export type KnowledgeTopic = (typeof KNOWLEDGE_TOPICS)[number];
 
 export type KnowledgeEscalation = 'none' | 'handoff' | 'sos' | 'out_of_bounds';
 
+export type ConciergeEscalationLevel = KnowledgeEscalation;
+export type ConciergeMode = 'retrieve_and_rank' | 'llm';
+
+export interface ConciergeLiveContext {
+  area?: string;
+  tripMode?: string;
+  firstName?: string;
+  dietaryPreferences?: string[];
+  mobilityNeeds?: string[];
+}
+
+export interface ConciergeReply {
+  text: string;
+  placeCards: KnowledgePlaceCard[];
+  phraseTips: KnowledgePhraseTip[];
+  followUpChips: string[];
+  deepLink?: string;
+  trustLine: string | null;
+  sos: {
+    color: '#E11D48';
+    path: 'emergency-help';
+    numbers: Array<{ code: string; label: string }>;
+  } | null;
+}
+
+export interface ConciergeChatResponse {
+  conversationId: string;
+  category: ConciergeCategory;
+  escalationLevel: ConciergeEscalationLevel;
+  mode: ConciergeMode;
+  fallbackReason?: 'llm_error' | 'llm_invalid';
+  reply: ConciergeReply;
+  citations: Array<{ articleId: string; title: string; score: number }>;
+  analytics: {
+    category: ConciergeCategory;
+    escalationLevel: ConciergeEscalationLevel;
+  };
+}
+
+export type ReferralStatus = 'pending' | 'clicked' | 'converted' | 'expired';
+
 export interface KnowledgePhraseTip {
   phrase: string;
   pronunciation?: string;

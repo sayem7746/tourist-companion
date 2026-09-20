@@ -46,3 +46,10 @@ export class ServiceUnavailableError extends AppError {
     this.name = 'ServiceUnavailableError';
   }
 }
+
+export class TooManyRequestsError extends AppError {
+  constructor(message = 'Too many requests', retryAfterSeconds?: number) {
+    super(429, 'RATE_LIMITED', message, retryAfterSeconds != null ? { retryAfterSeconds } : undefined);
+    this.name = 'TooManyRequestsError';
+  }
+}

@@ -20,7 +20,20 @@ const envSchema = z.object({
   JWT_SECRET: z.string().min(16).default(INSECURE_DEV_JWT),
   JWT_EXPIRES_IN: z.string().min(1).default('7d'),
   FRONTEND_ORIGIN: z.string().url().default('http://localhost:4200'),
+  LLM_API_KEY: z.string().min(1).optional(),
+  LLM_BASE_URL: z.string().url().default('https://api.openai.com/v1'),
+  LLM_MODEL: z.string().min(1).default('gpt-4o-mini'),
+  CONCIERGE_RATE_LIMIT_MAX: z.coerce.number().int().min(1).max(1000).default(30),
+  CONCIERGE_RATE_LIMIT_WINDOW_MS: z.coerce.number().int().min(1000).default(60_000),
 });
+
+export function hasUsableLlmKey(key: string | undefined): boolean {
+  if (!key) return false;
+  const trimmed = key.trim();
+  if (trimmed.length < 8) return false;
+  if (trimmed.startsWith('CHANGE_ME')) return false;
+  return true;
+}
 
 export type AppConfig = z.infer<typeof envSchema>;
 

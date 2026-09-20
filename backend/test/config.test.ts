@@ -34,7 +34,9 @@ describe('loadConfig', () => {
       DATABASE_URL: 'postgres://user:pass@db:5432/tourist_companion',
       JWT_SECRET: 'production-grade-secret-value-32chars',
       FRONTEND_ORIGIN: 'https://app.example.com',
+      LLM_API_KEY: 'sk-test-not-used-in-this-assertion',
     });
     expect(cfg.APP_ENV).toBe('production');
+    expect(cfg.LLM_MODEL).toBe('gpt-4o-mini');
   });
 });
