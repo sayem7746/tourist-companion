@@ -29,6 +29,16 @@ export type MobilityNeed =
   | 'hearing_impairment';
 
 export type TravelStyle = 'relaxed' | 'balanced' | 'packed';
+export type DailyBudget = 'low' | 'medium' | 'high';
+export type TripInterest =
+  | 'food'
+  | 'nature'
+  | 'culture'
+  | 'shopping'
+  | 'nightlife'
+  | 'family'
+  | 'adventure'
+  | 'wellness';
 
 export interface TouristProfile {
   userId: UserId;
@@ -46,6 +56,15 @@ export interface Trip {
   destination: string;
   startDate: string;
   endDate: string;
+  adultCount: number;
+  childCount: number;
+  interests: TripInterest[];
+  dailyBudget: DailyBudget | null;
+  travelStyle: TravelStyle | null;
+  accommodationName: string | null;
+  arrivalAirport: string | null;
+  arrivalFlight: string | null;
+  arrivalAt: string | null;
   status?: 'draft' | 'active' | 'completed' | 'cancelled';
 }
 

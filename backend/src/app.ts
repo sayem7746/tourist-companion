@@ -8,6 +8,10 @@ import { createMemoryProfileStore } from './profile/memory-store.js';
 import { createPgProfileStore } from './profile/pg-store.js';
 import { registerProfileRoutes } from './profile/routes.js';
 import type { ProfileStore } from './profile/types.js';
+import { createMemoryTripStore } from './trips/memory-store.js';
+import { createPgTripStore } from './trips/pg-store.js';
+import { registerTripRoutes } from './trips/routes.js';
+import type { TripStore } from './trips/types.js';
 import type { AppConfig } from './config.js';
 import { registerDb } from './db/pool.js';
 import { AppError, NotFoundError } from './errors.js';
@@ -155,6 +159,7 @@ export function buildApp(config: AppConfig): FastifyInstance {
 
   let memoryAuthStore: AuthStore | undefined;
   let memoryProfileStore: ProfileStore | undefined;
+  let memoryTripStore: TripStore | undefined;
 
   const resolveAuthStore = (): AuthStore | undefined => {
     if (app.db) {
@@ -178,6 +183,17 @@ export function buildApp(config: AppConfig): FastifyInstance {
       if (!authStore) return undefined;
       memoryProfileStore ??= createMemoryProfileStore(authStore);
       return memoryProfileStore;
+    }
+    return undefined;
+  });
+
+  void registerTripRoutes(app, config, () => {
+    if (app.db) {
+      return createPgTripStore(app.db);
+    }
+    if (config.NODE_ENV === 'test') {
+      memoryTripStore ??= createMemoryTripStore();
+      return memoryTripStore;
     }
     return undefined;
   });
