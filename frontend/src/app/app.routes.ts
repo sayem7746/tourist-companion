@@ -29,7 +29,12 @@ export const routes: Routes = [
     path: 'trips',
     component: TripDashboard,
     canActivate: [authGuard],
-    title: 'Trip dashboard',
+    title: 'Plan',
+  },
+  {
+    path: 'plan',
+    redirectTo: 'trips',
+    pathMatch: 'full',
   },
   {
     path: 'trips/new',

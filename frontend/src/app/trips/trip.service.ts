@@ -63,6 +63,153 @@ export interface SavedTripPlace {
   sortOrder: number;
 }
 
+export const ITINERARY_ITEM_KINDS = ['activity', 'meal', 'travel', 'note'] as const;
+export type ItineraryItemKind = (typeof ITINERARY_ITEM_KINDS)[number];
+export type ItineraryStatus = 'draft' | 'active' | 'archived';
+
+export interface ItineraryItem {
+  id: string;
+  dayId: string;
+  sortOrder: number;
+  kind: ItineraryItemKind;
+  startTime: string;
+  endTime: string;
+  placeId: string | null;
+  travelTimeMinutes: number | null;
+  notes: string | null;
+  bookingUrl: string | null;
+  referralPartnerId: string | null;
+  locked: boolean;
+  title: string | null;
+}
+
+export interface ItineraryDay {
+  id: string;
+  itineraryId: string;
+  dayNumber: number;
+  date: string;
+  items: ItineraryItem[];
+}
+
+export interface Itinerary {
+  id: string;
+  tripId: string;
+  dayCount: number;
+  status: ItineraryStatus;
+  days: ItineraryDay[];
+  generatedAt: string | null;
+  updatedAt?: string;
+}
+
+export type TimelineRow =
+  | { type: 'commute'; minutes: number; title: string | null; directionsHref: string | null }
+  | { type: 'block'; item: ItineraryItem };
+
+export function itineraryIsEmpty(itinerary: Itinerary | null | undefined): boolean {
+  return !itinerary || itinerary.days.every((day) => day.items.length === 0);
+}
+
+export function highlightCount(day: ItineraryDay | null | undefined): number {
+  if (!day) {
+    return 0;
+  }
+  return day.items.filter((item) => item.kind === 'activity' || item.kind === 'meal').length;
+}
+
+export function selectPlanDayNumber(itinerary: Itinerary, today: string): number {
+  const match = itinerary.days.find((day) => day.date === today);
+  return match?.dayNumber ?? itinerary.days[0]?.dayNumber ?? 1;
+}
+
+export function formatTime12h(hhmm: string): string {
+  const [hourPart, minutePart] = hhmm.split(':');
+  const hour = Number(hourPart);
+  const minutes = minutePart ?? '00';
+  if (!Number.isFinite(hour)) {
+    return hhmm;
+  }
+  const suffix = hour >= 12 ? 'PM' : 'AM';
+  const hour12 = hour % 12 === 0 ? 12 : hour % 12;
+  return `${String(hour12).padStart(2, '0')}:${minutes} ${suffix}`;
+}
+
+export function formatPlanDate(isoDate: string): string {
+  const [year, month, day] = isoDate.split('-').map(Number);
+  if (!year || !month || !day) {
+    return isoDate;
+  }
+  return new Intl.DateTimeFormat('en-GB', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'short',
+    timeZone: 'UTC',
+  }).format(new Date(Date.UTC(year, month - 1, day)));
+}
+
+function timeToMinutes(hhmm: string): number {
+  const [hour, minute] = hhmm.split(':').map(Number);
+  return hour * 60 + minute;
+}
+
+function blockMinutes(item: ItineraryItem): number {
+  if (item.travelTimeMinutes != null && item.travelTimeMinutes > 0) {
+    return item.travelTimeMinutes;
+  }
+  const span = timeToMinutes(item.endTime) - timeToMinutes(item.startTime);
+  return span > 0 ? span : 0;
+}
+
+export function directionsHref(
+  item: Pick<ItineraryItem, 'placeId' | 'title'>,
+  savedPlaces: SavedTripPlace[],
+): string | null {
+  const saved = item.placeId
+    ? savedPlaces.find((place) => place.placeId === item.placeId)
+    : undefined;
+  if (saved?.latitude != null && saved.longitude != null) {
+    const query = new URLSearchParams({
+      api: '1',
+      destination: `${saved.latitude},${saved.longitude}`,
+      travelmode: 'walking',
+    });
+    return `https://www.google.com/maps/dir/?${query.toString()}`;
+  }
+  const queryText = item.title?.trim() || saved?.name;
+  if (queryText) {
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(queryText)}`;
+  }
+  return null;
+}
+
+export function buildTimeline(items: ItineraryItem[], savedPlaces: SavedTripPlace[] = []): TimelineRow[] {
+  const rows: TimelineRow[] = [];
+  let lastWasCommute = false;
+  for (const item of items) {
+    if (item.kind === 'travel') {
+      rows.push({
+        type: 'commute',
+        minutes: blockMinutes(item),
+        title: item.title,
+        directionsHref: directionsHref(item, savedPlaces),
+      });
+      lastWasCommute = true;
+      continue;
+    }
+    const inbound = item.travelTimeMinutes != null && item.travelTimeMinutes > 0;
+    if (inbound && !lastWasCommute) {
+      rows.push({
+        type: 'commute',
+        minutes: item.travelTimeMinutes ?? 0,
+        title: null,
+        directionsHref: directionsHref(item, savedPlaces),
+      });
+    }
+    rows.push({ type: 'block', item });
+    lastWasCommute = false;
+  }
+  return rows;
+}
+
 export function localTodayIso(now = new Date()): string {
   const year = now.getFullYear();
   const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -125,6 +272,21 @@ export class TripService {
 
   removePlace(tripId: string, placeId: string): Observable<void> {
     return this.http.delete<void>(`${this.base}/${tripId}/places/${encodeURIComponent(placeId)}`, {
+      withCredentials: true,
+    });
+  }
+
+  getItinerary(tripId: string): Observable<{ itinerary: Itinerary }> {
+    return this.http.get<{ itinerary: Itinerary }>(`${this.base}/${tripId}/itinerary`, {
+      withCredentials: true,
+    });
+  }
+
+  generateItinerary(
+    tripId: string,
+    body: { dayId?: string; dayNumber?: number } = {},
+  ): Observable<{ itinerary: Itinerary }> {
+    return this.http.post<{ itinerary: Itinerary }>(`${this.base}/${tripId}/itinerary/generate`, body, {
       withCredentials: true,
     });
   }

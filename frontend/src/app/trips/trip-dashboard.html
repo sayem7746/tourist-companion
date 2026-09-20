@@ -1,6 +1,6 @@
 <section>
-  <h1>Trip dashboard</h1>
-  <p class="lede">Your current or next Malaysia trip, with space for itinerary, saved places, and referrals.</p>
+  <h1>Plan</h1>
+  <p class="lede">Day-by-day Malaysia plans with times, places, and directions.</p>
 
   @if (pending()) {
     <p class="meta" aria-live="polite">Loading trips…</p>
@@ -8,7 +8,7 @@
 
   @if (loadError()) {
     <p class="error" role="alert">{{ loadError() }}</p>
-    <button type="button" (click)="load()">Retry</button>
+    <button type="button" class="btn" (click)="load()">Retry</button>
   }
 
   @if (!pending() && !loadError() && featuredKind() === 'none') {
@@ -17,22 +17,111 @@
   }
 
   @if (featured(); as trip) {
-    <article class="card">
-      <p class="eyebrow">{{ featuredKind() === 'current' ? 'Current trip' : 'Upcoming trip' }}</p>
-      <h2>{{ trip.destination }}</h2>
-      <p class="meta">{{ trip.startDate }} → {{ trip.endDate }} · {{ dayCount() }} day{{ dayCount() === 1 ? '' : 's' }}</p>
-      <p class="meta">
-        {{ trip.adultCount }} adult{{ trip.adultCount === 1 ? '' : 's' }},
-        {{ trip.childCount }} child{{ trip.childCount === 1 ? '' : 'ren' }}
-      </p>
-      @if (trip.interests.length) {
-        <p class="meta">Interests: {{ trip.interests.join(', ') }}</p>
+    <p class="eyebrow">
+      @if (itinerary(); as plan) {
+        Day {{ selectedDay()?.dayNumber ?? 1 }} of {{ plan.dayCount }}
+      } @else {
+        {{ featuredKind() === 'current' ? 'Current trip' : 'Upcoming trip' }}
       }
-    </article>
-  }
+    </p>
+    <h2 class="destination">{{ trip.destination }}</h2>
+    <p class="meta">{{ trip.startDate }} → {{ trip.endDate }} · {{ dayCount() }} day{{ dayCount() === 1 ? '' : 's' }}</p>
+    <p class="meta">
+      {{ trip.adultCount }} adult{{ trip.adultCount === 1 ? '' : 's' }},
+      {{ trip.childCount }} child{{ trip.childCount === 1 ? '' : 'ren' }}
+    </p>
+    @if (trip.interests.length) {
+      <p class="meta">Interests: {{ trip.interests.join(', ') }}</p>
+    }
 
-  <h2>Itinerary</h2>
-  <p class="placeholder">Itinerary summary will appear here once daily plans are available.</p>
+    @if (itinerary(); as plan) {
+      <div class="day-chips" role="tablist" aria-label="Trip days">
+        @for (day of plan.days; track day.id) {
+          <button
+            type="button"
+            class="chip"
+            role="tab"
+            [class.chip-primary]="day.dayNumber === selectedDayNumber()"
+            [attr.aria-selected]="day.dayNumber === selectedDayNumber()"
+            (click)="selectDay(day.dayNumber)"
+          >
+            Day {{ day.dayNumber }}
+          </button>
+        }
+      </div>
+    }
+
+    <header class="plan-head">
+      <h2>Today's Plan</h2>
+      @if (selectedDay(); as day) {
+        <p class="meta">{{ formatDate(day.date) }} · {{ highlights() }} highlight{{ highlights() === 1 ? '' : 's' }}</p>
+      }
+    </header>
+
+    @if (itineraryPending() || generating()) {
+      <p class="meta" aria-live="polite">{{ generating() ? 'Building your plan…' : 'Loading itinerary…' }}</p>
+    }
+
+    @if (itineraryError()) {
+      <p class="error" role="alert">{{ itineraryError() }}</p>
+      <button type="button" class="btn" (click)="generate()">Generate plan</button>
+    }
+
+    @if (!itineraryPending() && !generating() && planEmpty() && !itineraryError()) {
+      <p class="placeholder">No timed stops yet. Generate a draft from your trip dates and interests.</p>
+      <button type="button" class="btn" (click)="generate()">Generate plan</button>
+    }
+
+    <ol class="timeline">
+      @for (row of timeline(); track $index) {
+        @if (row.type === 'commute') {
+          <li class="commute">
+            <span class="commute-line" aria-hidden="true"></span>
+            <p>
+              {{ row.minutes }} min travel time
+              @if (row.title) {
+                <span class="commute-title">{{ row.title }}</span>
+              }
+            </p>
+            @if (row.directionsHref) {
+              <a class="directions" [href]="row.directionsHref" target="_blank" rel="noreferrer">Directions</a>
+            }
+          </li>
+        } @else {
+          <li class="block" [attr.data-kind]="row.item.kind">
+            <time class="clock">{{ formatTime(row.item.startTime) }}</time>
+            <article class="plan-card" [class.note-card]="row.item.kind === 'note'">
+              <div class="card-head">
+                @if (row.item.placeId) {
+                  <h3>
+                    <a [routerLink]="['/explore', row.item.placeId]">{{ itemTitle(row.item) }}</a>
+                  </h3>
+                } @else {
+                  <h3>{{ itemTitle(row.item) }}</h3>
+                }
+                @if (row.item.kind === 'meal') {
+                  <span class="chip chip-gold">Meal</span>
+                }
+              </div>
+              <p class="meta">{{ formatTime(row.item.startTime) }} – {{ formatTime(row.item.endTime) }}</p>
+              @if (row.item.notes) {
+                <p class="notes">{{ row.item.notes }}</p>
+              }
+              <div class="item-actions">
+                @if (row.item.placeId) {
+                  <a class="btn btn-secondary" [routerLink]="['/explore', row.item.placeId]">Place</a>
+                }
+                @if (row.item.bookingUrl) {
+                  <a class="btn" [href]="row.item.bookingUrl" target="_blank" rel="noreferrer">Tickets</a>
+                }
+                <a class="btn btn-secondary" routerLink="/concierge">Ask concierge</a>
+              </div>
+            </article>
+          </li>
+        }
+      }
+    </ol>
+  }
 
   <h2>Saved places</h2>
   @if (savedError()) {

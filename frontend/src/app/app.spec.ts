@@ -29,6 +29,12 @@ describe('App', () => {
   it('should guard the trip dashboard', () => {
     const dashboard = routes.find((route) => route.path === 'trips');
     expect(dashboard?.canActivate).toEqual([authGuard]);
+    expect(dashboard?.title).toBe('Plan');
+  });
+
+  it('should alias /plan to the Plan tab', () => {
+    const plan = routes.find((route) => route.path === 'plan');
+    expect(plan?.redirectTo).toBe('trips');
   });
 
   it('should guard preferences', () => {

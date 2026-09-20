@@ -4,12 +4,17 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { provideRouter } from '@angular/router';
 import { environment } from '../../environments/environment';
 import {
+  buildTimeline,
+  formatTime12h,
+  highlightCount,
   inclusiveDayCount,
+  itineraryIsEmpty,
   localTodayIso,
   selectFeaturedTrip,
+  selectPlanDayNumber,
   TripDashboard,
 } from './trip-dashboard';
-import type { Trip } from './trip.service';
+import type { Itinerary, ItineraryItem, Trip } from './trip.service';
 
 function trip(partial: Partial<Trip> & Pick<Trip, 'id' | 'startDate' | 'endDate'>): Trip {
   return {
@@ -22,6 +27,80 @@ function trip(partial: Partial<Trip> & Pick<Trip, 'id' | 'startDate' | 'endDate'
     travelStyle: 'balanced',
     ...partial,
   };
+}
+
+function item(partial: Partial<ItineraryItem> & Pick<ItineraryItem, 'id' | 'kind' | 'startTime' | 'endTime'>): ItineraryItem {
+  return {
+    dayId: 'day-2',
+    sortOrder: 0,
+    placeId: null,
+    travelTimeMinutes: null,
+    notes: null,
+    bookingUrl: null,
+    referralPartnerId: null,
+    locked: false,
+    title: null,
+    ...partial,
+  };
+}
+
+function skeleton(tripId: string, dayCount = 7): Itinerary {
+  return {
+    id: 'itin-1',
+    tripId,
+    dayCount,
+    status: 'draft',
+    generatedAt: null,
+    days: Array.from({ length: dayCount }, (_, index) => ({
+      id: `day-${index + 1}`,
+      itineraryId: 'itin-1',
+      dayNumber: index + 1,
+      date: `2099-01-${String(10 + index).padStart(2, '0')}`,
+      items: [],
+    })),
+  };
+}
+
+function filledPlan(tripId: string): Itinerary {
+  const base = skeleton(tripId, 7);
+  base.days[1] = {
+    ...base.days[1],
+    date: '2026-09-22',
+    items: [],
+  };
+  base.days[0] = {
+    ...base.days[0],
+    items: [
+      item({
+        id: 'a1',
+        kind: 'activity',
+        startTime: '09:30',
+        endTime: '11:00',
+        title: 'Petronas Twin Towers',
+        placeId: 'my-attr-petronas',
+        bookingUrl: 'https://www.petronastwintowers.com.my/',
+        notes: 'Book the skybridge slot',
+      }),
+      item({
+        id: 'm1',
+        kind: 'meal',
+        startTime: '12:00',
+        endTime: '13:00',
+        title: 'Madam Kwan’s',
+        placeId: 'my-food-madam-kwan',
+        travelTimeMinutes: 15,
+      }),
+      item({
+        id: 'n1',
+        kind: 'note',
+        startTime: '14:00',
+        endTime: '15:00',
+        title: 'Rest at the hotel',
+        notes: 'Open afternoon for downtime',
+      }),
+    ],
+  };
+  return base;
 }
 
 describe('trip dashboard helpers', () => {
@@ -51,6 +130,44 @@ describe('trip dashboard helpers', () => {
     );
     expect(featured?.id).toBe('soon');
   });
+
+  it('formats 24h times as 12h Stitch clocks', () => {
+    expect(formatTime12h('09:30')).toBe('09:30 AM');
+    expect(formatTime12h('16:00')).toBe('04:00 PM');
+  });
+
+  it('counts activity and meal highlights', () => {
+    const plan = filledPlan('trip-1');
+    expect(highlightCount(plan.days[0])).toBe(2);
+    expect(itineraryIsEmpty(skeleton('trip-1'))).toBeTrue();
+    expect(itineraryIsEmpty(plan)).toBeFalse();
+  });
+
+  it('selects today’s day number when it is on the plan', () => {
+    expect(selectPlanDayNumber(filledPlan('trip-1'), '2026-09-22')).toBe(2);
+    expect(selectPlanDayNumber(filledPlan('trip-1'), '2020-01-01')).toBe(1);
+  });
+
+  it('inserts commute connectors from inbound minutes and travel blocks', () => {
+    const rows = buildTimeline([
+      item({ id: 't1', kind: 'travel', startTime: '08:00', endTime: '08:50', title: 'Transfer from KUL', travelTimeMinutes: 50 }),
+      item({ id: 'a1', kind: 'activity', startTime: '09:30', endTime: '11:00', title: 'Petronas Twin Towers' }),
+      item({
+        id: 'm1',
+        kind: 'meal',
+        startTime: '12:00',
+        endTime: '13:00',
+        title: 'Madam Kwan’s',
+        travelTimeMinutes: 15,
+      }),
+    ]);
+    expect(rows[0]).toEqual(
+      jasmine.objectContaining({ type: 'commute', minutes: 50, title: 'Transfer from KUL' }),
+    );
+    expect(rows[1]).toEqual(jasmine.objectContaining({ type: 'block' }));
+    expect(rows[2]).toEqual(jasmine.objectContaining({ type: 'commute', minutes: 15 }));
+    expect(rows[3]).toEqual(jasmine.objectContaining({ type: 'block' }));
+  });
 });
 
 describe('TripDashboard', () => {
@@ -71,7 +188,7 @@ describe('TripDashboard', () => {
     http.verify();
   });
 
-  it('loads GET /trips with credentials and shows an upcoming trip', () => {
+  it('loads GET /trips with credentials and generates an empty itinerary', () => {
     fixture.detectChanges();
     const req = http.expectOne(`${environment.apiBaseUrl}/trips`);
     expect(req.request.method).toBe('GET');
@@ -110,22 +227,54 @@ describe('TripDashboard', () => {
         },
       ],
     });
+    const itinReq = http.expectOne(`${environment.apiBaseUrl}/trips/trip-1/itinerary`);
+    expect(itinReq.request.method).toBe('GET');
+    expect(itinReq.request.withCredentials).toBeTrue();
+    itinReq.flush({ itinerary: skeleton('trip-1', 5) });
+
+    const generateReq = http.expectOne(`${environment.apiBaseUrl}/trips/trip-1/itinerary/generate`);
+    expect(generateReq.request.method).toBe('POST');
+    expect(generateReq.request.withCredentials).toBeTrue();
+    generateReq.flush({ itinerary: filledPlan('trip-1') });
     fixture.detectChanges();
 
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Trip dashboard');
-    expect(compiled.textContent).toContain('Upcoming trip');
+    expect(compiled.querySelector('h1')?.textContent).toContain('Plan');
+    expect(compiled.textContent).toContain('Day 1 of 7');
     expect(compiled.textContent).toContain('Langkawi');
     expect(compiled.textContent).toContain('5 days');
-    expect(compiled.textContent).toContain('Itinerary summary will appear');
+    expect(compiled.textContent).toContain("Today's Plan");
+    expect(compiled.textContent).toContain('09:30 AM');
+    expect(compiled.textContent).toContain('Petronas Twin Towers');
+    expect(compiled.querySelector('a[href="/explore/my-attr-petronas"]')?.textContent).toContain('Petronas Twin Towers');
+    expect(compiled.querySelector('a[href="https://www.petronastwintowers.com.my/"]')?.textContent).toContain('Tickets');
+    expect(compiled.textContent).toContain('15 min travel time');
+    expect(compiled.textContent).toContain('Directions');
+    expect(compiled.textContent).toContain('Meal');
+    expect(compiled.textContent).toContain("Madam Kwan’s");
+    expect(compiled.textContent).toContain('Open afternoon for downtime');
     expect(compiled.textContent).toContain('Madam Kwan’s (Suria KLCC)');
-    expect(compiled.querySelector('a[href="/explore/my-food-madam-kwan"]')?.textContent).toContain(
+    expect(compiled.querySelector('.saved-list a[href="/explore/my-food-madam-kwan"]')?.textContent).toContain(
       'Madam Kwan’s (Suria KLCC)',
     );
     expect(compiled.textContent).toContain('Partner referrals will appear');
     expect(compiled.querySelector('a[href="/trips/new"]')?.textContent).toContain('Plan a trip');
     expect(compiled.querySelector('a[href="/arrival"]')?.textContent).toContain('Arrival checklist');
     expect(localTodayIso().length).toBe(10);
+  });
+
+  it('does not generate when the itinerary already has stops', () => {
+    fixture.detectChanges();
+    http.expectOne(`${environment.apiBaseUrl}/trips`).flush({
+      trips: [trip({ id: 'trip-2', destination: 'Kuala Lumpur', startDate: '2099-02-01', endDate: '2099-02-07' })],
+    });
+    http.expectOne(`${environment.apiBaseUrl}/trips/trip-2/places`).flush({ places: [] });
+    http.expectOne(`${environment.apiBaseUrl}/trips/trip-2/itinerary`).flush({ itinerary: filledPlan('trip-2') });
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain('Petronas Twin Towers');
+    http.verify();
   });
 
   it('shows an empty state when there is no current or upcoming trip', () => {
