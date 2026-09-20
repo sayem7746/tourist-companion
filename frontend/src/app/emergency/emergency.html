@@ -65,6 +65,17 @@
     <a routerLink="/embassies" class="btn">Find your embassy</a>
   </article>
 
+  <article class="card embassy-link">
+    <div class="context-head">
+      <span class="material-symbols-outlined" aria-hidden="true">health_and_safety</span>
+      <h2>Safety tips</h2>
+    </div>
+    <p class="summary">
+      Concise steps for lost items, scams, transport disputes, and a lost passport.
+    </p>
+    <a routerLink="/safety" class="btn btn-secondary">Read safety tips</a>
+  </article>
+
   @if (pending()) {
     <p class="meta" aria-live="polite">Loading emergency help…</p>
   }

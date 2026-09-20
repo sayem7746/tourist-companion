@@ -210,6 +210,20 @@ describe('concierge API', () => {
     const passportBody = passport.json() as ChatBody;
     expect(passportBody.escalationLevel).toBe('handoff');
     expect(passportBody.reply.deepLink).toBe('/embassies');
+
+    const scam = await app.inject({
+      method: 'POST',
+      url: '/concierge/chat',
+      payload: { message: 'Is this gem shop a scam?' },
+    });
+    expect((scam.json() as ChatBody).reply.deepLink).toBe('/safety');
+
+    const fare = await app.inject({
+      method: 'POST',
+      url: '/concierge/chat',
+      payload: { message: 'The Grab fare looks wrong and I want to dispute it.' },
+    });
+    expect((fare.json() as ChatBody).reply.deepLink).toBe('/safety');
   });
 
   it('allows anonymous chat and injects JWT display name when present', async () => {

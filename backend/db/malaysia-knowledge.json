@@ -792,6 +792,7 @@
         "Tourist Police",
         "Airport transfer options"
       ],
+      "deepLink": "/safety",
       "trustLineEligible": true,
       "escalation": "handoff",
       "sortOrder": 4
@@ -830,11 +831,56 @@
         "mdac"
       ],
       "followUpChips": [
-        "Find my embassy"
+        "Find my embassy",
+        "Safety tips"
       ],
       "deepLink": "/embassies",
       "escalation": "handoff",
       "sortOrder": 6
+    },
+    {
+      "id": "my-faq-lost-items",
+      "topic": "faq",
+      "category": "safety_non_emergency",
+      "title": "Lost phone, wallet, or bag",
+      "summary": "Retrace, tell the hotel or venue, then file a police report if it is still missing.",
+      "body": "Stay put if it is safe and retrace your last stops. Ask the venue lost-and-found and your hotel desk. Freeze cards from another device. File a police report with Tourist Police for insurance. Everyday steps live in the in-app safety guide. If you are being followed or threatened, use SOS (999 / 112) instead of searching.",
+      "tags": [
+        "lost",
+        "wallet",
+        "phone",
+        "bag",
+        "tourist-police"
+      ],
+      "followUpChips": [
+        "Open safety tips",
+        "Tourist Police"
+      ],
+      "deepLink": "/safety",
+      "escalation": "handoff",
+      "sortOrder": 13
+    },
+    {
+      "id": "my-faq-fare-dispute",
+      "topic": "faq",
+      "category": "safety_non_emergency",
+      "title": "Grab and taxi fare disputes",
+      "summary": "Screenshot the trip and use in-app help or the hotel desk — do not argue in the street.",
+      "body": "Screenshot the Grab trip, fare, and driver details before you close the app. Use in-app help or your hotel desk. At KLIA, use the official coupon-taxi booth. Confirm a city taxi meter is on before you sit. Everyday steps live in the in-app safety guide. If you feel unsafe, use SOS (999 / 112).",
+      "tags": [
+        "grab",
+        "taxi",
+        "fare",
+        "dispute",
+        "meter"
+      ],
+      "followUpChips": [
+        "Open safety tips",
+        "Airport transfer options"
+      ],
+      "deepLink": "/safety",
+      "escalation": "handoff",
+      "sortOrder": 14
     },
     {
       "id": "my-faq-visa-oob",

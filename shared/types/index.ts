@@ -761,6 +761,50 @@ export interface EmbassyDirectory {
   missions: ForeignMission[];
 }
 
+export const SAFETY_TOPICS = [
+  'lost_items',
+  'scams',
+  'transport_disputes',
+  'document_loss',
+] as const;
+
+export type SafetyTopic = (typeof SAFETY_TOPICS)[number];
+
+export const SAFETY_GUIDE_PATHS = ['/emergency', '/embassies'] as const;
+export type SafetyGuidePath = (typeof SAFETY_GUIDE_PATHS)[number];
+
+export const SAFETY_ACCENT = '#0D7652' as const;
+
+export interface SafetyGuideLink {
+  label: string;
+  path: SafetyGuidePath;
+}
+
+export interface SafetyTip {
+  id: string;
+  topic: SafetyTopic;
+  title: string;
+  summary: string;
+  steps: string[];
+  whenToUse: string;
+  icon: string;
+  links: SafetyGuideLink[];
+  sortOrder: number;
+}
+
+export interface SafetyGuide {
+  country: 'MY';
+  destination: 'Malaysia';
+  version: string;
+  topic: SafetyTopic | null;
+  topics: SafetyTopic[];
+  disclaimer: string;
+  accent: typeof SAFETY_ACCENT;
+  emergencyPath: '/emergency';
+  embassyPath: '/embassies';
+  tips: SafetyTip[];
+}
+
 export const REFERRAL_STATUSES = ['pending', 'clicked', 'converted', 'expired'] as const;
 export type ReferralStatus = (typeof REFERRAL_STATUSES)[number];
 

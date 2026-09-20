@@ -1,0 +1,104 @@
+<section class="safety">
+  <h1>Safety tips</h1>
+  <p class="lede">{{ lede }}</p>
+
+  <article class="card context">
+    <div class="context-head">
+      <span class="material-symbols-outlined" aria-hidden="true">info</span>
+      <h2>Everyday help, not SOS</h2>
+    </div>
+    <p>
+      These emerald tip cards cover lost items, scams, transport disputes, and a lost passport. If
+      you are in immediate danger, open emergency help and call 999 or 112.
+    </p>
+  </article>
+
+  <div class="link-row">
+    <article class="card jump">
+      <div class="context-head">
+        <span class="material-symbols-outlined" aria-hidden="true">e911_emergency</span>
+        <h2>Emergency help</h2>
+      </div>
+      <p class="summary">999, 112, Tourist Police, and one-tap dialers.</p>
+      <a [routerLink]="guide()?.emergencyPath || '/emergency'" class="btn btn-sos">Open SOS</a>
+    </article>
+    <article class="card jump">
+      <div class="context-head">
+        <span class="material-symbols-outlined" aria-hidden="true">account_balance</span>
+        <h2>Embassies</h2>
+      </div>
+      <p class="summary">Search Kuala Lumpur missions and open official websites only.</p>
+      <a [routerLink]="guide()?.embassyPath || '/embassies'" class="btn">Find your embassy</a>
+    </article>
+  </div>
+
+  @if (pending()) {
+    <p class="meta" aria-live="polite">Loading safety tips…</p>
+  }
+
+  @if (loadError()) {
+    <p class="error" role="alert">{{ loadError() }}</p>
+    <button type="button" class="btn" (click)="load()">Retry</button>
+  }
+
+  <div class="chip-row" role="tablist" aria-label="Safety topic filters">
+    @for (chip of chips; track chip.id) {
+      <button
+        type="button"
+        class="chip"
+        [class.selected]="filter === chip.id"
+        [attr.aria-pressed]="filter === chip.id"
+        [disabled]="pending()"
+        (click)="onFilter(chip.id)"
+      >
+        {{ chip.label }}
+      </button>
+    }
+  </div>
+
+  @if (guide(); as dir) {
+    @if (!pending() && !loadError()) {
+      @if (dir.tips.length === 0) {
+        <p class="meta">No tips in this filter. Try All.</p>
+      }
+      <div class="tip-list">
+        @for (tip of dir.tips; track tip.id) {
+          <article class="card emerald-tip" data-accent="emerald" [style.--tip-accent]="accent()">
+            <div class="tip-head">
+              <span class="tip-icon" aria-hidden="true">
+                <span class="material-symbols-outlined">{{ tip.icon }}</span>
+              </span>
+              <div>
+                <div class="meta-row">
+                  <span class="topic">{{ topicLabels[tip.topic] }}</span>
+                </div>
+                <h3>{{ tip.title }}</h3>
+              </div>
+            </div>
+            <p class="summary">{{ tip.summary }}</p>
+            <ol class="steps">
+              @for (step of tip.steps; track $index) {
+                <li>{{ step }}</li>
+              }
+            </ol>
+            <p class="when"><strong>When to use:</strong> {{ tip.whenToUse }}</p>
+            <div class="tip-actions">
+              @for (link of visibleLinks(tip); track link.path + link.label) {
+                <a
+                  class="btn"
+                  [class.btn-sos]="link.path === '/emergency'"
+                  [class.btn-secondary]="link.path === '/embassies'"
+                  [routerLink]="link.path"
+                >
+                  {{ link.label }}
+                </a>
+              }
+            </div>
+          </article>
+        }
+      </div>
+    }
+
+    <p class="disclaimer">{{ dir.disclaimer }}</p>
+  }
+</section>

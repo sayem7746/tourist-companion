@@ -119,6 +119,7 @@ describe('Embassies', () => {
     expect(text).toContain('British High Commission');
     expect(text).toContain('376 Jalan Tun Razak');
     expect(host.querySelector('a[href="/emergency"]')?.textContent).toContain('emergency help');
+    expect(host.querySelector('a[href="/safety"]')?.textContent).toContain('Safety tips');
     expect(host.querySelector('a[href="https://my.usembassy.gov/"]')?.textContent).toContain(
       'Official website',
     );

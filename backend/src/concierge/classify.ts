@@ -72,6 +72,7 @@ const LEGAL_PATTERNS = [
 const HANDOFF_PATTERNS: Array<{ re: RegExp; category: ConciergeCategory }> = [
   { re: /\blost (my )?passport\b/i, category: 'safety_non_emergency' },
   { re: /\bpassport (is )?(lost|stolen)\b/i, category: 'safety_non_emergency' },
+  { re: /\blost (my )?(phone|wallet|bag|luggage|items?)\b/i, category: 'safety_non_emergency' },
   { re: /\bscam\b/i, category: 'safety_non_emergency' },
   { re: /\b(grab fare|disputed? (fare|grab))\b/i, category: 'safety_non_emergency' },
   { re: /\bcustoms seizure\b/i, category: 'safety_non_emergency' },
@@ -151,7 +152,9 @@ export function classifyIntent(message: string, categoryHint?: ConciergeCategory
     if (item.re.test(text)) {
       const articleHint =
         /passport/i.test(text) ? 'my-faq-passport'
-        : /scam|touts|grab fare/i.test(text) ? 'my-faq-scams'
+        : /grab fare|disputed? (fare|grab)/i.test(text) ? 'my-faq-fare-dispute'
+        : /lost (my )?(phone|wallet|bag|luggage|items?)/i.test(text) ? 'my-faq-lost-items'
+        : /scam|touts/i.test(text) ? 'my-faq-scams'
         : /pharmacy|stomach|clinic/i.test(text) ? 'my-faq-pharmacy'
         : 'my-faq-scams';
       return { category: item.category, escalationLevel: 'handoff', articleHint };

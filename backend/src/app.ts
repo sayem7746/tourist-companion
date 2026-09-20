@@ -32,6 +32,7 @@ import { createPgConciergeHistoryStore } from './concierge/pg-store.js';
 import type { ConciergeHistoryStore } from './concierge/history-types.js';
 import { registerEmbassyRoutes } from './embassies/routes.js';
 import { registerEmergencyRoutes } from './emergency/routes.js';
+import { registerSafetyRoutes } from './safety/routes.js';
 import { registerKnowledgeRoutes } from './knowledge/routes.js';
 import { registerPartnerAdminRoutes, registerPartnerPublicRoutes } from './partners/routes.js';
 import { registerReferralRoutes } from './partners/referral-routes.js';
@@ -180,6 +181,7 @@ export function buildApp(config: AppConfig): FastifyInstance {
   void registerKnowledgeRoutes(app, config);
   void registerEmergencyRoutes(app, config);
   void registerEmbassyRoutes(app, config);
+  void registerSafetyRoutes(app, config);
   void registerPlacesRoutes(app, config);
 
   let memoryAuthStore: AuthStore | undefined;

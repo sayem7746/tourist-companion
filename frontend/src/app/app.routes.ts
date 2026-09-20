@@ -15,6 +15,7 @@ import { PlaceDetailsPage } from './explore/place-details';
 import { Concierge } from './concierge/concierge';
 import { Emergency } from './emergency/emergency';
 import { Embassies } from './embassies/embassies';
+import { Safety } from './safety/safety';
 
 export const routes: Routes = [
   { path: '', component: Home, title: 'Malaysia Companion' },
@@ -29,6 +30,7 @@ export const routes: Routes = [
   { path: 'concierge', component: Concierge, title: 'Malaysia AI Concierge' },
   { path: 'emergency', component: Emergency, title: 'Emergency help' },
   { path: 'embassies', component: Embassies, title: 'Embassies and consulates' },
+  { path: 'safety', component: Safety, title: 'Safety tips' },
   {
     path: 'trips',
     component: TripDashboard,

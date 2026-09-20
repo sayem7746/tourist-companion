@@ -88,6 +88,9 @@ describe('Home', () => {
     expect(
       compiled.querySelector('.account-links a[href="/arrival/money"]')?.textContent,
     ).toContain('Currency');
+    expect(compiled.querySelector('.account-links a[href="/safety"]')?.textContent).toContain(
+      'Safety',
+    );
     expect(compiled.querySelector('a.quick-card[href="/emergency"]')?.textContent).toContain(
       'Emergency',
     );

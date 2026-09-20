@@ -77,6 +77,13 @@ describe('App', () => {
     expect(embassies?.title).toBe('Embassies and consulates');
   });
 
+  it('should expose a public tourist safety guide route', () => {
+    const safety = routes.find((route) => route.path === 'safety');
+    expect(safety?.component).toBeTruthy();
+    expect(safety?.canActivate).toBeUndefined();
+    expect(safety?.title).toBe('Safety tips');
+  });
+
   it('should expose a public Malaysia AI Concierge route', () => {
     const concierge = routes.find((route) => route.path === 'concierge');
     expect(concierge?.component).toBeTruthy();
