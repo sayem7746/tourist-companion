@@ -8,6 +8,7 @@
     "start": "node dist/index.js",
     "dev": "tsx watch src/index.ts",
     "test": "vitest run",
+    "lint": "tsc -p tsconfig.json --noEmit",
     "db:migrate": "node-pg-migrate up --migrations-dir migrations --migration-file-language js",
     "db:migrate:down": "node-pg-migrate down --migrations-dir migrations",
     "db:migrate:create": "node-pg-migrate create --migrations-dir migrations --migration-file-language js",

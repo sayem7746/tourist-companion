@@ -26,6 +26,10 @@ npm run db:seed
 
 See `backend/README.md` for schema, migrate, and seed details.
 
+## CI/CD
+
+Pull requests and pushes to `main` run lint, test, and build for frontend and backend (`.github/workflows/ci.yml`). Staging vs production deploy notes (no cloud credentials) are in `infra/DEPLOY.md`.
+
 ## Status
 
 Foundation work is in progress. See the Asana project **Tourist companion**.
