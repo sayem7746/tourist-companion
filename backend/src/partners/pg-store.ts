@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type pg from 'pg';
 import { ConflictError, ValidationError } from '../errors.js';
+import { collectReferralAnalytics } from './analytics.js';
 import { applyPartnerPatch, parseCommissionRate, rowFromCreate, toOpsProvider, toReferral } from './map.js';
 import {
   redirectByCode,
@@ -416,6 +417,15 @@ export function createPgPartnerStore(pool: pg.Pool): PartnerStore {
     },
     redirectByCode(code) {
       return redirectByCode(persistence, code);
+    },
+    async getReferralAnalytics(filters) {
+      const referrals = await pool.query<ReferralRow>(SELECT_REFERRAL);
+      const providers = await pool.query<ProviderRow>(SELECT_PROVIDER);
+      return collectReferralAnalytics(
+        referrals.rows,
+        providers.rows.map((row) => toOpsProvider(row)),
+        filters,
+      );
     },
   };
 }

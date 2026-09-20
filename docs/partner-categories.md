@@ -4,9 +4,9 @@ Product spec for the referral marketplace: which businesses can appear as partne
 
 Asana: [Define partner categories](https://app.asana.com/1/1218080418840809/project/1218661619289569/task/1218663074686851) (EPIC 07 — Referral Marketplace).
 
-Shared contract: `PARTNER_CATEGORIES`, `PARTNER_CATEGORY_CHIPS`, `Provider`, `PartnerListing`, `PartnerCommission`, `Referral`, and `REFERRAL_DISCLOSURE` in `shared/types/index.ts`.
+Shared contract: `PARTNER_CATEGORIES`, `PARTNER_CATEGORY_CHIPS`, `Provider`, `PartnerListing`, `PartnerCommission`, `Referral`, `ReferralAnalytics`, and `REFERRAL_DISCLOSURE` in `shared/types/index.ts`.
 
-This document is the category and compliance model. Traveler listings are `GET /partners` and `GET /partners/:id` (active rows only; no contact email or commission). Partner admin listing CRUD lives at `/admin/partners`. Traveler click, lead, and outbound-redirect tracking lives at `/referrals/*` and `GET /r/:code`.
+This document is the category and compliance model. Traveler listings are `GET /partners` and `GET /partners/:id` (active rows only; no contact email or commission). Partner admin listing CRUD lives at `/admin/partners`. Traveler click, lead, and outbound-redirect tracking lives at `/referrals/*` and `GET /r/:code`. Admin click/lead/conversion reporting is `GET /admin/referrals/analytics`.
 
 ## Screen contract
 
@@ -181,6 +181,7 @@ Authenticated tourist endpoints (JWT or session cookie). `channel` is the source
 | `GET` | `/referrals/go/:providerId?channel=` | Cookie/JWT outbound start: record a click and `302` to the tracked partner URL |
 | `GET` | `/r/:code` | Public tracked redirect for an issued code (`pending` → `clicked`). `302` only to the stored HTTPS partner URL |
 | `POST` | `/referrals/bookings` | Admin (`ADMIN_TOKEN` or `role: admin`): partner-reported booking/activation. Sets `converted` and `convertedAt` |
+| `GET` | `/admin/referrals/analytics` | Admin: click, lead, and conversion totals plus per-partner and per-channel performance. Query: optional `providerId`, `category`, `channel`. `clicks` / `leads` / `conversions` are event totals (`metadata.clickCount`, `leadCount`, `bookingCount`, with status fallbacks). `referrals` is the row count. `conversionRate` is conversions ÷ clicks (`0` when there are no clicks). Partner admin UI and payout reports stay out of scope. |
 
 Inactive partners cannot open new clicks or leads (`404`). Existing codes still redirect. Clicks never set `converted`. Open redirects are rejected: the Location is always the listing `bookingUrl`, else `reservationUrl`, else `website`, and only `https://`.
 
@@ -260,7 +261,7 @@ Core tables (`backend/migrations/1730000000000_init-core-schema.cjs`) plus marke
 
 Public tourist API: `GET /partners` (query: `category`, `city`, `airport`) and `GET /partners/:id`. Active listings only, ranked sponsored-first, using the tourist `Provider` view.
 
-Admin API (`ADMIN_TOKEN` or JWT `role: admin`): `GET`/`POST /admin/partners`, `GET`/`PATCH`/`DELETE /admin/partners/:id`, `POST /admin/partners/:id/approve` (sets `is_active`), `POST /admin/partners/:id/pause`. Responses use the ops `Provider` view (contact + commission). Delete fails with 409 when referrals still point at the row — pause instead.
+Admin API (`ADMIN_TOKEN` or JWT `role: admin`): `GET`/`POST /admin/partners`, `GET`/`PATCH`/`DELETE /admin/partners/:id`, `POST /admin/partners/:id/approve` (sets `is_active`), `POST /admin/partners/:id/pause`, `GET /admin/referrals/analytics`. Partner responses use the ops `Provider` view (contact + commission). Delete fails with 409 when referrals still point at the row — pause instead. Analytics omits commission and contact email.
 
 Legacy `transport` / `lodging` / `activity` rows remap to `transfers` / `hotels` / `tours`. `insurance` / `other` are deactivated and parked as `tourist_services` (off-marketplace).
 

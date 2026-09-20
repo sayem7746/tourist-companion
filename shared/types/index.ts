@@ -720,3 +720,37 @@ export interface Referral {
   convertedAt?: string | null;
   metadata?: ReferralMetadata;
 }
+
+export interface ReferralAnalyticsCounts {
+  referrals: number;
+  clicks: number;
+  leads: number;
+  conversions: number;
+}
+
+export interface ReferralAnalyticsTotals extends ReferralAnalyticsCounts {
+  pending: number;
+  clicked: number;
+  converted: number;
+  expired: number;
+  conversionRate: number;
+}
+
+export interface PartnerPerformance extends ReferralAnalyticsCounts {
+  providerId: ProviderId;
+  name: string;
+  slug: string;
+  category: PartnerCategory;
+  isActive: boolean;
+  conversionRate: number;
+}
+
+export interface ReferralChannelPerformance extends ReferralAnalyticsCounts {
+  channel: ReferralChannel | null;
+}
+
+export interface ReferralAnalytics {
+  totals: ReferralAnalyticsTotals;
+  partners: PartnerPerformance[];
+  channels: ReferralChannelPerformance[];
+}

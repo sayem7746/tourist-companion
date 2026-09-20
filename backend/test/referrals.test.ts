@@ -3,12 +3,17 @@ import { buildApp } from '../src/app.js';
 import { loadConfig } from '../src/config.js';
 import { signAccessToken } from '../src/auth/tokens.js';
 import {
+  collectReferralAnalytics,
+  conversionRate,
+  referralEventCounts,
+} from '../src/partners/analytics.js';
+import {
   applyReferralEvent,
   generateReferralCode,
   nextReferralStatus,
   trackedOutboundUrl,
 } from '../src/partners/tracking.js';
-import type { ReferralRow } from '../src/partners/types.js';
+import type { Provider, ReferralAnalytics, ReferralRow } from '../src/partners/types.js';
 
 const ADMIN_TOKEN = 'test-only-admin-token';
 const config = loadConfig({
@@ -66,6 +71,7 @@ async function createActivePartner(input?: {
   website?: string | null;
   name?: string;
   slug?: string;
+  category?: 'transfers' | 'sim';
 }) {
   const created = await app.inject({
     method: 'POST',
@@ -74,7 +80,7 @@ async function createActivePartner(input?: {
     payload: {
       name: input?.name ?? 'Grab Malaysia',
       slug: input?.slug ?? `grab-${Math.random().toString(36).slice(2, 10)}`,
-      category: 'transfers',
+      category: input?.category ?? 'transfers',
       isActive: true,
       website: input?.website === undefined ? 'https://www.grab.com/my/' : input.website,
       listing: {
@@ -134,6 +140,143 @@ describe('referral tracking helpers', () => {
     const booked = applyReferralEvent(clicked, 'booking', { now: '2026-09-20T09:00:00.000Z' });
     expect(booked.status).toBe('converted');
     expect(booked.convertedAt).toBe('2026-09-20T09:00:00.000Z');
+  });
+});
+
+describe('referral analytics helpers', () => {
+  const grab: Provider = {
+    id: '11111111-1111-4111-8111-111111111111',
+    name: 'Grab Malaysia',
+    slug: 'grab-malaysia',
+    category: 'transfers',
+    isActive: true,
+  };
+  const airalo: Provider = {
+    id: '44444444-4444-4444-8444-444444444444',
+    name: 'Airalo Malaysia',
+    slug: 'airalo-malaysia',
+    category: 'sim',
+    isActive: true,
+  };
+
+  function row(overrides: Partial<ReferralRow> & Pick<ReferralRow, 'id' | 'providerId' | 'status'>): ReferralRow {
+    return {
+      userId: '33333333-3333-4333-8333-333333333333',
+      tripId: null,
+      placeId: null,
+      referralCode: overrides.referralCode ?? `CODE-${overrides.id.slice(0, 8)}`,
+      channel: overrides.channel ?? 'arrival',
+      itineraryItemId: null,
+      convertedAt: null,
+      metadata: {},
+      ...overrides,
+    };
+  }
+
+  it('falls back from status when metadata counts are missing', () => {
+    expect(referralEventCounts(row({ id: 'a', providerId: grab.id, status: 'pending' }))).toEqual({
+      referrals: 1,
+      clicks: 0,
+      leads: 0,
+      conversions: 0,
+    });
+    expect(referralEventCounts(row({ id: 'b', providerId: grab.id, status: 'clicked' }))).toEqual({
+      referrals: 1,
+      clicks: 1,
+      leads: 0,
+      conversions: 0,
+    });
+    expect(referralEventCounts(row({ id: 'c', providerId: grab.id, status: 'converted' }))).toEqual({
+      referrals: 1,
+      clicks: 1,
+      leads: 0,
+      conversions: 1,
+    });
+    expect(
+      referralEventCounts(
+        row({
+          id: 'd',
+          providerId: grab.id,
+          status: 'clicked',
+          metadata: { clickCount: 4, leadCount: 2, bookingCount: 0 },
+        }),
+      ),
+    ).toEqual({ referrals: 1, clicks: 4, leads: 2, conversions: 0 });
+    expect(
+      referralEventCounts(
+        row({
+          id: 'e',
+          providerId: grab.id,
+          status: 'clicked',
+          metadata: { leadCount: 1 },
+        }),
+      ),
+    ).toEqual({ referrals: 1, clicks: 0, leads: 1, conversions: 0 });
+    expect(conversionRate(1, 4)).toBe(0.25);
+    expect(conversionRate(1, 0)).toBe(0);
+  });
+
+  it('rolls up partner performance and optional filters', () => {
+    const referrals: ReferralRow[] = [
+      row({
+        id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+        providerId: grab.id,
+        status: 'converted',
+        channel: 'arrival',
+        metadata: { clickCount: 3, leadCount: 1, bookingCount: 1 },
+      }),
+      row({
+        id: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+        providerId: airalo.id,
+        status: 'clicked',
+        channel: 'explore',
+        metadata: { clickCount: 1, leadCount: 1 },
+      }),
+    ];
+    const all = collectReferralAnalytics(referrals, [grab, airalo]);
+    expect(all.totals).toMatchObject({
+      referrals: 2,
+      clicks: 4,
+      leads: 2,
+      conversions: 1,
+      pending: 0,
+      clicked: 1,
+      converted: 1,
+      expired: 0,
+      conversionRate: 0.25,
+    });
+    expect(all.partners.map((partner) => partner.slug)).toEqual(['grab-malaysia', 'airalo-malaysia']);
+    expect(all.partners[0]).toMatchObject({
+      providerId: grab.id,
+      clicks: 3,
+      leads: 1,
+      conversions: 1,
+      conversionRate: 0.3333,
+    });
+    expect(all.channels.map((channel) => channel.channel)).toEqual(['arrival', 'explore']);
+
+    const arrival = collectReferralAnalytics(referrals, [grab, airalo], { channel: 'arrival' });
+    expect(arrival.totals.clicks).toBe(3);
+    expect(arrival.partners).toHaveLength(1);
+
+    const sims = collectReferralAnalytics(referrals, [grab, airalo], { category: 'sim' });
+    expect(sims.partners.map((partner) => partner.slug)).toEqual(['airalo-malaysia']);
+
+    const emptyPartner = collectReferralAnalytics(referrals, [grab, airalo], {
+      providerId: airalo.id,
+      channel: 'arrival',
+    });
+    expect(emptyPartner.totals.referrals).toBe(0);
+    expect(emptyPartner.partners).toEqual([
+      expect.objectContaining({
+        providerId: airalo.id,
+        referrals: 0,
+        clicks: 0,
+        leads: 0,
+        conversions: 0,
+        conversionRate: 0,
+      }),
+    ]);
   });
 });
 
@@ -438,5 +581,191 @@ describe('referral tracking API', () => {
       headers: { authorization: `Bearer ${session.token}` },
     });
     expect(go.statusCode).toBe(400);
+  });
+
+  it('rejects non-admin referral analytics', async () => {
+    const missing = await app.inject({ method: 'GET', url: '/admin/referrals/analytics' });
+    expect(missing.statusCode).toBe(401);
+
+    const session = await signup('analytics-tourist@example.com');
+    const tourist = await app.inject({
+      method: 'GET',
+      url: '/admin/referrals/analytics',
+      headers: { authorization: `Bearer ${session.token}` },
+    });
+    expect(tourist.statusCode).toBe(403);
+
+    const invalid = await app.inject({
+      method: 'GET',
+      url: '/admin/referrals/analytics?category=transport',
+      headers: adminHeaders,
+    });
+    expect(invalid.statusCode).toBe(400);
+  });
+
+  it('reports clicks, leads, and partner performance for admins', async () => {
+    const session = await signup('analytics-ops@example.com');
+    const headers = { authorization: `Bearer ${session.token}` };
+    const suffix = Math.random().toString(36).slice(2, 8);
+    const { partner: grab } = await createActivePartner({
+      name: 'Analytics Grab',
+      slug: `analytics-grab-${suffix}`,
+    });
+    const { partner: airalo } = await createActivePartner({
+      name: 'Analytics Airalo',
+      slug: `analytics-airalo-${suffix}`,
+      category: 'sim',
+      website: 'https://www.airalo.com/',
+      bookingUrl: 'https://www.airalo.com/',
+    });
+    const { partner: idle } = await createActivePartner({
+      name: 'Analytics Idle',
+      slug: `analytics-idle-${suffix}`,
+    });
+
+    const clicked = await app.inject({
+      method: 'POST',
+      url: '/referrals/clicks',
+      headers,
+      payload: { providerId: grab.id, channel: 'arrival', clickKey: `analytics-grab-${suffix}` },
+    });
+    expect(clicked.statusCode).toBe(201);
+    const clickBody = clicked.json() as TrackResponse;
+
+    const replay = await app.inject({
+      method: 'POST',
+      url: '/referrals/clicks',
+      headers,
+      payload: { providerId: grab.id, channel: 'arrival', clickKey: `analytics-grab-${suffix}` },
+    });
+    expect(replay.statusCode).toBe(200);
+
+    const lead = await app.inject({
+      method: 'POST',
+      url: '/referrals/leads',
+      headers,
+      payload: { referralId: clickBody.referral.id, channel: 'arrival' },
+    });
+    expect(lead.statusCode).toBe(200);
+
+    const booked = await app.inject({
+      method: 'POST',
+      url: '/referrals/bookings',
+      headers: adminHeaders,
+      payload: { referralId: clickBody.referral.id },
+    });
+    expect(booked.statusCode).toBe(200);
+
+    const exploreClick = await app.inject({
+      method: 'POST',
+      url: '/referrals/clicks',
+      headers,
+      payload: { providerId: airalo.id, channel: 'explore', clickKey: `analytics-airalo-${suffix}` },
+    });
+    expect(exploreClick.statusCode).toBe(201);
+
+    const openedLead = await app.inject({
+      method: 'POST',
+      url: '/referrals/leads',
+      headers,
+      payload: { providerId: airalo.id, channel: 'concierge' },
+    });
+    expect(openedLead.statusCode).toBe(201);
+
+    const grabReport = await app.inject({
+      method: 'GET',
+      url: `/admin/referrals/analytics?providerId=${grab.id}`,
+      headers: adminHeaders,
+    });
+    expect(grabReport.statusCode).toBe(200);
+    const grabAnalytics = (grabReport.json() as { analytics: ReferralAnalytics }).analytics;
+    expect(grabAnalytics.totals).toMatchObject({
+      referrals: 1,
+      clicks: 2,
+      leads: 1,
+      conversions: 1,
+      converted: 1,
+      conversionRate: 0.5,
+    });
+    expect(grabAnalytics.partners).toEqual([
+      expect.objectContaining({
+        providerId: grab.id,
+        name: 'Analytics Grab',
+        slug: `analytics-grab-${suffix}`,
+        category: 'transfers',
+        clicks: 2,
+        leads: 1,
+        conversions: 1,
+        conversionRate: 0.5,
+      }),
+    ]);
+    expect(grabAnalytics.channels).toEqual([
+      expect.objectContaining({ channel: 'arrival', clicks: 2, leads: 1, conversions: 1 }),
+    ]);
+
+    const simReport = await app.inject({
+      method: 'GET',
+      url: `/admin/referrals/analytics?category=sim&providerId=${airalo.id}`,
+      headers: adminHeaders,
+    });
+    const simAnalytics = (simReport.json() as { analytics: ReferralAnalytics }).analytics;
+    expect(simAnalytics.totals).toMatchObject({
+      referrals: 2,
+      clicks: 1,
+      leads: 1,
+      conversions: 0,
+      clicked: 2,
+      conversionRate: 0,
+    });
+    expect(simAnalytics.partners).toHaveLength(1);
+    expect(simAnalytics.partners[0]).toMatchObject({
+      providerId: airalo.id,
+      category: 'sim',
+      clicks: 1,
+      leads: 1,
+      conversions: 0,
+    });
+
+    const arrivalOnly = await app.inject({
+      method: 'GET',
+      url: `/admin/referrals/analytics?providerId=${grab.id}&channel=arrival`,
+      headers: adminHeaders,
+    });
+    expect((arrivalOnly.json() as { analytics: ReferralAnalytics }).analytics.totals.clicks).toBe(2);
+
+    const exploreOnly = await app.inject({
+      method: 'GET',
+      url: `/admin/referrals/analytics?providerId=${grab.id}&channel=explore`,
+      headers: adminHeaders,
+    });
+    expect((exploreOnly.json() as { analytics: ReferralAnalytics }).analytics.totals.clicks).toBe(0);
+
+    const idleReport = await app.inject({
+      method: 'GET',
+      url: `/admin/referrals/analytics?providerId=${idle.id}`,
+      headers: adminHeaders,
+    });
+    const idleAnalytics = (idleReport.json() as { analytics: ReferralAnalytics }).analytics;
+    expect(idleAnalytics.totals.referrals).toBe(0);
+    expect(idleAnalytics.partners).toEqual([
+      expect.objectContaining({ providerId: idle.id, clicks: 0, leads: 0, conversions: 0 }),
+    ]);
+
+    const adminJwt = signAccessToken(
+      {
+        id: '00000000-0000-4000-8000-000000000098',
+        email: 'analytics-admin@example.com',
+        displayName: 'Ops',
+        role: 'admin',
+      },
+      config,
+    );
+    const viaJwt = await app.inject({
+      method: 'GET',
+      url: `/admin/referrals/analytics?providerId=${grab.id}`,
+      headers: { authorization: `Bearer ${adminJwt}` },
+    });
+    expect(viaJwt.statusCode).toBe(200);
+    expect((viaJwt.json() as { analytics: ReferralAnalytics }).analytics.totals.conversions).toBe(1);
   });
 });

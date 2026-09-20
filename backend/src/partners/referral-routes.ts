@@ -4,7 +4,7 @@ import { optionalAuth, requireAdmin, requireAuth } from '../auth/middleware.js';
 import type { AppConfig } from '../config.js';
 import { NotFoundError, ServiceUnavailableError, ValidationError } from '../errors.js';
 import { validateRequest } from '../validate.js';
-import { REFERRAL_CHANNELS, type PartnerStore } from './types.js';
+import { PARTNER_CATEGORIES, REFERRAL_CHANNELS, type PartnerStore } from './types.js';
 
 const uuid = z.string().uuid();
 const optionalUuid = uuid.optional();
@@ -77,6 +77,14 @@ const goQuery = z
     placeId: uuid.optional(),
     itineraryItemId: uuid.optional(),
     clickKey,
+  })
+  .strict();
+
+const analyticsQuery = z
+  .object({
+    providerId: uuid.optional(),
+    category: z.enum(PARTNER_CATEGORIES).optional(),
+    channel: z.enum(REFERRAL_CHANNELS).optional(),
   })
   .strict();
 
@@ -154,6 +162,16 @@ export async function registerReferralRoutes(
     }
     const referrals = await getStore().listReferrals(user.id);
     return { referrals };
+  });
+
+  app.get('/admin/referrals/analytics', admin, async (request) => {
+    const { query } = validateRequest(request, { query: analyticsQuery });
+    const analytics = await getStore().getReferralAnalytics({
+      providerId: query.providerId,
+      category: query.category,
+      channel: query.channel,
+    });
+    return { analytics };
   });
 
   app.get(

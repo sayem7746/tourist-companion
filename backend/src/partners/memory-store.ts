@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { ConflictError, ValidationError } from '../errors.js';
+import { collectReferralAnalytics } from './analytics.js';
 import { applyPartnerPatch, parseCommissionRate, rowFromCreate, toOpsProvider, toReferral } from './map.js';
 import {
   redirectByCode,
@@ -188,6 +189,13 @@ export function createMemoryPartnerStore(): PartnerStore {
     },
     redirectByCode(code) {
       return redirectByCode(persistence, code);
+    },
+    async getReferralAnalytics(filters) {
+      return collectReferralAnalytics(
+        [...referralsById.values()].map((row) => cloneReferral(row)),
+        [...byId.values()].map((row) => toOpsProvider(cloneRow(row))),
+        filters,
+      );
     },
   };
 }

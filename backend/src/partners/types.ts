@@ -212,6 +212,46 @@ export interface OutboundRedirect {
   url: string;
 }
 
+export interface ReferralAnalyticsFilters {
+  providerId?: string;
+  category?: PartnerCategory;
+  channel?: ReferralChannel;
+}
+
+export interface ReferralAnalyticsCounts {
+  referrals: number;
+  clicks: number;
+  leads: number;
+  conversions: number;
+}
+
+export interface ReferralAnalyticsTotals extends ReferralAnalyticsCounts {
+  pending: number;
+  clicked: number;
+  converted: number;
+  expired: number;
+  conversionRate: number;
+}
+
+export interface PartnerPerformance extends ReferralAnalyticsCounts {
+  providerId: string;
+  name: string;
+  slug: string;
+  category: PartnerCategory;
+  isActive: boolean;
+  conversionRate: number;
+}
+
+export interface ReferralChannelPerformance extends ReferralAnalyticsCounts {
+  channel: ReferralChannel | null;
+}
+
+export interface ReferralAnalytics {
+  totals: ReferralAnalyticsTotals;
+  partners: PartnerPerformance[];
+  channels: ReferralChannelPerformance[];
+}
+
 export interface ReferralPersistence {
   getProvider(id: string): Promise<Provider | undefined>;
   findReferralById(id: string): Promise<ReferralRow | undefined>;
@@ -233,4 +273,5 @@ export interface PartnerStore {
   trackBooking(input: TrackBookingInput): Promise<Referral | undefined>;
   listReferrals(userId: string): Promise<Referral[]>;
   redirectByCode(code: string): Promise<OutboundRedirect | undefined>;
+  getReferralAnalytics(filters?: ReferralAnalyticsFilters): Promise<ReferralAnalytics>;
 }
