@@ -142,6 +142,30 @@ export interface ArrivalTransportOption {
   sortOrder: number;
 }
 
+export interface ArrivalTransferOptionView {
+  id: string;
+  mode: TransportMode;
+  name: string;
+  badge: string;
+  recommended: boolean;
+  reason: string;
+  estimatedCost: string;
+  estimatedDuration: string;
+  frequency?: string;
+  lastMile?: string;
+  boarding: string;
+}
+
+export interface ArrivalTransferRecommendation {
+  airportCode: ArrivalAirportCode;
+  destination: string;
+  destinationLabel: string;
+  areaId: string;
+  railFriendly: boolean;
+  summary: string;
+  options: ArrivalTransferOptionView[];
+}
+
 export type ReferralStatus = 'pending' | 'clicked' | 'converted' | 'expired';
 
 export interface Referral {

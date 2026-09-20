@@ -1,0 +1,73 @@
+<section class="transfer-helper">
+  <h2>Hotel transfer helper</h2>
+  <p class="lede">Enter a hotel or neighbourhood. We recommend official modes and show published time and fare estimates.</p>
+
+  <form class="search-form" (ngSubmit)="recommend()">
+    <label class="search-field" for="hotel-destination">Hotel or destination</label>
+    <div class="search-wrap">
+      <span class="search-icon" aria-hidden="true">⌕</span>
+      <input
+        id="hotel-destination"
+        name="destination"
+        type="search"
+        class="search-input"
+        placeholder="Hotel or neighbourhood, e.g. KLCC"
+        [(ngModel)]="destination"
+        [disabled]="pending()"
+        autocomplete="off"
+      />
+    </div>
+    <button type="submit" class="btn" [disabled]="pending()">Recommend transfers</button>
+  </form>
+
+  @if (formError()) {
+    <p class="error" role="alert">{{ formError() }}</p>
+  }
+
+  @if (pending()) {
+    <p class="meta" aria-live="polite">Finding transfer options…</p>
+  }
+
+  @if (loadError()) {
+    <p class="error" role="alert">{{ loadError() }}</p>
+    <button type="button" class="btn" (click)="recommend()">Retry</button>
+  }
+
+  @if (recommendation(); as rec) {
+    <p class="summary">{{ rec.summary }}</p>
+    <div class="option-list">
+      @for (option of rec.options; track option.id) {
+        <article class="card option">
+          <div class="option-head">
+            <h3>{{ option.name }}</h3>
+            <span [class]="chipClass(option.recommended)">{{ option.badge }}</span>
+          </div>
+          <p class="reason">{{ option.reason }}</p>
+          <dl class="facts">
+            <div>
+              <dt>Est. cost</dt>
+              <dd>{{ option.estimatedCost }}</dd>
+            </div>
+            <div>
+              <dt>Est. time</dt>
+              <dd>{{ option.estimatedDuration }}</dd>
+            </div>
+            @if (option.frequency) {
+              <div>
+                <dt>Frequency</dt>
+                <dd>{{ option.frequency }}</dd>
+              </div>
+            }
+            @if (option.lastMile) {
+              <div>
+                <dt>Last mile</dt>
+                <dd>{{ option.lastMile }}</dd>
+              </div>
+            }
+          </dl>
+          <p class="boarding"><strong>Boarding:</strong> {{ option.boarding }}</p>
+        </article>
+      }
+    </div>
+  }
+</section>

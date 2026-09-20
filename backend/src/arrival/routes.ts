@@ -3,6 +3,7 @@ import { z } from 'zod';
 import type { AppConfig } from '../config.js';
 import { ServiceUnavailableError } from '../errors.js';
 import { validateRequest } from '../validate.js';
+import { recommendHotelTransfers } from './hotel-transfer.js';
 import { ARRIVAL_TRANSPORT_SEED } from './transport-content.js';
 import {
   ARRIVAL_AIRPORTS,
@@ -57,5 +58,17 @@ export async function registerArrivalRoutes(
       airportCode: query.airport,
       options,
     };
+  });
+
+  const transferQuerySchema = z
+    .object({
+      airport: z.enum(ARRIVAL_AIRPORTS).optional().default(DEFAULT_ARRIVAL_AIRPORT),
+      destination: z.string().trim().min(2).max(120),
+    })
+    .strict();
+
+  app.get('/arrival-transfer', async (request) => {
+    const { query } = validateRequest(request, { query: transferQuerySchema });
+    return recommendHotelTransfers(query.airport, query.destination);
   });
 }

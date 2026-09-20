@@ -110,6 +110,7 @@ describe('ArrivalTransport', () => {
     expect(text).toContain('cost matters more than speed');
     expect(text).toContain('hotel drop-off');
     expect(text).toContain('mobility needs');
+    expect(text).toContain('Hotel transfer helper');
   });
 
   it('filters by airport', () => {

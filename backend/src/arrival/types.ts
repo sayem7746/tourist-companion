@@ -47,3 +47,27 @@ export interface ArrivalTransportOption {
   whenToUse: string;
   sortOrder: number;
 }
+
+export interface ArrivalTransferOptionView {
+  id: string;
+  mode: TransportMode;
+  name: string;
+  badge: string;
+  recommended: boolean;
+  reason: string;
+  estimatedCost: string;
+  estimatedDuration: string;
+  frequency?: string;
+  lastMile?: string;
+  boarding: string;
+}
+
+export interface ArrivalTransferRecommendation {
+  airportCode: ArrivalAirportCode;
+  destination: string;
+  destinationLabel: string;
+  areaId: string;
+  railFriendly: boolean;
+  summary: string;
+  options: ArrivalTransferOptionView[];
+}

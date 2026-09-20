@@ -121,4 +121,63 @@ describe('arrival checklist endpoint', () => {
     const unknown = await app.inject({ method: 'GET', url: '/arrival-transport?airport=PEN' });
     expect(unknown.statusCode).toBe(400);
   });
+
+  it('recommends rail modes for a KLCC hotel with published time and cost', async () => {
+    const response = await app.inject({
+      method: 'GET',
+      url: '/arrival-transfer?airport=KUL&destination=Mandarin%20Oriental',
+    });
+    expect(response.statusCode).toBe(200);
+    const body = response.json() as {
+      airportCode: string;
+      destinationLabel: string;
+      areaId: string;
+      railFriendly: boolean;
+      options: Array<{
+        mode: string;
+        recommended: boolean;
+        estimatedCost: string;
+        estimatedDuration: string;
+        name: string;
+      }>;
+    };
+    expect(body.airportCode).toBe('KUL');
+    expect(body.areaId).toBe('klcc');
+    expect(body.destinationLabel).toBe('KLCC');
+    expect(body.railFriendly).toBe(true);
+    expect(body.options.map((option) => option.mode)).toEqual(['ekspres', 'bus', 'e_hail', 'private']);
+    expect(body.options.filter((option) => option.recommended).map((option) => option.mode)).toEqual([
+      'ekspres',
+      'bus',
+    ]);
+    const ekspres = body.options.find((option) => option.mode === 'ekspres');
+    expect(ekspres).toMatchObject({
+      name: 'KLIA Ekspres',
+      estimatedCost: '~RM 55 per adult',
+      estimatedDuration: '28 mins',
+    });
+  });
+
+  it('recommends door-to-door modes for Petaling Jaya and rejects a blank destination', async () => {
+    const pj = await app.inject({
+      method: 'GET',
+      url: '/arrival-transfer?airport=KLIA2&destination=Sunway',
+    });
+    expect(pj.statusCode).toBe(200);
+    const body = pj.json() as {
+      airportCode: string;
+      railFriendly: boolean;
+      options: Array<{ mode: string; recommended: boolean; boarding: string }>;
+    };
+    expect(body.airportCode).toBe('KLIA2');
+    expect(body.railFriendly).toBe(false);
+    expect(body.options.filter((option) => option.recommended).map((option) => option.mode)).toEqual([
+      'e_hail',
+      'private',
+    ]);
+    expect(body.options[0].boarding).toContain('KLIA2');
+
+    const blank = await app.inject({ method: 'GET', url: '/arrival-transfer?destination=%20' });
+    expect(blank.statusCode).toBe(400);
+  });
 });

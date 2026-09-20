@@ -75,6 +75,30 @@ export interface ArrivalTransportResponse {
   options: ArrivalTransportOption[];
 }
 
+export interface ArrivalTransferOptionView {
+  id: string;
+  mode: TransportMode;
+  name: string;
+  badge: string;
+  recommended: boolean;
+  reason: string;
+  estimatedCost: string;
+  estimatedDuration: string;
+  frequency?: string;
+  lastMile?: string;
+  boarding: string;
+}
+
+export interface ArrivalTransferRecommendation {
+  airportCode: ArrivalAirportCode;
+  destination: string;
+  destinationLabel: string;
+  areaId: string;
+  railFriendly: boolean;
+  summary: string;
+  options: ArrivalTransferOptionView[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class ArrivalService {
   private readonly base = `${environment.apiBaseUrl}/arrival-checklist`;
@@ -92,5 +116,13 @@ export class ArrivalService {
   listTransport(airport: ArrivalAirportCode = DEFAULT_ARRIVAL_AIRPORT): Observable<ArrivalTransportResponse> {
     const params = new HttpParams().set('airport', airport);
     return this.http.get<ArrivalTransportResponse>(`${environment.apiBaseUrl}/arrival-transport`, { params });
+  }
+
+  recommendTransfer(
+    destination: string,
+    airport: ArrivalAirportCode = DEFAULT_ARRIVAL_AIRPORT,
+  ): Observable<ArrivalTransferRecommendation> {
+    const params = new HttpParams().set('airport', airport).set('destination', destination);
+    return this.http.get<ArrivalTransferRecommendation>(`${environment.apiBaseUrl}/arrival-transfer`, { params });
   }
 }

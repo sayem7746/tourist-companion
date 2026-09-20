@@ -1,6 +1,7 @@
 import { Component, Input, OnChanges, OnInit, SimpleChanges, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { ArrivalTransferHelper } from './arrival-transfer-helper';
 import {
   AIRPORT_LABELS,
   ARRIVAL_AIRPORTS,
@@ -12,7 +13,7 @@ import {
 
 @Component({
   selector: 'app-arrival-transport',
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, ArrivalTransferHelper],
   templateUrl: './arrival-transport.html',
   styleUrl: './arrival-transport.css',
 })

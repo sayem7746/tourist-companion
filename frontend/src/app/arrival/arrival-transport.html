@@ -23,6 +23,8 @@
     drivers soliciting in arrival halls.
   </p>
 
+  <app-arrival-transfer-helper [airport]="airport" />
+
   @if (pending()) {
     <p class="meta" aria-live="polite">Loading transport options…</p>
   }
