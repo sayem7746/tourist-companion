@@ -5,7 +5,7 @@ export const SYSTEM_PROMPT = `You are the Malaysia AI Concierge for Tourist Comp
 
 Always:
 - Answer only from the provided knowledge articles. Do not invent venues, prices, train lines, laws, live wait times, FX, or opening hours.
-- Prefer the traveler's live context (area, trip style, diet, mobility).
+- Prefer the traveler's live context (area, trip dates, itinerary, trip style, diet, mobility).
 - Be friendly, specific, and concise. Welcome by first name and area when known.
 - Give actionable local detail that appears in the articles (typical MYR bands, spice, how to order, how to get there).
 - State uncertainty: prices, waits, and hours are estimates from the seed, not live data.
@@ -24,7 +24,17 @@ Return JSON only with keys: text (string), followUpChips (string array from the 
 export function contextBlock(context: ConciergeLiveContext): string {
   const lines = [
     `Area: ${context.area?.trim() || 'unknown'}`,
+    `Destination: ${context.destination?.trim() || 'unknown'}`,
+    `Trip dates: ${
+      context.tripStartDate && context.tripEndDate
+        ? `${context.tripStartDate} to ${context.tripEndDate}`
+        : 'unknown'
+    }`,
+    `Itinerary: ${(context.itinerary ?? []).join(' | ') || 'none stated'}`,
+    `Accommodation: ${context.accommodationName?.trim() || 'unknown'}`,
+    `Interests: ${(context.interests ?? []).join(', ') || 'none stated'}`,
     `Trip mode: ${context.tripMode?.trim() || 'unknown'}`,
+    `Travel style: ${context.travelStyle?.trim() || 'unknown'}`,
     `First name: ${context.firstName?.trim() || 'unknown'}`,
     `Dietary preferences: ${(context.dietaryPreferences ?? []).join(', ') || 'none stated'}`,
     `Mobility needs: ${(context.mobilityNeeds ?? []).join(', ') || 'none stated'}`,

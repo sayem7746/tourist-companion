@@ -163,7 +163,6 @@ export function buildApp(config: AppConfig): FastifyInstance {
   void registerHealthRoutes(app);
   void registerMetricsRoutes(app);
   void registerKnowledgeRoutes(app, config);
-  void registerConciergeRoutes(app, config);
 
   let memoryAuthStore: AuthStore | undefined;
   let memoryProfileStore: ProfileStore | undefined;
@@ -181,9 +180,7 @@ export function buildApp(config: AppConfig): FastifyInstance {
     return undefined;
   };
 
-  void registerAuthRoutes(app, config, resolveAuthStore);
-
-  void registerProfileRoutes(app, config, () => {
+  const resolveProfileStore = (): ProfileStore | undefined => {
     if (app.db) {
       return createPgProfileStore(app.db);
     }
@@ -194,9 +191,9 @@ export function buildApp(config: AppConfig): FastifyInstance {
       return memoryProfileStore;
     }
     return undefined;
-  });
+  };
 
-  void registerTripRoutes(app, config, () => {
+  const resolveTripStore = (): TripStore | undefined => {
     if (app.db) {
       return createPgTripStore(app.db);
     }
@@ -205,6 +202,14 @@ export function buildApp(config: AppConfig): FastifyInstance {
       return memoryTripStore;
     }
     return undefined;
+  };
+
+  void registerAuthRoutes(app, config, resolveAuthStore);
+  void registerProfileRoutes(app, config, resolveProfileStore);
+  void registerTripRoutes(app, config, resolveTripStore);
+  void registerConciergeRoutes(app, config, {
+    resolveProfileStore,
+    resolveTripStore,
   });
 
   void registerArrivalRoutes(app, config, () => {

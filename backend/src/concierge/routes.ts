@@ -7,8 +7,13 @@ import { TooManyRequestsError } from '../errors.js';
 import { CONCIERGE_CATEGORIES } from '../knowledge/types.js';
 import { validateRequest } from '../validate.js';
 import { createOpenAiCompatibleClient, type LlmClient } from './llm.js';
+import type { ProfileStore } from '../profile/types.js';
+import type { TripStore } from '../trips/types.js';
 import { orchestrateConciergeChat } from './orchestrate.js';
 import { SlidingWindowLimiter } from './rate-limit.js';
+import { loadStoredConciergeContext } from './trip-context.js';
+
+const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use an ISO date (YYYY-MM-DD)');
 
 const contextSchema = z
   .object({
@@ -17,6 +22,13 @@ const contextSchema = z
     firstName: z.string().trim().min(1).max(40).optional(),
     dietaryPreferences: z.array(z.string().trim().min(1).max(40)).max(12).optional(),
     mobilityNeeds: z.array(z.string().trim().min(1).max(40)).max(12).optional(),
+    travelStyle: z.string().trim().min(1).max(40).optional(),
+    destination: z.string().trim().min(1).max(120).optional(),
+    tripStartDate: isoDate.optional(),
+    tripEndDate: isoDate.optional(),
+    itinerary: z.array(z.string().trim().min(1).max(200)).max(20).optional(),
+    accommodationName: z.string().trim().min(1).max(200).optional(),
+    interests: z.array(z.string().trim().min(1).max(40)).max(12).optional(),
   })
   .strict();
 
@@ -44,7 +56,12 @@ function clientKey(request: { ip: string; user?: { id: string } }): string {
 export async function registerConciergeRoutes(
   app: FastifyInstance,
   config: AppConfig,
-  options?: { llm?: LlmClient; limiter?: SlidingWindowLimiter },
+  options?: {
+    llm?: LlmClient;
+    limiter?: SlidingWindowLimiter;
+    resolveProfileStore?: () => ProfileStore | undefined;
+    resolveTripStore?: () => TripStore | undefined;
+  },
 ): Promise<void> {
   const limiter =
     options?.limiter ??
@@ -72,7 +89,15 @@ export async function registerConciergeRoutes(
       );
     }
 
-    const result = await orchestrateConciergeChat(body, { llm, useLlm }, request.user);
+    const stored =
+      request.user?.id
+        ? await loadStoredConciergeContext(request.user.id, {
+            profileStore: options?.resolveProfileStore?.(),
+            tripStore: options?.resolveTripStore?.(),
+          }, { displayName: request.user.displayName })
+        : undefined;
+
+    const result = await orchestrateConciergeChat(body, { llm, useLlm }, request.user, stored);
     request.log.info(
       {
         requestId: request.id,

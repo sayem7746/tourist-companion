@@ -4,6 +4,7 @@ import { classifyIntent } from '../src/concierge/classify.js';
 import { orchestrateConciergeChat } from '../src/concierge/orchestrate.js';
 import { SOS_COPY } from '../src/concierge/prompts.js';
 import { SlidingWindowLimiter } from '../src/concierge/rate-limit.js';
+import { selectCurrentTrip } from '../src/concierge/trip-context.js';
 import { TRUST_LINE } from '../src/concierge/types.js';
 import { loadConfig } from '../src/config.js';
 import { queryKnowledge } from '../src/knowledge/query.js';
@@ -271,6 +272,90 @@ describe('concierge API', () => {
     expect(result.reply.text).toMatch(/Touch/i);
   });
 
+  it('loads JWT profile and current trip into retrieve replies', async () => {
+    const signup = await app.inject({
+      method: 'POST',
+      url: '/auth/signup',
+      payload: { email: 'trip-context@example.com', password: 'password12', displayName: 'Jordan Lee' },
+    });
+    expect(signup.statusCode).toBe(201);
+    const token = (signup.json() as { token: string }).token;
+    const headers = { authorization: `Bearer ${token}` };
+
+    const profile = await app.inject({
+      method: 'PATCH',
+      url: '/profile',
+      headers,
+      payload: { dietaryPreferences: ['vegetarian'], mobilityNeeds: ['limited_walking'] },
+    });
+    expect(profile.statusCode).toBe(200);
+
+    const later = await app.inject({
+      method: 'POST',
+      url: '/trips',
+      headers,
+      payload: {
+        destination: 'Langkawi',
+        startDate: '2026-12-10',
+        endDate: '2026-12-14',
+        adultCount: 2,
+        childCount: 0,
+        interests: ['nature'],
+        status: 'draft',
+      },
+    });
+    expect(later.statusCode).toBe(201);
+
+    const current = await app.inject({
+      method: 'POST',
+      url: '/trips',
+      headers,
+      payload: {
+        destination: 'Bukit Bintang',
+        startDate: '2026-09-18',
+        endDate: '2026-09-25',
+        adultCount: 2,
+        childCount: 1,
+        interests: ['food', 'family'],
+        travelStyle: 'relaxed',
+        accommodationName: 'Pavilion Residences',
+        arrivalAirport: 'KUL',
+        arrivalFlight: 'MH1',
+        arrivalAt: '2026-09-18T04:00:00.000Z',
+        status: 'active',
+      },
+    });
+    expect(current.statusCode).toBe(201);
+
+    const dinner = await app.inject({
+      method: 'POST',
+      url: '/concierge/chat',
+      headers,
+      payload: { message: 'What are the best non-spicy Malaysian dishes for dinner that kids will love?' },
+    });
+    expect(dinner.statusCode).toBe(200);
+    const dinnerBody = dinner.json() as ChatBody;
+    expect(dinnerBody.reply.text).toMatch(/Welcome to Bukit Bintang, Jordan!/);
+    expect(dinnerBody.reply.text).toMatch(/vegetarian/i);
+    expect(dinnerBody.reply.followUpChips.join(' ')).toMatch(/Vegetarian|Jalan Alor|Food Map/i);
+
+    const lrt = await app.inject({
+      method: 'POST',
+      url: '/concierge/chat',
+      headers,
+      payload: { message: 'How to ride the LRT?' },
+    });
+    expect((lrt.json() as ChatBody).reply.text).toMatch(/limited_walking/i);
+
+    const override = await app.inject({
+      method: 'POST',
+      url: '/concierge/chat',
+      headers,
+      payload: { message: 'Best dinner nearby?', context: { area: 'KLCC' } },
+    });
+    expect((override.json() as ChatBody).reply.text).toMatch(/Welcome to KLCC, Jordan!/);
+  });
+
   it('uses LLM text when JSON is valid but keeps seed place cards', async () => {
     const result = await orchestrateConciergeChat(
       { message: 'Best dinner near KLCC?' },
@@ -291,6 +376,115 @@ describe('concierge API', () => {
     expect(result.reply.followUpChips).toContain('Bukit Bintang Food Map');
     expect(result.reply.followUpChips.join(' ')).not.toMatch(/Invented/);
     expect(result.reply.placeCards.some((card) => /Suria KLCC/i.test(card.name))).toBe(true);
+  });
+
+  it('passes trip dates, itinerary, and area into the LLM context block', async () => {
+    let userPrompt = '';
+    const result = await orchestrateConciergeChat(
+      {
+        message: 'How to ride the LRT?',
+        context: {
+          area: 'Bukit Bintang',
+          destination: 'Kuala Lumpur',
+          tripStartDate: '2026-09-18',
+          tripEndDate: '2026-09-25',
+          itinerary: [
+            'Kuala Lumpur 2026-09-18–2026-09-25',
+            'Arrive KUL MH1',
+            'Stay Pavilion Residences',
+          ],
+          travelStyle: 'relaxed',
+          interests: ['food', 'family'],
+        },
+      },
+      {
+        useLlm: true,
+        llm: {
+          async complete({ user }) {
+            userPrompt = user;
+            return JSON.stringify({ text: 'Use Touch n Go on the LRT.', followUpChips: [] });
+          },
+        },
+      },
+    );
+    expect(result.mode).toBe('llm');
+    expect(userPrompt).toMatch(/Area: Bukit Bintang/);
+    expect(userPrompt).toMatch(/Trip dates: 2026-09-18 to 2026-09-25/);
+    expect(userPrompt).toMatch(/Pavilion Residences/);
+    expect(userPrompt).toMatch(/Interests: food, family/);
+  });
+});
+
+describe('current trip selection', () => {
+  const base = {
+    userId: 'user-1',
+    adultCount: 2,
+    childCount: 0,
+    interests: ['food'] as const,
+    dailyBudget: 'medium' as const,
+    travelStyle: 'balanced' as const,
+    accommodationName: null,
+    arrivalAirport: null,
+    arrivalFlight: null,
+    arrivalAt: null,
+  };
+
+  it('prefers an in-window active trip over a later draft', () => {
+    const current = selectCurrentTrip(
+      [
+        {
+          ...base,
+          id: 'later',
+          destination: 'Langkawi',
+          startDate: '2026-12-10',
+          endDate: '2026-12-14',
+          status: 'draft',
+        },
+        {
+          ...base,
+          id: 'now',
+          destination: 'Kuala Lumpur',
+          startDate: '2026-09-18',
+          endDate: '2026-09-25',
+          status: 'active',
+        },
+      ],
+      '2026-09-20',
+    );
+    expect(current?.id).toBe('now');
+  });
+
+  it('skips cancelled and completed trips and picks the nearest upcoming', () => {
+    const upcoming = selectCurrentTrip(
+      [
+        {
+          ...base,
+          id: 'done',
+          destination: 'Penang',
+          startDate: '2026-08-01',
+          endDate: '2026-08-05',
+          status: 'completed',
+        },
+        {
+          ...base,
+          id: 'cancelled',
+          destination: 'Melaka',
+          startDate: '2026-09-19',
+          endDate: '2026-09-22',
+          status: 'cancelled',
+        },
+        {
+          ...base,
+          id: 'soon',
+          destination: 'Langkawi',
+          startDate: '2026-10-01',
+          endDate: '2026-10-04',
+          status: 'draft',
+        },
+      ],
+      '2026-09-20',
+    );
+    expect(upcoming?.id).toBe('soon');
   });
 });
 

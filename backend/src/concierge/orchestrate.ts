@@ -51,13 +51,28 @@ function inferTripMode(message: string, explicit?: string): string | undefined {
   return undefined;
 }
 
-function mergeContext(request: ConciergeChatRequest, user?: { displayName: string }): ConciergeLiveContext {
-  const context = request.context ?? {};
+function pickList(requestValue: string[] | undefined, storedValue: string[] | undefined): string[] | undefined {
+  if (requestValue !== undefined) return requestValue;
+  return storedValue;
+}
+
+export function mergeContext(
+  request: ConciergeChatRequest,
+  user?: { displayName: string },
+  stored?: ConciergeLiveContext,
+): ConciergeLiveContext {
+  const requestCtx = request.context ?? {};
+  const base = { ...(stored ?? {}), ...requestCtx };
   return {
-    ...context,
-    area: inferArea(request.message, context.area),
-    tripMode: inferTripMode(request.message, context.tripMode),
-    firstName: context.firstName?.trim() || firstNameFromDisplay(user?.displayName),
+    ...base,
+    area: inferArea(request.message, requestCtx.area ?? stored?.area),
+    tripMode: inferTripMode(request.message, requestCtx.tripMode ?? stored?.tripMode),
+    firstName:
+      requestCtx.firstName?.trim() || stored?.firstName?.trim() || firstNameFromDisplay(user?.displayName),
+    dietaryPreferences: pickList(requestCtx.dietaryPreferences, stored?.dietaryPreferences),
+    mobilityNeeds: pickList(requestCtx.mobilityNeeds, stored?.mobilityNeeds),
+    itinerary: pickList(requestCtx.itinerary, stored?.itinerary),
+    interests: pickList(requestCtx.interests, stored?.interests),
   };
 }
 
@@ -224,8 +239,9 @@ export async function orchestrateConciergeChat(
   request: ConciergeChatRequest,
   deps: OrchestrateDeps,
   user?: { displayName: string },
+  stored?: ConciergeLiveContext,
 ): Promise<ConciergeChatResponse> {
-  const context = mergeContext(request, user);
+  const context = mergeContext(request, user, stored);
   const intent = classifyIntent(request.message, request.categoryHint);
   const { articles, citations } = retrieveAndRank(request.message, intent, context);
   const conversationId = request.conversationId?.trim() || randomUUID();

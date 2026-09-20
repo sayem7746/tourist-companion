@@ -54,6 +54,11 @@ function scoreArticle(article: KnowledgeArticle, queryTokens: string[], intent: 
     score += 10;
   }
 
+  const destination = context.destination?.toLowerCase().trim();
+  if (destination && article.area?.toLowerCase().includes(destination)) {
+    score += 4;
+  }
+
   const family = /family|kid/i.test(context.tripMode ?? '');
   if (family && (article.tags.includes('family') || article.tags.includes('kids'))) {
     score += 6;

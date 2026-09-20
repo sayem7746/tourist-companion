@@ -12,6 +12,13 @@ export interface ConciergeLiveContext {
   firstName?: string;
   dietaryPreferences?: string[];
   mobilityNeeds?: string[];
+  travelStyle?: string;
+  destination?: string;
+  tripStartDate?: string;
+  tripEndDate?: string;
+  itinerary?: string[];
+  accommodationName?: string;
+  interests?: string[];
 }
 
 export interface ConciergeHistoryTurn {
