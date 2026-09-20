@@ -1,3 +1,4 @@
+import { MALAYSIA_SOS_CARD } from '../emergency/content.js';
 import type { ConciergeCategory, KnowledgePhraseTip, KnowledgePlaceCard } from '../knowledge/types.js';
 
 export const CONCIERGE_ESCALATION_LEVELS = ['none', 'handoff', 'sos', 'out_of_bounds'] as const;
@@ -75,11 +76,5 @@ export interface ConciergeChatResponse {
 
 export const TRUST_LINE = 'Verified cultural etiquette & local transport safety checked';
 
-export const SOS_CARD: ConciergeSosCard = {
-  color: '#E11D48',
-  path: 'emergency-help',
-  numbers: [
-    { code: '999', label: 'Police, fire, ambulance' },
-    { code: '112', label: 'Mobile networks' },
-  ],
-};
+/** Same numbers as GET /emergency `sos` (Malaysia seed). */
+export const SOS_CARD: ConciergeSosCard = MALAYSIA_SOS_CARD;

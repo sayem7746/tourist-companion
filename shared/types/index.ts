@@ -676,6 +676,58 @@ export interface KnowledgeArticle {
   sortOrder: number;
 }
 
+export const EMERGENCY_CATEGORIES = [
+  'police',
+  'ambulance',
+  'fire',
+  'tourist_assistance',
+] as const;
+
+export type EmergencyCategory = (typeof EMERGENCY_CATEGORIES)[number];
+
+export const EMERGENCY_URGENCIES = ['sos', 'assistance'] as const;
+export type EmergencyUrgency = (typeof EMERGENCY_URGENCIES)[number];
+
+export interface EmergencyNumber {
+  code: string;
+  label: string;
+  display?: string;
+}
+
+export interface EmergencyContact {
+  id: string;
+  name: string;
+  category: EmergencyCategory;
+  urgency: EmergencyUrgency;
+  numbers: EmergencyNumber[];
+  summary: string;
+  whenToUse: string;
+  area: string;
+  hours: string;
+  englishSpoken?: boolean;
+  source: string;
+  sourceUrl?: string;
+  sortOrder: number;
+}
+
+export interface EmergencySosCard {
+  color: '#E11D48';
+  path: 'emergency-help';
+  numbers: Array<{ code: string; label: string }>;
+}
+
+export interface EmergencyDirectory {
+  country: 'MY';
+  destination: 'Malaysia';
+  version: string;
+  category: EmergencyCategory | null;
+  urgency: EmergencyUrgency | null;
+  categories: EmergencyCategory[];
+  disclaimer: string;
+  sos: EmergencySosCard;
+  contacts: EmergencyContact[];
+}
+
 export const REFERRAL_STATUSES = ['pending', 'clicked', 'converted', 'expired'] as const;
 export type ReferralStatus = (typeof REFERRAL_STATUSES)[number];
 
