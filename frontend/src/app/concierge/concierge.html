@@ -1,0 +1,163 @@
+<section class="concierge">
+  <header class="page-head">
+    <div>
+      <h1>Malaysia AI Concierge</h1>
+      <p class="lede">Your 24/7 friendly local guide &amp; cultural translator</p>
+    </div>
+    <button
+      type="button"
+      class="sos-btn"
+      data-path="emergency-help"
+      [style.background]="sosColor"
+      (click)="openSos()"
+    >
+      SOS
+    </button>
+  </header>
+
+  <p class="live-context">
+    <span class="live-dot" aria-hidden="true"></span>
+    Live context: {{ liveContextLabel }}
+  </p>
+
+  @if (sosOpen()) {
+    <aside id="emergency-help" class="sos-panel" data-path="emergency-help" role="alert">
+      <p class="sos-title">Emergency help</p>
+      <p>Stay safe. Call now and share your location if you can.</p>
+      <p>
+        <a class="sos-dial" href="tel:999">999 — Police, fire, ambulance</a>
+      </p>
+      <p>
+        <a class="sos-dial" href="tel:112">112 — Mobile networks</a>
+      </p>
+    </aside>
+  }
+
+  <div class="chip-row" aria-label="Suggested questions">
+    @for (chip of chips; track chip.label) {
+      <button
+        type="button"
+        class="chip prompt"
+        [attr.data-label]="chip.label"
+        [disabled]="pending()"
+        (click)="sendChip(chip.label, chip.categoryHint)"
+      >
+        <span aria-hidden="true">{{ chip.emoji }}</span>
+        {{ chip.label }}
+      </button>
+    }
+  </div>
+
+  <div class="thread" [attr.aria-busy]="pending()">
+    @for (turn of turns(); track $index) {
+      @if (turn.role === 'user') {
+        <article class="bubble user">
+          <p>{{ turn.content }}</p>
+          @if (turn.time) {
+            <p class="stamp">{{ turn.time }}</p>
+          }
+        </article>
+      } @else {
+        <article class="bubble assistant">
+          <p class="reply-text">{{ turn.content }}</p>
+
+          @if (turn.reply?.sos; as sos) {
+            <div class="sos-card" [attr.data-path]="sos.path" [style.background]="sos.color">
+              <p class="sos-title">SOS / Emergency help</p>
+              @for (number of sos.numbers; track number.code) {
+                <p>
+                  <a class="sos-dial" [href]="'tel:' + number.code">{{ number.code }} — {{ number.label }}</a>
+                </p>
+              }
+            </div>
+          }
+
+          @if (turn.reply?.placeCards?.length) {
+            <div class="places">
+              @for (place of turn.reply!.placeCards; track place.name) {
+                <article class="card place">
+                  <div class="place-head">
+                    <h2>{{ place.name }}</h2>
+                    @if (place.badge) {
+                      <span class="chip chip-gold">{{ place.badge }}</span>
+                    }
+                  </div>
+                  <p class="meta">{{ place.area }}</p>
+                  @if (place.distanceHint) {
+                    <p class="meta">{{ place.distanceHint }}</p>
+                  }
+                  @if (place.priceBandMyr) {
+                    <p class="price">{{ place.priceBandMyr }}</p>
+                  }
+                  <p>{{ place.why }}</p>
+                  <p class="place-actions">
+                    <a routerLink="/explore" class="btn btn-secondary">Show on Map</a>
+                    <a routerLink="/trips" class="btn btn-secondary">Add to Plan</a>
+                  </p>
+                </article>
+              }
+            </div>
+          }
+
+          @if (turn.reply?.phraseTips?.length) {
+            <aside class="phrase-card">
+              <h2>Smart Local Phrase Tip</h2>
+              @for (tip of turn.reply!.phraseTips; track tip.phrase) {
+                <p>
+                  <strong>“{{ tip.phrase }}”</strong>
+                  @if (tip.pronunciation) {
+                    <span class="meta">({{ tip.pronunciation }})</span>
+                  }
+                  = {{ tip.meaning }}
+                </p>
+              }
+            </aside>
+          }
+
+          @if (turn.reply?.deepLink) {
+            <p>
+              <a class="btn" [routerLink]="turn.reply!.deepLink">Open guide</a>
+            </p>
+          }
+
+          @if (turn.reply?.trustLine) {
+            <p class="trust">{{ turn.reply!.trustLine }}</p>
+          }
+
+          @if (turn.reply?.followUpChips?.length) {
+            <div class="follow-ups">
+              @for (chip of turn.reply!.followUpChips; track chip) {
+                <button type="button" class="chip" [disabled]="pending()" (click)="sendFollowUp(chip)">
+                  {{ chip }}
+                </button>
+              }
+            </div>
+          }
+        </article>
+      }
+    }
+
+    @if (pending()) {
+      <p class="meta loading" aria-live="polite">Concierge is thinking…</p>
+    }
+
+    @if (sendError()) {
+      <p class="error" role="alert">{{ sendError() }}</p>
+      <button type="button" class="btn" (click)="retry()">Retry</button>
+    }
+  </div>
+
+  <form class="composer" (ngSubmit)="submitDraft()">
+    <label class="sr-only" for="concierge-draft">Message</label>
+    <input
+      id="concierge-draft"
+      name="message"
+      [(ngModel)]="draft"
+      placeholder="Ask me anything about Malaysia…"
+      autocomplete="off"
+      maxlength="2000"
+      [disabled]="pending()"
+    />
+    <button type="submit" class="btn send" [disabled]="pending() || !draft.trim()">Send</button>
+  </form>
+</section>

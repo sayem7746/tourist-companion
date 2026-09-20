@@ -22,7 +22,7 @@ export const routes: Routes = [
   { path: 'arrival/money', component: ArrivalCurrency, title: 'Currency and payments' },
   { path: 'arrival', component: ArrivalChecklist, title: 'Arrival checklist' },
   { path: 'explore', component: Explore, title: 'Explore' },
-  { path: 'concierge', component: Concierge, title: 'Concierge' },
+  { path: 'concierge', component: Concierge, title: 'Malaysia AI Concierge' },
   {
     path: 'trips',
     component: TripDashboard,

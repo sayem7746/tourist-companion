@@ -1,0 +1,212 @@
+.page-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+h1 {
+  margin: 0 0 0.25rem;
+  font-size: 1.5rem;
+}
+
+h2 {
+  margin: 0 0 0.35rem;
+  font-size: 1rem;
+}
+
+.lede,
+.meta {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.sos-btn {
+  flex-shrink: 0;
+  min-height: var(--btn-min-height);
+  padding: 0.4rem 1rem;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: #e11d48;
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.live-context {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0.85rem 0 0.5rem;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.live-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--color-primary);
+}
+
+.sos-panel,
+.sos-card {
+  margin: 0.75rem 0;
+  padding: 1rem;
+  border-radius: var(--radius-card);
+  background: #e11d48;
+  color: #fff;
+}
+
+.sos-title {
+  margin: 0 0 0.35rem;
+  font-weight: 700;
+}
+
+.sos-dial {
+  color: #fff;
+  font-weight: 700;
+}
+
+.chip-row,
+.follow-ups {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding: 0.35rem 0 0.75rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+.chip.prompt {
+  flex-shrink: 0;
+  min-height: 2.5rem;
+}
+
+.thread {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.bubble {
+  max-width: 92%;
+  padding: 0.85rem 1rem;
+  border-radius: 1.1rem;
+}
+
+.bubble p {
+  margin: 0;
+}
+
+.bubble.user {
+  align-self: flex-end;
+  background: var(--color-primary);
+  color: #fff;
+  border-bottom-right-radius: 0.3rem;
+}
+
+.bubble.assistant {
+  align-self: flex-start;
+  width: 100%;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-card);
+  border-bottom-left-radius: 0.3rem;
+}
+
+.stamp {
+  margin-top: 0.35rem;
+  font-size: 0.7rem;
+  opacity: 0.85;
+  text-align: right;
+}
+
+.reply-text {
+  white-space: pre-wrap;
+}
+
+.place {
+  margin: 0.75rem 0 0;
+}
+
+.place-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.price {
+  font-weight: 700;
+  color: var(--color-gold);
+}
+
+.place-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.65rem;
+}
+
+.phrase-card {
+  margin-top: 0.75rem;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-card);
+  background: var(--color-gold-tint);
+}
+
+.phrase-card p {
+  margin: 0.4rem 0 0;
+}
+
+.trust {
+  margin-top: 0.75rem;
+  font-size: 0.8rem;
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.loading,
+.error {
+  margin: 0.25rem 0;
+}
+
+.error {
+  color: var(--color-sos);
+}
+
+.composer {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding: 0.5rem 0 0.25rem;
+  background: var(--color-canvas);
+}
+
+.composer input {
+  flex: 1;
+  min-height: var(--btn-min-height);
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  font: inherit;
+  background: var(--color-surface);
+}
+
+.send {
+  min-width: 4.5rem;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}

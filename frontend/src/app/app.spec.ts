@@ -54,6 +54,13 @@ describe('App', () => {
     expect(sim?.canActivate).toBeUndefined();
   });
 
+  it('should expose a public Malaysia AI Concierge route', () => {
+    const concierge = routes.find((route) => route.path === 'concierge');
+    expect(concierge?.component).toBeTruthy();
+    expect(concierge?.canActivate).toBeUndefined();
+    expect(concierge?.title).toBe('Malaysia AI Concierge');
+  });
+
   it('should expose a public currency and payment guide route', () => {
     const money = routes.find((route) => route.path === 'arrival/money');
     expect(money?.component).toBeTruthy();
