@@ -1,8 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
-import { App } from './app';
+import { App, isAdminPath } from './app';
 import { routes } from './app.routes';
+import { adminGuard } from './admin/admin.guard';
 import { authGuard } from './auth/auth.guard';
 
 describe('App', () => {
@@ -43,6 +44,18 @@ describe('App', () => {
   it('should guard preferences', () => {
     const settings = routes.find((route) => route.path === 'settings');
     expect(settings?.canActivate).toEqual([authGuard]);
+  });
+
+  it('should guard the admin home and expose /admin/login', () => {
+    const admin = routes.find((route) => route.path === 'admin');
+    expect(admin?.canActivate).toEqual([adminGuard]);
+    expect(admin?.title).toBe('Operations');
+    const login = routes.find((route) => route.path === 'admin/login');
+    expect(login?.canActivate).toBeUndefined();
+    expect(login?.title).toBe('Admin sign in');
+    expect(isAdminPath('/admin')).toBeTrue();
+    expect(isAdminPath('/admin/login')).toBeTrue();
+    expect(isAdminPath('/')).toBeFalse();
   });
 
   it('should expose a public arrival checklist route', () => {

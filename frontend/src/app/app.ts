@@ -7,6 +7,10 @@ import { STITCH_AVATAR_URL, STITCH_HEADER_WEATHER, STITCH_LOGO_URL } from './sti
 
 const MAIN_TABS = new Set(['/', '/explore', '/trips', '/plan', '/concierge', '/settings']);
 
+export function isAdminPath(path: string): boolean {
+  return path === '/admin' || path.startsWith('/admin/');
+}
+
 @Component({
   selector: 'app-root',
   imports: [RouterLink, RouterLinkActive, RouterOutlet],
@@ -23,13 +27,16 @@ export class App {
   readonly weatherLine = STITCH_HEADER_WEATHER;
   readonly sosColor = SOS_COLOR;
   readonly showBack = signal(false);
+  readonly adminShell = signal(false);
 
   constructor() {
     this.router.events
       .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
       .subscribe((event) => {
         const path = event.urlAfterRedirects.split('?')[0];
-        this.showBack.set(!MAIN_TABS.has(path));
+        const admin = isAdminPath(path);
+        this.adminShell.set(admin);
+        this.showBack.set(!admin && !MAIN_TABS.has(path));
       });
   }
 

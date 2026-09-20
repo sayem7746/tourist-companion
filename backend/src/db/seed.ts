@@ -29,6 +29,14 @@ async function seed(): Promise<void> {
          AND (password_hash IS NULL OR password_hash = '')`,
       [demoHash],
     );
+    const opsHash = await bcrypt.hash('ops-password', 10);
+    await pool.query(
+      `UPDATE users
+       SET password_hash = $1, role = 'admin'
+       WHERE email = 'ops@tourist-companion.local'
+         AND (password_hash IS NULL OR password_hash = '')`,
+      [opsHash],
+    );
     await pool.query('COMMIT');
     console.log('Seed complete (idempotent).');
   } catch (error) {

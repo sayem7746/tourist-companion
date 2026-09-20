@@ -62,7 +62,10 @@ function readAdminSecret(request: FastifyRequest): string | undefined {
   return readAccessToken(request);
 }
 
-/** ADMIN_TOKEN via `X-Admin-Token` or Bearer, or a JWT whose payload includes `role: "admin"`. */
+/**
+ * ADMIN_TOKEN via `X-Admin-Token` or Bearer, or a JWT whose payload includes
+ * `role: "admin"` (from `/auth/login` or `/auth/admin/login`).
+ */
 export function requireAdmin(config: AppConfig) {
   return async (request: FastifyRequest, _reply: FastifyReply): Promise<void> => {
     const presented = readAdminSecret(request);

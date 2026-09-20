@@ -4,7 +4,7 @@ Operational checklist for putting a Malaysia marketplace partner live: verify th
 
 Asana: [Define partner onboarding process](https://app.asana.com/1/1218080418840809/project/1218661619289569/task/1218661691725071) (EPIC 07 — Referral Marketplace).
 
-Product fields, traveler disclosure, and category rules: `docs/partner-categories.md`. Shared contract: `Provider`, `PartnerListing`, `PartnerCommission` in `shared/types/index.ts`. Admin listing CRUD: `/admin/partners` (`ADMIN_TOKEN` or JWT `role: admin`).
+Product fields, traveler disclosure, and category rules: `docs/partner-categories.md`. Shared contract: `Provider`, `PartnerListing`, `PartnerCommission` in `shared/types/index.ts`. Admin listing CRUD: `/admin/partners` (`ADMIN_TOKEN` or JWT `role: admin`). Ops sign in at Angular `/admin/login`.
 
 New partners stay **inactive** until this checklist is complete. Inactive rows never appear on traveler CTAs. Contact email and commission stay on the ops `Provider` view only — never on `GET /partners`.
 
@@ -20,7 +20,7 @@ An ops owner can take a candidate from intake to an approved listing without inv
 | Partner (counterparty) | Signed terms, conversion reports, payout destination, license proofs |
 | Admin API | Create inactive `providers` row, patch fields, `approve` / `pause` |
 
-There is no partner admin UI and no in-app payout report in MVP. Record contract and bank details in the signed agreement (and ops vault), not in tourist APIs.
+Ops sign in at `/admin/login` (JWT `role: admin`). There is no partner listing CRUD UI and no in-app payout report in MVP. Record contract and bank details in the signed agreement (and ops vault), not in tourist APIs.
 
 ## Stages
 

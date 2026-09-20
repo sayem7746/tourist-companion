@@ -2,7 +2,7 @@ import { createHash, randomBytes } from 'node:crypto';
 import jwt from 'jsonwebtoken';
 import type { AppConfig } from '../config.js';
 import { UnauthorizedError } from '../errors.js';
-import type { AuthUser } from './types.js';
+import { parseAuthRole, toPublicUser, type AuthUser } from './types.js';
 
 export const ACCESS_COOKIE = 'tc_access';
 
@@ -10,18 +10,19 @@ interface AccessPayload {
   sub: string;
   email: string;
   displayName: string;
-  role?: AuthUser['role'];
+  role: AuthUser['role'];
 }
 
-export function signAccessToken(user: AuthUser, config: AppConfig): string {
+export function signAccessToken(
+  user: Omit<AuthUser, 'role'> & { role?: AuthUser['role'] },
+  config: AppConfig,
+): string {
   const payload: AccessPayload = {
     sub: user.id,
     email: user.email,
     displayName: user.displayName,
+    role: parseAuthRole(user.role),
   };
-  if (user.role) {
-    payload.role = user.role;
-  }
   return jwt.sign(payload, config.JWT_SECRET, {
     expiresIn: config.JWT_EXPIRES_IN as jwt.SignOptions['expiresIn'],
   });
@@ -33,12 +34,12 @@ export function verifyAccessToken(token: string, config: AppConfig): AuthUser {
     if (!payload.sub || !payload.email) {
       throw new UnauthorizedError('Invalid session');
     }
-    return {
+    return toPublicUser({
       id: payload.sub,
       email: payload.email,
       displayName: payload.displayName ?? '',
-      role: payload.role === 'admin' || payload.role === 'tourist' ? payload.role : undefined,
-    };
+      role: payload.role,
+    });
   } catch (error) {
     if (error instanceof UnauthorizedError) throw error;
     throw new UnauthorizedError('Invalid or expired session');

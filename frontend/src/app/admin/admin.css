@@ -1,0 +1,49 @@
+h1 {
+  margin: 0 0 0.5rem;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.lede {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+}
+
+.meta {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+.error {
+  color: var(--color-sos);
+}
+
+.role {
+  display: inline-block;
+  margin-left: 0.5rem;
+  padding: 0.15rem 0.6rem;
+  border-radius: var(--radius-pill);
+  background: var(--color-primary-fixed);
+  color: var(--color-on-primary-fixed);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+button {
+  min-height: var(--btn-min-height);
+  padding: 0.5rem 1.15rem;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--color-primary);
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+code {
+  font-size: 0.85em;
+}

@@ -1,4 +1,4 @@
-<div class="shell">
+<div class="shell" [class.admin-shell]="adminShell()">
   <header class="top-bar">
     <div class="brand-cluster">
       @if (showBack()) {
@@ -16,47 +16,51 @@
         </span>
       </a>
     </div>
-    <div class="header-actions">
-      <a
-        routerLink="/emergency"
-        class="sos-btn"
-        data-path="emergency-help"
-        aria-label="Emergency help"
-        [style.background]="sosColor"
-      >
-        <span class="material-symbols-outlined">e911_emergency</span>
-        SOS
-      </a>
-      <a routerLink="/settings" class="avatar-link" aria-label="Profile">
-        <img class="avatar" [src]="avatarUrl" alt="" />
-      </a>
-    </div>
+    @if (!adminShell()) {
+      <div class="header-actions">
+        <a
+          routerLink="/emergency"
+          class="sos-btn"
+          data-path="emergency-help"
+          aria-label="Emergency help"
+          [style.background]="sosColor"
+        >
+          <span class="material-symbols-outlined">e911_emergency</span>
+          SOS
+        </a>
+        <a routerLink="/settings" class="avatar-link" aria-label="Profile">
+          <img class="avatar" [src]="avatarUrl" alt="" />
+        </a>
+      </div>
+    }
   </header>
 
   <main class="content">
     <router-outlet />
   </main>
-  <nav class="tab-bar" aria-label="Primary">
-    <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
-      <span class="material-symbols-outlined">explore</span>
-      <span class="tab-label">Home</span>
-    </a>
-    <a routerLink="/explore" routerLinkActive="active">
-      <span class="material-symbols-outlined">pin_drop</span>
-      <span class="tab-label">Explore</span>
-    </a>
-    <a routerLink="/trips" routerLinkActive="active">
-      <span class="material-symbols-outlined">calendar_month</span>
-      <span class="tab-label">Plan</span>
-    </a>
-    <a routerLink="/concierge" routerLinkActive="active" class="concierge-tab">
-      <span class="material-symbols-outlined">auto_awesome</span>
-      <span class="tab-label">Concierge</span>
-      <span class="concierge-dot" aria-hidden="true"></span>
-    </a>
-    <a routerLink="/settings" routerLinkActive="active">
-      <span class="material-symbols-outlined">account_circle</span>
-      <span class="tab-label">Profile</span>
-    </a>
-  </nav>
+  @if (!adminShell()) {
+    <nav class="tab-bar" aria-label="Primary">
+      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+        <span class="material-symbols-outlined">explore</span>
+        <span class="tab-label">Home</span>
+      </a>
+      <a routerLink="/explore" routerLinkActive="active">
+        <span class="material-symbols-outlined">pin_drop</span>
+        <span class="tab-label">Explore</span>
+      </a>
+      <a routerLink="/trips" routerLinkActive="active">
+        <span class="material-symbols-outlined">calendar_month</span>
+        <span class="tab-label">Plan</span>
+      </a>
+      <a routerLink="/concierge" routerLinkActive="active" class="concierge-tab">
+        <span class="material-symbols-outlined">auto_awesome</span>
+        <span class="tab-label">Concierge</span>
+        <span class="concierge-dot" aria-hidden="true"></span>
+      </a>
+      <a routerLink="/settings" routerLinkActive="active">
+        <span class="material-symbols-outlined">account_circle</span>
+        <span class="tab-label">Profile</span>
+      </a>
+    </nav>
+  }
 </div>

@@ -141,6 +141,10 @@
   margin: 0 auto;
 }
 
+.admin-shell .content {
+  padding-bottom: 2rem;
+}
+
 .tab-bar {
   position: fixed;
   left: 0;

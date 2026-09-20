@@ -1,0 +1,20 @@
+<section class="admin">
+  <h1>Operations</h1>
+  @if (pending()) {
+    <p class="meta" aria-live="polite">Checking administrator session…</p>
+  }
+  @if (loadError()) {
+    <p class="error" role="alert">{{ loadError() }}</p>
+  }
+  @if (user(); as session) {
+    <p class="lede">
+      Signed in as <strong>{{ session.email }}</strong>
+      <span class="role">{{ session.role }}</span>
+    </p>
+    <p class="meta">
+      This JWT authorizes partner admin APIs. Scripts may still send
+      <code>X-Admin-Token</code> or a Bearer <code>ADMIN_TOKEN</code>.
+    </p>
+    <button type="button" (click)="logout()">Sign out</button>
+  }
+</section>

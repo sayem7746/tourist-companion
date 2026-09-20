@@ -9,10 +9,13 @@ export type ItineraryId = string;
 export type ItineraryDayId = string;
 export type ItineraryItemId = string;
 
+export type UserRole = 'tourist' | 'admin';
+
 export interface User {
   id: UserId;
   email: string;
   displayName: string;
+  role: UserRole;
 }
 
 export type DietaryPreference =

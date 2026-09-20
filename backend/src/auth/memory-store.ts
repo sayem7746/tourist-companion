@@ -1,6 +1,12 @@
 import { randomUUID } from 'node:crypto';
 import { ConflictError } from '../errors.js';
-import type { AuthStore, AuthUser, ResetTokenRecord, UserRecord } from './types.js';
+import {
+  parseAuthRole,
+  toPublicUser,
+  type AuthStore,
+  type ResetTokenRecord,
+  type UserRecord,
+} from './types.js';
 
 export function createMemoryAuthStore(): AuthStore {
   const usersById = new Map<string, UserRecord>();
@@ -17,10 +23,11 @@ export function createMemoryAuthStore(): AuthStore {
         email: input.email,
         displayName: input.displayName,
         passwordHash: input.passwordHash,
+        role: parseAuthRole(input.role),
       };
       usersById.set(user.id, user);
       usersByEmail.set(user.email, user);
-      return toPublic(user);
+      return toPublicUser(user);
     },
     async findByEmail(email) {
       return usersByEmail.get(email);
@@ -52,8 +59,4 @@ export function createMemoryAuthStore(): AuthStore {
       resetTokens.set(tokenHash, { ...existing, usedAt: new Date() });
     },
   };
-}
-
-function toPublic(user: UserRecord): AuthUser {
-  return { id: user.id, email: user.email, displayName: user.displayName };
 }

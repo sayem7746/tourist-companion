@@ -1,16 +1,20 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { buildApp } from '../src/app.js';
+import { hashPassword } from '../src/auth/password.js';
+import { verifyAccessToken } from '../src/auth/tokens.js';
+import { parseAuthRole } from '../src/auth/types.js';
 import { loadConfig } from '../src/config.js';
 
-const app = buildApp(
-  loadConfig({
-    NODE_ENV: 'test',
-    HOST: '127.0.0.1',
-    PORT: '3000',
-    LOG_LEVEL: 'silent',
-    JWT_SECRET: 'test-only-insecure-jwt-secret',
-  }),
-);
+const ADMIN_TOKEN = 'test-only-admin-token';
+const config = loadConfig({
+  NODE_ENV: 'test',
+  HOST: '127.0.0.1',
+  PORT: '3000',
+  LOG_LEVEL: 'silent',
+  JWT_SECRET: 'test-only-insecure-jwt-secret',
+  ADMIN_TOKEN,
+});
+const app = buildApp(config);
 
 describe('auth endpoints', () => {
   beforeAll(async () => {
@@ -34,11 +38,13 @@ describe('auth endpoints', () => {
 
     expect(signup.statusCode).toBe(201);
     const created = signup.json() as {
-      user: { email: string; displayName: string };
+      user: { email: string; displayName: string; role: string };
       token: string;
     };
     expect(created.user.email).toBe('ada@example.com');
+    expect(created.user.role).toBe('tourist');
     expect(created.token).toBeTruthy();
+    expect(verifyAccessToken(created.token, config).role).toBe('tourist');
     const cookie = signup.headers['set-cookie'];
     expect(String(cookie)).toContain('HttpOnly');
 
@@ -48,14 +54,14 @@ describe('auth endpoints', () => {
       headers: { cookie: String(cookie) },
     });
     expect(me.statusCode).toBe(200);
-    expect(me.json()).toMatchObject({ user: { email: 'ada@example.com' } });
+    expect(me.json()).toMatchObject({ user: { email: 'ada@example.com', role: 'tourist' } });
 
     const logout = await app.inject({ method: 'POST', url: '/auth/logout' });
     expect(logout.statusCode).toBe(200);
     expect(String(logout.headers['set-cookie'])).toContain('Max-Age=0');
   });
 
-  it('rejects duplicate signup and invalid login', async () => {
+  it('rejects duplicate signup, self-assigned admin role, and invalid login', async () => {
     const payload = {
       email: 'sam@example.com',
       password: 'password12',
@@ -67,6 +73,13 @@ describe('auth endpoints', () => {
 
     const duplicate = await app.inject({ method: 'POST', url: '/auth/signup', payload });
     expect(duplicate.statusCode).toBe(409);
+
+    const withRole = await app.inject({
+      method: 'POST',
+      url: '/auth/signup',
+      payload: { ...payload, email: 'sam-admin@example.com', role: 'admin' },
+    });
+    expect(withRole.statusCode).toBe(400);
 
     const badLogin = await app.inject({
       method: 'POST',
@@ -81,6 +94,7 @@ describe('auth endpoints', () => {
       payload: { email: 'sam@example.com', password: 'password12' },
     });
     expect(goodLogin.statusCode).toBe(200);
+    expect(goodLogin.json()).toMatchObject({ user: { email: 'sam@example.com', role: 'tourist' } });
   });
 
   it('protects /auth/me without a session', async () => {
@@ -135,5 +149,102 @@ describe('auth endpoints', () => {
       headers: { authorization: `Bearer ${(newLogin.json() as { token: string }).token}` },
     });
     expect(bearerMe.statusCode).toBe(200);
+    expect(bearerMe.json()).toMatchObject({ user: { role: 'tourist' } });
+  });
+
+  it('treats unknown roles as tourist', () => {
+    expect(parseAuthRole('admin')).toBe('admin');
+    expect(parseAuthRole('tourist')).toBe('tourist');
+    expect(parseAuthRole('superuser')).toBe('tourist');
+    expect(parseAuthRole(undefined)).toBe('tourist');
+  });
+
+  it('rejects tourist credentials and tourist JWTs on admin routes', async () => {
+    const signup = await app.inject({
+      method: 'POST',
+      url: '/auth/signup',
+      payload: {
+        email: 'tourist-ops@example.com',
+        password: 'password12',
+        displayName: 'Tourist',
+      },
+    });
+    expect(signup.statusCode).toBe(201);
+    const { token } = signup.json() as { token: string };
+
+    const adminLogin = await app.inject({
+      method: 'POST',
+      url: '/auth/admin/login',
+      payload: { email: 'tourist-ops@example.com', password: 'password12' },
+    });
+    expect(adminLogin.statusCode).toBe(403);
+    expect(String(adminLogin.headers['set-cookie'] ?? '')).not.toContain('tc_access=');
+
+    const partners = await app.inject({
+      method: 'GET',
+      url: '/admin/partners',
+      headers: { authorization: `Bearer ${token}` },
+    });
+    expect(partners.statusCode).toBe(403);
+  });
+
+  it('issues an admin JWT from /auth/admin/login and still accepts ADMIN_TOKEN', async () => {
+    const store = app.getAuthStore();
+    expect(store).toBeDefined();
+    const passwordHash = await hashPassword('password12', 'test');
+    await store!.createUser({
+      email: 'ops@example.com',
+      displayName: 'Ops',
+      passwordHash,
+      role: 'admin',
+    });
+
+    const touristLogin = await app.inject({
+      method: 'POST',
+      url: '/auth/login',
+      payload: { email: 'ops@example.com', password: 'password12' },
+    });
+    expect(touristLogin.statusCode).toBe(200);
+    expect(touristLogin.json()).toMatchObject({ user: { role: 'admin' } });
+
+    const adminLogin = await app.inject({
+      method: 'POST',
+      url: '/auth/admin/login',
+      payload: { email: 'ops@example.com', password: 'password12' },
+    });
+    expect(adminLogin.statusCode).toBe(200);
+    const body = adminLogin.json() as { token: string; user: { role: string; email: string } };
+    expect(body.user).toMatchObject({ email: 'ops@example.com', role: 'admin' });
+    expect(verifyAccessToken(body.token, config).role).toBe('admin');
+
+    const viaJwt = await app.inject({
+      method: 'GET',
+      url: '/admin/partners',
+      headers: { authorization: `Bearer ${body.token}` },
+    });
+    expect(viaJwt.statusCode).toBe(200);
+
+    const viaHeader = await app.inject({
+      method: 'GET',
+      url: '/admin/partners',
+      headers: { 'x-admin-token': ADMIN_TOKEN },
+    });
+    expect(viaHeader.statusCode).toBe(200);
+
+    const viaBearerToken = await app.inject({
+      method: 'GET',
+      url: '/admin/partners',
+      headers: { authorization: `Bearer ${ADMIN_TOKEN}` },
+    });
+    expect(viaBearerToken.statusCode).toBe(200);
+  });
+
+  it('rejects invalid admin login credentials', async () => {
+    const missing = await app.inject({
+      method: 'POST',
+      url: '/auth/admin/login',
+      payload: { email: 'nobody@example.com', password: 'password12' },
+    });
+    expect(missing.statusCode).toBe(401);
   });
 });

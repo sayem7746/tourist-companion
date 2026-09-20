@@ -16,6 +16,9 @@ import { Concierge } from './concierge/concierge';
 import { Emergency } from './emergency/emergency';
 import { Embassies } from './embassies/embassies';
 import { Safety } from './safety/safety';
+import { AdminHome } from './admin/admin';
+import { AdminLogin } from './admin/admin-login';
+import { adminGuard } from './admin/admin.guard';
 
 export const routes: Routes = [
   { path: '', component: Home, title: 'Malaysia Companion' },
@@ -53,6 +56,13 @@ export const routes: Routes = [
     component: Preferences,
     canActivate: [authGuard],
     title: 'Preferences',
+  },
+  { path: 'admin/login', component: AdminLogin, title: 'Admin sign in' },
+  {
+    path: 'admin',
+    component: AdminHome,
+    canActivate: [adminGuard],
+    title: 'Operations',
   },
   { path: '**', redirectTo: '' },
 ];

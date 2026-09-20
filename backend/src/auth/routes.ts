@@ -1,7 +1,8 @@
-import type { FastifyInstance } from 'fastify';
+import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import type { AppConfig } from '../config.js';
 import {
+  ForbiddenError,
   ServiceUnavailableError,
   UnauthorizedError,
   ValidationError,
@@ -16,7 +17,7 @@ import {
   hashToken,
   signAccessToken,
 } from './tokens.js';
-import type { AuthStore } from './types.js';
+import { toPublicUser, type AuthStore, type AuthUser } from './types.js';
 
 const credentialsSchema = z
   .object({
@@ -25,9 +26,11 @@ const credentialsSchema = z
   })
   .strict();
 
-const signupSchema = credentialsSchema.extend({
-  displayName: z.string().trim().min(1).max(80),
-});
+const signupSchema = credentialsSchema
+  .extend({
+    displayName: z.string().trim().min(1).max(80),
+  })
+  .strict();
 
 const forgotSchema = z
   .object({
@@ -57,14 +60,11 @@ export async function registerAuthRoutes(
     return store;
   };
 
-  const setSession = (reply: { header: (k: string, v: string) => unknown }, user: {
-    id: string;
-    email: string;
-    displayName: string;
-  }) => {
-    const token = signAccessToken(user, config);
+  const setSession = (reply: { header: (k: string, v: string) => unknown }, user: AuthUser) => {
+    const sessionUser = toPublicUser(user);
+    const token = signAccessToken(sessionUser, config);
     reply.header('Set-Cookie', accessCookie(token, config, COOKIE_MAX_AGE));
-    return { user, token };
+    return { user: sessionUser, token };
   };
 
   app.post('/auth/signup', async (request, reply) => {
@@ -79,7 +79,11 @@ export async function registerAuthRoutes(
     return reply.status(201).send(session);
   });
 
-  app.post('/auth/login', async (request, reply) => {
+  const loginHandler = async (
+    request: FastifyRequest,
+    reply: FastifyReply,
+    requireAdminRole: boolean,
+  ) => {
     const { body } = validateRequest(request, { body: credentialsSchema });
     const record = await getStore().findByEmail(body.email);
     if (!record?.passwordHash) {
@@ -89,13 +93,16 @@ export async function registerAuthRoutes(
     if (!matches) {
       throw new UnauthorizedError('Invalid email or password');
     }
-    const user = {
-      id: record.id,
-      email: record.email,
-      displayName: record.displayName,
-    };
+    const user = toPublicUser(record);
+    if (requireAdminRole && user.role !== 'admin') {
+      throw new ForbiddenError('Administrator access required');
+    }
     return setSession(reply, user);
-  });
+  };
+
+  app.post('/auth/login', async (request, reply) => loginHandler(request, reply, false));
+
+  app.post('/auth/admin/login', async (request, reply) => loginHandler(request, reply, true));
 
   app.post('/auth/logout', async (_request, reply) => {
     reply.header('Set-Cookie', clearAccessCookie(config));

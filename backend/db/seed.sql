@@ -5,6 +5,12 @@ INSERT INTO users (email, display_name)
 VALUES ('demo@tourist-companion.local', 'Demo Traveller')
 ON CONFLICT (email) DO UPDATE SET display_name = EXCLUDED.display_name;
 
+INSERT INTO users (email, display_name, role)
+VALUES ('ops@tourist-companion.local', 'Ops Admin', 'admin')
+ON CONFLICT (email) DO UPDATE SET
+  display_name = EXCLUDED.display_name,
+  role = EXCLUDED.role;
+
 INSERT INTO tourist_profiles (user_id, language, dietary_preferences, mobility_needs, travel_style)
 SELECT id, 'en', ARRAY['halal']::text[], '{}'::text[], 'balanced'
 FROM users

@@ -227,7 +227,12 @@ describe('partner admin CRUD and public listing', () => {
     expect(missing.statusCode).toBe(401);
 
     const tourist = signAccessToken(
-      { id: '00000000-0000-4000-8000-000000000001', email: 'ada@example.com', displayName: 'Ada' },
+      {
+        id: '00000000-0000-4000-8000-000000000001',
+        email: 'ada@example.com',
+        displayName: 'Ada',
+        role: 'tourist',
+      },
       config,
     );
     const forbidden = await app.inject({

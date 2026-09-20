@@ -1,18 +1,46 @@
 import type pg from 'pg';
 import { ConflictError } from '../errors.js';
-import type { AuthStore, AuthUser, UserRecord } from './types.js';
+import {
+  parseAuthRole,
+  toPublicUser,
+  type AuthStore,
+  type AuthUser,
+  type UserRecord,
+} from './types.js';
+
+interface UserRow {
+  id: string;
+  email: string;
+  displayName: string;
+  role: string;
+  passwordHash?: string | null;
+}
+
+const USER_COLUMNS = `id, email, display_name AS "displayName", role`;
+const RECORD_COLUMNS = `${USER_COLUMNS}, password_hash AS "passwordHash"`;
+
+function mapUser(row: UserRow): AuthUser {
+  return toPublicUser(row);
+}
+
+function mapRecord(row: UserRow): UserRecord {
+  return {
+    ...mapUser(row),
+    passwordHash: row.passwordHash ?? null,
+  };
+}
 
 export function createPgAuthStore(pool: pg.Pool): AuthStore {
   return {
     async createUser(input) {
       try {
-        const result = await pool.query<AuthUser>(
-          `INSERT INTO users (email, display_name, password_hash)
-           VALUES ($1, $2, $3)
-           RETURNING id, email, display_name AS "displayName"`,
-          [input.email, input.displayName, input.passwordHash],
+        const result = await pool.query<UserRow>(
+          `INSERT INTO users (email, display_name, password_hash, role)
+           VALUES ($1, $2, $3, $4)
+           RETURNING ${USER_COLUMNS}`,
+          [input.email, input.displayName, input.passwordHash, parseAuthRole(input.role)],
         );
-        return result.rows[0];
+        return mapUser(result.rows[0]);
       } catch (error) {
         if (isUniqueViolation(error)) {
           throw new ConflictError('An account with this email already exists');
@@ -21,20 +49,18 @@ export function createPgAuthStore(pool: pg.Pool): AuthStore {
       }
     },
     async findByEmail(email) {
-      const result = await pool.query<UserRecord>(
-        `SELECT id, email, display_name AS "displayName", password_hash AS "passwordHash"
-         FROM users WHERE email = $1`,
+      const result = await pool.query<UserRow>(
+        `SELECT ${RECORD_COLUMNS} FROM users WHERE email = $1`,
         [email],
       );
-      return result.rows[0];
+      return result.rows[0] ? mapRecord(result.rows[0]) : undefined;
     },
     async findById(id) {
-      const result = await pool.query<UserRecord>(
-        `SELECT id, email, display_name AS "displayName", password_hash AS "passwordHash"
-         FROM users WHERE id = $1`,
+      const result = await pool.query<UserRow>(
+        `SELECT ${RECORD_COLUMNS} FROM users WHERE id = $1`,
         [id],
       );
-      return result.rows[0];
+      return result.rows[0] ? mapRecord(result.rows[0]) : undefined;
     },
     async updatePasswordHash(userId, passwordHash) {
       await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [

@@ -262,6 +262,8 @@ export function buildApp(config: AppConfig): FastifyInstance {
     return undefined;
   };
 
+  app.decorate('getAuthStore', resolveAuthStore);
+
   void registerAuthRoutes(app, config, resolveAuthStore);
   void registerProfileRoutes(app, config, resolveProfileStore);
   void registerTripRoutes(app, config, resolveTripStore);
