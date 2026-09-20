@@ -59,6 +59,20 @@ describe('itinerary CRUD endpoints', () => {
     const tripId = '11111111-1111-4111-8111-111111111111';
     const get = await app.inject({ method: 'GET', url: `/trips/${tripId}/itinerary` });
     expect(get.statusCode).toBe(401);
+
+    const generate = await app.inject({
+      method: 'POST',
+      url: `/trips/${tripId}/itinerary/generate`,
+      payload: {},
+    });
+    expect(generate.statusCode).toBe(401);
+
+    const regenerate = await app.inject({
+      method: 'POST',
+      url: `/trips/${tripId}/itinerary/regenerate`,
+      payload: { dayNumber: 1 },
+    });
+    expect(regenerate.statusCode).toBe(401);
   });
 
   it('scopes itineraries to the trip owner', async () => {

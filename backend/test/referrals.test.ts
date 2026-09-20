@@ -306,6 +306,12 @@ describe('referral tracking API', () => {
 
     const list = await app.inject({ method: 'GET', url: '/referrals' });
     expect(list.statusCode).toBe(401);
+
+    const go = await app.inject({
+      method: 'GET',
+      url: '/referrals/go/11111111-1111-4111-8111-111111111111?channel=arrival',
+    });
+    expect(go.statusCode).toBe(401);
   });
 
   it('records clicks with source placement, stays idempotent, and never self-converts', async () => {

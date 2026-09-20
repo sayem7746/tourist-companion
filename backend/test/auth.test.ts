@@ -247,4 +247,32 @@ describe('auth endpoints', () => {
     });
     expect(missing.statusCode).toBe(401);
   });
+
+  it('does not leak reset tokens for unknown emails', async () => {
+    const forgot = await app.inject({
+      method: 'POST',
+      url: '/auth/forgot-password',
+      payload: { email: 'nobody@example.com' },
+    });
+    expect(forgot.statusCode).toBe(200);
+    const body = forgot.json() as { ok: true; resetToken?: string };
+    expect(body.ok).toBe(true);
+    expect(body.resetToken).toBeUndefined();
+  });
+
+  it('rejects short passwords and invalid reset tokens', async () => {
+    const short = await app.inject({
+      method: 'POST',
+      url: '/auth/signup',
+      payload: { email: 'short-pass@example.com', password: 'short', displayName: 'Short' },
+    });
+    expect(short.statusCode).toBe(400);
+
+    const reset = await app.inject({
+      method: 'POST',
+      url: '/auth/reset-password',
+      payload: { token: 'this-token-is-long-enough-but-unknown', password: 'new-password' },
+    });
+    expect(reset.statusCode).toBe(400);
+  });
 });

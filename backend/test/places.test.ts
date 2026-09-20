@@ -442,6 +442,24 @@ describe('GET /places', () => {
     const named = area.json() as { areaId: string; places: Array<{ name: string }> };
     expect(named.areaId).toBe('bukit_bintang');
     expect(named.places.some((place) => place.name === 'Jalan Alor')).toBe(true);
+
+    const walk = await app.inject({ method: 'GET', url: '/places/nearby?walk15=true' });
+    expect(walk.statusCode).toBe(200);
+    const walkBody = walk.json() as {
+      quickFilters: string[];
+      places: Array<{ distanceMeters?: number }>;
+    };
+    expect(walkBody.quickFilters).toContain('walk_15');
+    expect(walkBody.places.every((place) => (place.distanceMeters ?? 0) <= 1200)).toBe(true);
+
+    const halal = await app.inject({ method: 'GET', url: '/places/nearby?halalOnly=true' });
+    expect(halal.statusCode).toBe(200);
+    const halalBody = halal.json() as {
+      places: Array<{ nearbyCategory: string; halal?: boolean }>;
+    };
+    expect(halalBody.places.every((place) => place.nearbyCategory === 'food' && place.halal === true)).toBe(
+      true,
+    );
   });
 
   it('rejects incomplete or invalid nearby filters', async () => {
