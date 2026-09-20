@@ -25,11 +25,29 @@ function matchesQuery(haystack: string, needle: string): boolean {
   return haystack.toLowerCase().includes(needle.toLowerCase());
 }
 
+export function mergeKnowledgeArticles(
+  seed: KnowledgeArticle[],
+  extra: KnowledgeArticle[] = [],
+): KnowledgeArticle[] {
+  if (extra.length === 0) return seed;
+  const byId = new Map<string, KnowledgeArticle>();
+  for (const article of seed) {
+    byId.set(article.id, article);
+  }
+  for (const article of extra) {
+    byId.set(article.id, article);
+  }
+  return [...byId.values()];
+}
+
 /** Same contract as GET /knowledge — concierge retrieve-and-rank uses this, not a second corpus. */
-export function queryKnowledge(filters: KnowledgeQuery = {}): KnowledgeQueryResult {
+export function queryKnowledge(
+  filters: KnowledgeQuery = {},
+  extraArticles: KnowledgeArticle[] = [],
+): KnowledgeQueryResult {
   const needle = filters.q?.trim();
 
-  const articles = MALAYSIA_KNOWLEDGE_SEED.articles
+  const articles = mergeKnowledgeArticles(MALAYSIA_KNOWLEDGE_SEED.articles, extraArticles)
     .filter((article) => (filters.topic ? article.topic === filters.topic : true))
     .filter((article) => (filters.category ? article.category === filters.category : true))
     .filter((article) => {

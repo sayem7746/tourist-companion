@@ -33,6 +33,7 @@ const ARRIVAL_SUMMARY_MAX_SENTENCES = 4;
 export interface OrchestrateDeps {
   llm?: LlmClient;
   useLlm: boolean;
+  extraArticles?: KnowledgeArticle[];
 }
 
 function firstNameFromDisplay(displayName?: string): string | undefined {
@@ -265,7 +266,13 @@ export async function orchestrateConciergeChat(
 ): Promise<ConciergeChatResponse> {
   const context = mergeContext(request, user, stored);
   const intent = classifyIntent(request.message, request.categoryHint);
-  const { articles, citations } = retrieveAndRank(request.message, intent, context);
+  const { articles, citations } = retrieveAndRank(
+    request.message,
+    intent,
+    context,
+    4,
+    deps.extraArticles,
+  );
   const conversationId = request.conversationId?.trim() || randomUUID();
 
   const base = composeRetrieveReply(intent, context, articles);

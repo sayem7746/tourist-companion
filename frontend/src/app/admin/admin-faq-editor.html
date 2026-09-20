@@ -1,0 +1,61 @@
+<section class="admin-content">
+  <p class="crumb"><a routerLink="/admin/faqs">FAQs</a> / {{ isNew() ? 'New' : 'Edit' }}</p>
+  <h1>{{ isNew() ? 'New FAQ' : 'Edit FAQ' }}</h1>
+  <p class="lede">Published answers ground the concierge and public FAQ search.</p>
+
+  @if (loadError()) {
+    <p class="error" role="alert">{{ loadError() }}</p>
+  }
+  @if (saveError()) {
+    <p class="error" role="alert">{{ saveError() }}</p>
+  }
+
+  <form (ngSubmit)="submit()">
+    <label>
+      Title
+      <input name="title" type="text" [(ngModel)]="title" required maxlength="160" />
+    </label>
+    <label>
+      Slug
+      <input
+        name="slug"
+        type="text"
+        [(ngModel)]="slug"
+        maxlength="80"
+        placeholder="optional-kebab-case"
+      />
+    </label>
+    <label>
+      Category
+      <select name="topic" [(ngModel)]="topic">
+        <option value="">Uncategorized</option>
+        @for (option of topics; track option) {
+          <option [value]="option">{{ labels[option] }}</option>
+        }
+      </select>
+    </label>
+    <label>
+      Summary
+      <input name="summary" type="text" [(ngModel)]="summary" maxlength="500" />
+    </label>
+    <label>
+      Answer
+      <textarea name="body" rows="8" [(ngModel)]="body" required maxlength="20000"></textarea>
+    </label>
+    <label>
+      Tags
+      <input name="tags" type="text" [(ngModel)]="tagsText" placeholder="comma or line separated" />
+    </label>
+    <label>
+      Sort order
+      <input name="sortOrder" type="number" min="0" max="9999" [(ngModel)]="sortOrder" />
+    </label>
+    <label class="check">
+      <input name="published" type="checkbox" [(ngModel)]="published" />
+      Published
+    </label>
+    <button type="submit" class="btn" [disabled]="pending()">
+      {{ isNew() ? 'Create' : 'Save' }}
+    </button>
+  </form>
+</section>

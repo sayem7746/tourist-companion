@@ -1,13 +1,14 @@
 <section class="admin-content">
-  <p class="crumb"><a routerLink="/admin">Operations</a> / Content</p>
-  <h1>Content</h1>
+  <p class="crumb"><a routerLink="/admin">Operations</a> / FAQs</p>
+  <h1>FAQs</h1>
   <p class="lede">
-    Arrival guides, FAQs, etiquette, payment guidance, and safety copy. Use the dedicated
-    <a routerLink="/admin/faqs">FAQ desk</a> to search and publish answers for concierge grounding.
+    Searchable FAQ desk for concierge grounding and app content. Only published answers are
+    retrieved in chat and public FAQ search.
   </p>
 
   <p class="toolbar">
-    <a routerLink="/admin/content/new" class="btn">New article</a>
+    <a routerLink="/admin/faqs/new" class="btn">New FAQ</a>
+    <a routerLink="/admin/content" class="btn btn-secondary">All content</a>
   </p>
 
   <div class="chips" role="list">
@@ -15,8 +16,8 @@
       <button
         type="button"
         class="chip"
-        [class.selected]="kind === chip.id"
-        (click)="filterKind(chip.id)"
+        [class.selected]="topic === chip.id"
+        (click)="filterTopic(chip.id)"
       >
         {{ chip.label }}
       </button>
@@ -40,7 +41,7 @@
   </form>
 
   @if (pending()) {
-    <p class="meta" aria-live="polite">Loading content…</p>
+    <p class="meta" aria-live="polite">Loading FAQs…</p>
   }
   @if (loadError()) {
     <p class="error" role="alert">{{ loadError() }}</p>
@@ -52,13 +53,13 @@
 
   @if (!pending() && !loadError()) {
     @if (items().length === 0) {
-      <p class="meta">No articles match these filters.</p>
+      <p class="meta">No FAQs match these filters.</p>
     }
     <ul class="list">
       @for (item of items(); track item.id) {
         <li>
-          <a [routerLink]="['/admin/content', item.id]" class="card">
-            <span class="kind">{{ labels[item.kind] }}</span>
+          <a [routerLink]="['/admin/faqs', item.id]" class="card">
+            <span class="kind">{{ topicLabel(item) }}</span>
             <strong>{{ item.title }}</strong>
             <span class="meta">{{ item.published ? 'Published' : 'Draft' }} · {{ item.slug }}</span>
           </a>

@@ -919,3 +919,17 @@ export interface ContentItem {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface FaqItem {
+  id: string;
+  slug: string;
+  title: string;
+  summary: string;
+  body: string;
+  tags: string[];
+  topic: ConciergeCategory | null;
+  sortOrder: number;
+  published: boolean;
+  createdAt: string;
+  updatedAt: string;
+}

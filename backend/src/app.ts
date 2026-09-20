@@ -35,6 +35,7 @@ import { registerEmergencyRoutes } from './emergency/routes.js';
 import { registerSafetyRoutes } from './safety/routes.js';
 import { registerKnowledgeRoutes } from './knowledge/routes.js';
 import { registerContentAdminRoutes } from './content/routes.js';
+import { registerFaqRoutes } from './faqs/routes.js';
 import { createMemoryContentStore } from './content/memory-store.js';
 import { createPgContentStore } from './content/pg-store.js';
 import type { ContentStore } from './content/types.js';
@@ -182,7 +183,6 @@ export function buildApp(config: AppConfig): FastifyInstance {
 
   void registerHealthRoutes(app);
   void registerMetricsRoutes(app);
-  void registerKnowledgeRoutes(app, config);
   void registerEmergencyRoutes(app, config);
   void registerEmbassyRoutes(app, config);
   void registerSafetyRoutes(app, config);
@@ -284,10 +284,12 @@ export function buildApp(config: AppConfig): FastifyInstance {
   void registerProfileRoutes(app, config, resolveProfileStore);
   void registerTripRoutes(app, config, resolveTripStore);
   void registerItineraryRoutes(app, config, resolveItineraryStore, resolveTripStore);
+  void registerKnowledgeRoutes(app, config, resolveContentStore);
   void registerConciergeRoutes(app, config, {
     resolveProfileStore,
     resolveTripStore,
     resolveHistoryStore,
+    resolveContentStore,
   });
 
   void registerArrivalRoutes(app, config, () => {
@@ -305,6 +307,7 @@ export function buildApp(config: AppConfig): FastifyInstance {
   void registerPartnerAdminRoutes(app, config, resolvePartnerStore);
   void registerReferralRoutes(app, config, resolvePartnerStore);
   void registerContentAdminRoutes(app, config, resolveContentStore);
+  void registerFaqRoutes(app, config, resolveContentStore);
 
   return app;
 }

@@ -56,6 +56,7 @@ describe('App', () => {
     expect(isAdminPath('/admin')).toBeTrue();
     expect(isAdminPath('/admin/login')).toBeTrue();
     expect(isAdminPath('/admin/content')).toBeTrue();
+    expect(isAdminPath('/admin/faqs')).toBeTrue();
     expect(isAdminPath('/')).toBeFalse();
   });
 
@@ -67,6 +68,18 @@ describe('App', () => {
     expect(create?.canActivate).toEqual([adminGuard]);
     const edit = routes.find((route) => route.path === 'admin/content/:id');
     expect(edit?.canActivate).toEqual([adminGuard]);
+  });
+
+  it('should guard dedicated FAQ admin pages', () => {
+    const list = routes.find((route) => route.path === 'admin/faqs');
+    expect(list?.canActivate).toEqual([adminGuard]);
+    expect(list?.title).toBe('FAQs');
+    const create = routes.find((route) => route.path === 'admin/faqs/new');
+    expect(create?.canActivate).toEqual([adminGuard]);
+    expect(create?.title).toBe('New FAQ');
+    const edit = routes.find((route) => route.path === 'admin/faqs/:id');
+    expect(edit?.canActivate).toEqual([adminGuard]);
+    expect(edit?.title).toBe('Edit FAQ');
   });
 
   it('should expose a public arrival checklist route', () => {

@@ -37,7 +37,7 @@ Workflow: `.github/workflows/deploy.yml`. Create GitHub **Environments** named `
 | --- | --- | --- |
 | `DATABASE_URL` | `env.DATABASE_URL` / `${{ secrets.DATABASE_URL }}` | Backend, migrations |
 | `JWT_SECRET` | `env.JWT_SECRET` | Backend tokens |
-| `ADMIN_TOKEN` | `env.ADMIN_TOKEN` | Partner and content admin (`X-Admin-Token` or Bearer). JWT `role: admin` from `/auth/admin/login` is also accepted. |
+| `ADMIN_TOKEN` | `env.ADMIN_TOKEN` | Partner, content, and FAQ admin (`X-Admin-Token` or Bearer). JWT `role: admin` from `/auth/admin/login` is also accepted. |
 | `JWT_EXPIRES_IN` | `env.JWT_EXPIRES_IN` | Backend tokens (optional; default `7d`) |
 | `LLM_API_KEY` | `env.LLM_API_KEY` | Optional concierge LLM; omit to retrieve-and-rank the knowledge seed |
 | `GOOGLE_PLACES_API_KEY` | `env.GOOGLE_PLACES_API_KEY` | Optional Explore nearby (Google Places). Omit or `CHANGE_ME_*` to use the Malaysia seed |

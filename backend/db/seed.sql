@@ -296,7 +296,7 @@ VALUES
   ARRAY['water', 'health', 'hotel']::text[],
   NULL,
   NULL,
-  NULL,
+  'safety_non_emergency',
   NULL,
   NULL,
   '{}'::text[],

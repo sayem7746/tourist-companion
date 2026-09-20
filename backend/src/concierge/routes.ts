@@ -4,6 +4,8 @@ import { optionalAuth, requireAuth } from '../auth/middleware.js';
 import type { AppConfig } from '../config.js';
 import { hasUsableLlmKey } from '../config.js';
 import { NotFoundError, TooManyRequestsError } from '../errors.js';
+import type { ContentStore } from '../content/types.js';
+import { publishedFaqArticles } from '../faqs/map.js';
 import { CONCIERGE_CATEGORIES } from '../knowledge/types.js';
 import { validateRequest } from '../validate.js';
 import { createOpenAiCompatibleClient, type LlmClient } from './llm.js';
@@ -93,6 +95,7 @@ export async function registerConciergeRoutes(
     resolveProfileStore?: () => ProfileStore | undefined;
     resolveTripStore?: () => TripStore | undefined;
     resolveHistoryStore?: () => ConciergeHistoryStore | undefined;
+    resolveContentStore?: () => ContentStore | undefined;
   },
 ): Promise<void> {
   const limiter =
@@ -185,9 +188,10 @@ export async function registerConciergeRoutes(
     const conversationId =
       body.conversationId?.trim() || storedMessages.at(-1)?.conversationId;
 
+    const extraArticles = await publishedFaqArticles(options?.resolveContentStore?.());
     const result = await orchestrateConciergeChat(
       { ...body, history, conversationId },
-      { llm, useLlm },
+      { llm, useLlm, extraArticles },
       request.user,
       stored,
     );

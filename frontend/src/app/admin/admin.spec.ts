@@ -44,7 +44,9 @@ describe('AdminHome', () => {
     expect(compiled.textContent).toContain('ops@example.com');
     expect(compiled.textContent).toContain('admin');
     expect(compiled.textContent).toContain('Manage content');
+    expect(compiled.textContent).toContain('Manage FAQs');
     expect(compiled.querySelector('a[href="/admin/content"]')).toBeTruthy();
+    expect(compiled.querySelector('a[href="/admin/faqs"]')).toBeTruthy();
   });
 
   it('should sign out and return to admin login', () => {

@@ -20,6 +20,8 @@ import { AdminHome } from './admin/admin';
 import { AdminLogin } from './admin/admin-login';
 import { AdminContent } from './admin/admin-content';
 import { AdminContentEditor } from './admin/admin-content-editor';
+import { AdminFaqs } from './admin/admin-faqs';
+import { AdminFaqEditor } from './admin/admin-faq-editor';
 import { adminGuard } from './admin/admin.guard';
 
 export const routes: Routes = [
@@ -83,6 +85,24 @@ export const routes: Routes = [
     component: AdminContentEditor,
     canActivate: [adminGuard],
     title: 'Edit content',
+  },
+  {
+    path: 'admin/faqs',
+    component: AdminFaqs,
+    canActivate: [adminGuard],
+    title: 'FAQs',
+  },
+  {
+    path: 'admin/faqs/new',
+    component: AdminFaqEditor,
+    canActivate: [adminGuard],
+    title: 'New FAQ',
+  },
+  {
+    path: 'admin/faqs/:id',
+    component: AdminFaqEditor,
+    canActivate: [adminGuard],
+    title: 'Edit FAQ',
   },
   { path: '**', redirectTo: '' },
 ];

@@ -72,10 +72,11 @@ export function retrieveAndRank(
   intent: ClassifiedIntent,
   context: ConciergeLiveContext,
   limit = 4,
+  extraArticles: KnowledgeArticle[] = [],
 ): { articles: KnowledgeArticle[]; citations: ConciergeCitation[] } {
-  // Same corpus as GET /knowledge (no second store). Rank in-process; do not
-  // pass the raw chat sentence as `q` (that filter is substring-on-full-needle).
-  const catalog = queryKnowledge({});
+  // Same corpus as GET /knowledge (seed plus published CMS FAQs). Rank in-process;
+  // do not pass the raw chat sentence as `q` (that filter is substring-on-full-needle).
+  const catalog = queryKnowledge({}, extraArticles);
   const pool = catalog.articles;
 
   const queryTokens = tokens(message);
@@ -87,7 +88,7 @@ export function retrieveAndRank(
     .sort((a, b) => b.score - a.score || a.article.sortOrder - b.article.sortOrder);
 
   const hinted = intent.articleHint
-    ? queryKnowledge({}).articles.find((article) => article.id === intent.articleHint)
+    ? pool.find((article) => article.id === intent.articleHint)
     : undefined;
 
   const picked: Array<{ article: KnowledgeArticle; score: number }> = [];
@@ -111,7 +112,10 @@ export function retrieveAndRank(
     intent.escalationLevel !== 'sos' &&
     intent.escalationLevel !== 'out_of_bounds'
   ) {
-    const fallback = queryKnowledge({ category: intent.category }).articles.slice(0, limit);
+    const fallback = queryKnowledge({ category: intent.category }, extraArticles).articles.slice(
+      0,
+      limit,
+    );
     for (const article of fallback) {
       picked.push({ article, score: 1 });
     }
