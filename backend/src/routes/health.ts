@@ -30,10 +30,21 @@ export async function registerHealthRoutes(app: FastifyInstance): Promise<void> 
         }
       }
 
+      const metrics = app.metrics.snapshot();
       return {
         ...payload,
         uptimeSeconds: process.uptime(),
         database,
+        metrics: {
+          requestsTotal: metrics.requestsTotal,
+          errorsTotal: metrics.errorsTotal,
+          latencyMs: {
+            p50: metrics.latencyMs.p50,
+            p95: metrics.latencyMs.p95,
+            p99: metrics.latencyMs.p99,
+            max: metrics.latencyMs.max,
+          },
+        },
       };
     }
 

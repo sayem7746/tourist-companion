@@ -7,30 +7,54 @@ import type { AuthStore } from './auth/types.js';
 import type { AppConfig } from './config.js';
 import { registerDb } from './db/pool.js';
 import { AppError, NotFoundError } from './errors.js';
+import { serializeErrorForLog } from './observability/error-log.js';
+import { createMetricsCollector } from './observability/metrics.js';
+import { REQUEST_ID_HEADER, resolveRequestId } from './observability/request-id.js';
 import { registerHealthRoutes } from './routes/health.js';
+import { registerMetricsRoutes } from './routes/metrics.js';
 
 export function buildApp(config: AppConfig): FastifyInstance {
   const app = Fastify({
     logger: {
       level: config.LOG_LEVEL,
+      serializers: {
+        err(error) {
+          const serialized = serializeErrorForLog(error, config);
+          return {
+            type: serialized.type ?? 'Error',
+            message: serialized.message,
+            stack: serialized.stack ?? '',
+            code: serialized.code,
+            statusCode: serialized.statusCode,
+          };
+        },
+      },
     },
+    requestIdHeader: REQUEST_ID_HEADER,
+    genReqId: resolveRequestId,
+    disableRequestLogging: true,
   });
+
+  app.decorate('metrics', createMetricsCollector());
 
   void registerDb(app, config);
 
   app.addHook('onRequest', async (request, reply) => {
+    reply.header(REQUEST_ID_HEADER, request.id);
+
     const origin = request.headers.origin;
     if (origin === config.FRONTEND_ORIGIN) {
       reply.header('Access-Control-Allow-Origin', origin);
       reply.header('Access-Control-Allow-Credentials', 'true');
       reply.header(
         'Access-Control-Allow-Headers',
-        'Content-Type, Authorization',
+        'Content-Type, Authorization, X-Request-Id',
       );
       reply.header(
         'Access-Control-Allow-Methods',
         'GET,POST,PUT,PATCH,DELETE,OPTIONS',
       );
+      reply.header('Access-Control-Expose-Headers', 'X-Request-Id');
     }
 
     if (request.method === 'OPTIONS') {
@@ -43,9 +67,11 @@ export function buildApp(config: AppConfig): FastifyInstance {
   });
 
   app.setErrorHandler((error, request, reply) => {
+    const errLog = serializeErrorForLog(error, config);
+
     if (error instanceof AppError) {
       request.log.warn(
-        { err: error, code: error.code, details: error.details },
+        { err: error, code: error.code, details: error.details, requestId: request.id },
         error.message,
       );
       return reply.status(error.statusCode).send({
@@ -53,17 +79,19 @@ export function buildApp(config: AppConfig): FastifyInstance {
           code: error.code,
           message: error.message,
           details: error.details,
+          requestId: request.id,
         },
       });
     }
 
     if (error instanceof ZodError) {
-      request.log.warn({ err: error }, 'Validation failed');
+      request.log.warn({ err: error, requestId: request.id }, 'Validation failed');
       return reply.status(400).send({
         error: {
           code: 'VALIDATION_ERROR',
           message: 'Request validation failed',
           details: error.flatten(),
+          requestId: request.id,
         },
       });
     }
@@ -78,7 +106,12 @@ export function buildApp(config: AppConfig): FastifyInstance {
 
     const message = error instanceof Error ? error.message : 'An unexpected error occurred';
 
-    request.log.error({ err: error }, message);
+    if (statusCode >= 500) {
+      request.log.error({ err: error, requestId: request.id, ...errLog }, message);
+    } else {
+      request.log.warn({ err: error, requestId: request.id }, message);
+    }
+
     return reply.status(statusCode).send({
       error: {
         code: statusCode >= 500 ? 'INTERNAL_ERROR' : 'REQUEST_ERROR',
@@ -86,18 +119,35 @@ export function buildApp(config: AppConfig): FastifyInstance {
           config.NODE_ENV === 'production' && statusCode >= 500
             ? 'An unexpected error occurred'
             : message,
+        requestId: request.id,
       },
     });
   });
 
   app.addHook('onRequest', async (request) => {
     request.log.info(
-      { method: request.method, url: request.url },
+      { method: request.method, url: request.url, requestId: request.id },
       'incoming request',
     );
   });
 
+  app.addHook('onResponse', async (request, reply) => {
+    const durationMs = reply.elapsedTime;
+    app.metrics.record(request.method, request.url, reply.statusCode, durationMs);
+    request.log.info(
+      {
+        method: request.method,
+        url: request.url,
+        statusCode: reply.statusCode,
+        durationMs: Math.round(durationMs * 100) / 100,
+        requestId: request.id,
+      },
+      'request completed',
+    );
+  });
+
   void registerHealthRoutes(app);
+  void registerMetricsRoutes(app);
 
   let memoryStore: AuthStore | undefined;
   void registerAuthRoutes(app, config, () => {

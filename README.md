@@ -24,7 +24,7 @@ npm run db:migrate
 npm run db:seed
 ```
 
-See `backend/README.md` for schema, migrate, and seed details.
+See `backend/README.md` for schema, migrate, and seed details. Request IDs, logging, metrics, and health are in `docs/observability.md`.
 
 ## Environments and secrets
 

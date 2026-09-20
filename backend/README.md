@@ -50,4 +50,4 @@ SQL source of truth: `db/seed.sql`. Do not run seed in production.
 | `providers` | Partner businesses used for referrals |
 | `referrals` | Attribution codes from a user/trip to a provider |
 
-The API opens a `pg` pool (optional `DATABASE_URL`), reports DB status on `GET /health?verbose=true`, and exposes tourist auth under `/auth/*`.
+The API opens a `pg` pool (optional `DATABASE_URL`), reports DB status on `GET /health?verbose=true`, exposes `GET /metrics`, and serves tourist auth under `/auth/*`. See `docs/observability.md`.
