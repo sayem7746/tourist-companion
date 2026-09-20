@@ -20,6 +20,7 @@ import type {
   PatchItemInput,
   PutItineraryInput,
   ReorderInput,
+  ReplaceUnlockedInput,
 } from './types.js';
 
 function isoNow(): string {
@@ -222,6 +223,21 @@ export function createMemoryItineraryStore(trips: TripStore): ItineraryStore {
       }
       const byId = new Map(day.items.map((item) => [item.id, item]));
       day.items = input.itemIds.map((id, index) => ({ ...byId.get(id)!, sortOrder: index }));
+      itinerary.updatedAt = isoNow();
+      return clone(itinerary);
+    },
+    async replaceUnlocked(userId, tripId, input: ReplaceUnlockedInput) {
+      const itinerary = await ensure(userId, tripId);
+      if (!itinerary) return undefined;
+      for (const dayInput of input.days) {
+        const day = findDay(itinerary, dayInput.dayId, dayInput.dayNumber);
+        const locked = day.items.filter((item) => item.locked);
+        const generated = dayInput.items.map((item, index) =>
+          toStoredItem(day.id, { ...item, locked: false }, item.sortOrder ?? index),
+        );
+        replaceDayItems(itinerary, day, [...locked, ...generated]);
+      }
+      itinerary.generatedAt = input.generatedAt;
       itinerary.updatedAt = isoNow();
       return clone(itinerary);
     },

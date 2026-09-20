@@ -81,6 +81,17 @@ export interface ReorderInput {
   itemIds: string[];
 }
 
+export interface ReplaceUnlockedDayInput {
+  dayId?: string;
+  dayNumber?: number;
+  items: ItemInput[];
+}
+
+export interface ReplaceUnlockedInput {
+  days: ReplaceUnlockedDayInput[];
+  generatedAt: string;
+}
+
 export interface ItineraryStore {
   get(userId: string, tripId: string): Promise<Itinerary | undefined>;
   put(userId: string, tripId: string, input: PutItineraryInput): Promise<Itinerary | undefined>;
@@ -97,4 +108,9 @@ export interface ItineraryStore {
   ): Promise<Itinerary | undefined>;
   deleteItem(userId: string, tripId: string, itemId: string): Promise<Itinerary | undefined>;
   reorder(userId: string, tripId: string, input: ReorderInput): Promise<Itinerary | undefined>;
+  replaceUnlocked(
+    userId: string,
+    tripId: string,
+    input: ReplaceUnlockedInput,
+  ): Promise<Itinerary | undefined>;
 }

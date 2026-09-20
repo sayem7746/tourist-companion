@@ -242,7 +242,7 @@ export function buildApp(config: AppConfig): FastifyInstance {
   void registerAuthRoutes(app, config, resolveAuthStore);
   void registerProfileRoutes(app, config, resolveProfileStore);
   void registerTripRoutes(app, config, resolveTripStore);
-  void registerItineraryRoutes(app, config, resolveItineraryStore);
+  void registerItineraryRoutes(app, config, resolveItineraryStore, resolveTripStore);
   void registerConciergeRoutes(app, config, {
     resolveProfileStore,
     resolveTripStore,

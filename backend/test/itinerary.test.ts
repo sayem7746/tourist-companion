@@ -295,10 +295,18 @@ describe('itinerary CRUD endpoints', () => {
     expect(missingTrip.statusCode).toBe(404);
   });
 
-  it('stubs regenerate without changing items', async () => {
+  it('regenerates a draft around locked items and can scope to one day', async () => {
     const token = await signup('itin-regen@example.com');
     const headers = { authorization: `Bearer ${token}` };
-    const tripId = await createTrip(token);
+    const tripId = await createTrip(token, {
+      destination: 'Kuala Lumpur',
+      startDate: '2026-09-21',
+      endDate: '2026-09-23',
+      adultCount: 2,
+      interests: ['food', 'culture'],
+      dailyBudget: 'medium',
+      travelStyle: 'balanced',
+    });
 
     const seeded = await app.inject({
       method: 'POST',
@@ -308,19 +316,61 @@ describe('itinerary CRUD endpoints', () => {
     });
     expect(seeded.statusCode).toBe(201);
 
-    const regen = await app.inject({
+    const noteOnDay2 = await app.inject({
+      method: 'POST',
+      url: `/trips/${tripId}/itinerary/items`,
+      headers,
+      payload: { dayNumber: 2, kind: 'note', startTime: '08:00', endTime: '08:20', title: 'Keep day 2' },
+    });
+    expect(noteOnDay2.statusCode).toBe(201);
+
+    const regenDay1 = await app.inject({
       method: 'POST',
       url: `/trips/${tripId}/itinerary/regenerate`,
       headers,
       payload: { dayNumber: 1 },
     });
-    expect(regen.statusCode).toBe(200);
-    const body = regen.json() as {
-      generation: { implemented: boolean };
+    expect(regenDay1.statusCode).toBe(200);
+    const day1Body = regenDay1.json() as {
+      generation: { implemented: boolean; source: string; daysRegenerated: number[] };
+      itinerary: {
+        generatedAt: string | null;
+        days: Array<{
+          dayNumber: number;
+          items: Array<{ id: string; title: string | null; kind: string; locked: boolean }>;
+        }>;
+      };
+    };
+    expect(day1Body.generation).toMatchObject({
+      implemented: true,
+      source: 'places-seed',
+      daysRegenerated: [1],
+    });
+    expect(day1Body.itinerary.generatedAt).toEqual(expect.any(String));
+    const day1 = day1Body.itinerary.days.find((day) => day.dayNumber === 1)!;
+    const locked = day1.items.find((item) => item.locked);
+    expect(locked?.title).toBe('Locked later');
+    expect(day1.items.length).toBeGreaterThan(1);
+    expect(day1.items.some((item) => item.kind === 'meal' || item.kind === 'activity')).toBe(true);
+    expect(
+      day1Body.itinerary.days.find((day) => day.dayNumber === 2)!.items.map((item) => item.title),
+    ).toEqual(['Keep day 2']);
+
+    const full = await app.inject({
+      method: 'POST',
+      url: `/trips/${tripId}/itinerary/generate`,
+      headers,
+      payload: {},
+    });
+    expect(full.statusCode).toBe(200);
+    const fullBody = full.json() as {
+      generation: { daysRegenerated: number[] };
       itinerary: { days: Array<{ dayNumber: number; items: Array<{ title: string | null }> }> };
     };
-    expect(body.generation.implemented).toBe(false);
-    expect(body.itinerary.days.find((day) => day.dayNumber === 1)!.items).toHaveLength(1);
-    expect(body.itinerary.days.find((day) => day.dayNumber === 1)!.items[0].title).toBe('Locked later');
+    expect(fullBody.generation.daysRegenerated).toEqual([1, 2, 3]);
+    expect(fullBody.itinerary.days.find((day) => day.dayNumber === 1)!.items.some((item) => item.title === 'Locked later')).toBe(
+      true,
+    );
+    expect(fullBody.itinerary.days.find((day) => day.dayNumber === 2)!.items.length).toBeGreaterThan(1);
   });
 });

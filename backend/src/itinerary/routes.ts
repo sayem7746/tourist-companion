@@ -1,9 +1,11 @@
-import type { FastifyInstance } from 'fastify';
+import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import { requireAuth } from '../auth/middleware.js';
 import type { AppConfig } from '../config.js';
 import { NotFoundError, ServiceUnavailableError, ValidationError } from '../errors.js';
+import type { TripStore } from '../trips/types.js';
 import { validateRequest } from '../validate.js';
+import { planItinerary } from './generate.js';
 import { ITINERARY_ITEM_KINDS, ITINERARY_STATUSES, type ItineraryStore } from './types.js';
 
 const time = z
@@ -126,11 +128,20 @@ export async function registerItineraryRoutes(
   app: FastifyInstance,
   config: AppConfig,
   resolveStore: () => ItineraryStore | undefined,
+  resolveTripStore: () => TripStore | undefined,
 ): Promise<void> {
   const getStore = (): ItineraryStore => {
     const store = resolveStore();
     if (!store) {
       throw new ServiceUnavailableError('Itinerary store is not configured');
+    }
+    return store;
+  };
+
+  const getTripStore = (): TripStore => {
+    const store = resolveTripStore();
+    if (!store) {
+      throw new ServiceUnavailableError('Trip store is not configured');
     }
     return store;
   };
@@ -204,15 +215,20 @@ export async function registerItineraryRoutes(
     return { itinerary };
   });
 
-  app.post('/trips/:id/itinerary/regenerate', auth, async (request) => {
+  const generateDraft = async (request: FastifyRequest) => {
     const { params, body } = validateRequest(request, { params: tripParams, body: regenerateSchema });
     const store = getStore();
     const userId = requireUserId(request);
+    const trip = await getTripStore().get(userId, params.id);
     const itinerary = await store.get(userId, params.id);
-    if (!itinerary) {
+    if (!trip || !itinerary) {
       throw new NotFoundError('Trip not found');
     }
-    if (body.dayId != null || body.dayNumber != null) {
+    const scope =
+      body.dayId != null || body.dayNumber != null
+        ? { dayId: body.dayId, dayNumber: body.dayNumber }
+        : undefined;
+    if (scope) {
       const day = itinerary.days.find(
         (entry) => entry.id === body.dayId || entry.dayNumber === body.dayNumber,
       );
@@ -220,12 +236,24 @@ export async function registerItineraryRoutes(
         throw new NotFoundError('Itinerary day not found');
       }
     }
+    const planned = planItinerary(trip, itinerary, scope);
+    const updated = await store.replaceUnlocked(userId, params.id, {
+      days: planned.map((day) => ({ dayId: day.dayId, items: day.items })),
+      generatedAt: new Date().toISOString(),
+    });
+    if (!updated) {
+      throw new NotFoundError('Trip not found');
+    }
     return {
-      itinerary,
+      itinerary: updated,
       generation: {
-        implemented: false,
-        message: 'Itinerary generation is not implemented yet; locked items will be kept when it is.',
+        implemented: true,
+        source: 'places-seed',
+        daysRegenerated: planned.map((day) => day.dayNumber),
       },
     };
-  });
+  };
+
+  app.post('/trips/:id/itinerary/regenerate', auth, generateDraft);
+  app.post('/trips/:id/itinerary/generate', auth, generateDraft);
 }

@@ -36,6 +36,13 @@ export function timeToMinutes(hhmm: string): number {
   return hours * 60 + minutes;
 }
 
+export function minutesToTime(totalMinutes: number): string {
+  const minutes = ((totalMinutes % (24 * 60)) + 24 * 60) % (24 * 60);
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
+}
+
 export function itemsOverlap(a: Pick<ItemInput, 'startTime' | 'endTime'>, b: Pick<ItemInput, 'startTime' | 'endTime'>): boolean {
   return timeToMinutes(a.startTime) < timeToMinutes(b.endTime) && timeToMinutes(b.startTime) < timeToMinutes(a.endTime);
 }

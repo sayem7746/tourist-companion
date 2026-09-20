@@ -21,6 +21,7 @@ import type {
   PatchItemInput,
   PutItineraryInput,
   ReorderInput,
+  ReplaceUnlockedInput,
 } from './types.js';
 
 interface ItineraryRow {
@@ -487,6 +488,24 @@ export function createPgItineraryStore(pool: pg.Pool, trips: TripStore): Itinera
           await client.query(`UPDATE itinerary_items SET sort_order = $2 WHERE id = $1`, [id, index]);
         }
         await client.query(`UPDATE itineraries SET updated_at = NOW() WHERE id = $1`, [itinerary.id]);
+        return (await loadItinerary(client, tripId))!;
+      });
+    },
+    async replaceUnlocked(userId, tripId, input: ReplaceUnlockedInput) {
+      return withTrip(userId, tripId, async (client, itinerary) => {
+        for (const dayInput of input.days) {
+          const day = dayFrom(itinerary, dayInput.dayId, dayInput.dayNumber);
+          const locked = day.items.filter((item) => item.locked);
+          assertNoOverlaps([...locked, ...dayInput.items]);
+          await client.query(`DELETE FROM itinerary_items WHERE day_id = $1 AND locked = false`, [day.id]);
+          for (const [index, item] of dayInput.items.entries()) {
+            await insertItem(client, day.id, { ...item, locked: false }, item.sortOrder ?? index);
+          }
+        }
+        await client.query(`UPDATE itineraries SET generated_at = $2, updated_at = NOW() WHERE id = $1`, [
+          itinerary.id,
+          input.generatedAt,
+        ]);
         return (await loadItinerary(client, tripId))!;
       });
     },
