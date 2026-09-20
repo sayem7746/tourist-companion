@@ -276,8 +276,33 @@ export interface ConciergeReply {
   } | null;
 }
 
+export interface ConciergeHistoryTurn {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+export interface ConciergeRetention {
+  maxMessages: number;
+  ttlMs: number;
+  persistEmergency: false;
+}
+
+export interface ConciergeHistoryResponse {
+  tripId: string | null;
+  conversationId: string | null;
+  messages: Array<{
+    role: 'user' | 'assistant';
+    content: string;
+    createdAt: string;
+    expiresAt: string;
+  }>;
+  retention: ConciergeRetention;
+}
+
 export interface ConciergeChatResponse {
   conversationId: string;
+  tripId?: string;
+  persisted?: boolean;
   category: ConciergeCategory;
   escalationLevel: ConciergeEscalationLevel;
   mode: ConciergeMode;

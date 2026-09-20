@@ -25,6 +25,8 @@ const envSchema = z.object({
   LLM_MODEL: z.string().min(1).default('gpt-4o-mini'),
   CONCIERGE_RATE_LIMIT_MAX: z.coerce.number().int().min(1).max(1000).default(30),
   CONCIERGE_RATE_LIMIT_WINDOW_MS: z.coerce.number().int().min(1000).default(60_000),
+  CONCIERGE_HISTORY_MAX_MESSAGES: z.coerce.number().int().min(2).max(100).default(20),
+  CONCIERGE_HISTORY_TTL_MS: z.coerce.number().int().min(60_000).default(7 * 24 * 60 * 60 * 1000),
 });
 
 export function hasUsableLlmKey(key: string | undefined): boolean {

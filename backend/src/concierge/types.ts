@@ -29,6 +29,7 @@ export interface ConciergeHistoryTurn {
 export interface ConciergeChatRequest {
   message: string;
   conversationId?: string;
+  tripId?: string;
   history?: ConciergeHistoryTurn[];
   context?: ConciergeLiveContext;
   categoryHint?: ConciergeCategory;
@@ -58,6 +59,8 @@ export interface ConciergeReply {
 
 export interface ConciergeChatResponse {
   conversationId: string;
+  tripId?: string;
+  persisted?: boolean;
   category: ConciergeCategory;
   escalationLevel: ConciergeEscalationLevel;
   mode: ConciergeMode;
