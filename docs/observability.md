@@ -35,6 +35,8 @@ Hooks log `incoming request` and `request completed`. Unexpected 5xx errors use 
 
 `GET /metrics` itself is not counted. Values reset when the process restarts. For multi-instance deploys, scrape each replica or replace this with a shared backend later.
 
+Admin `GET /admin/dashboard` (JWT `role: admin` or `ADMIN_TOKEN`) reuses this snapshot for concierge chat, nearby search, and error counts. User, trip, and referral totals come from stores when they are configured; otherwise those three also fall back to process metrics (`POST /auth/signup`, `POST /trips`, `POST /referrals/clicks`).
+
 ## Health
 
 | Endpoint | Purpose |

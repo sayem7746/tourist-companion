@@ -153,6 +153,12 @@ export function createPgTripStore(pool: pg.Pool): TripStore {
       ]);
       return result.rows[0] ? mapTrip(result.rows[0]) : undefined;
     },
+    async count() {
+      const result = await pool.query<{ count: number | string }>(
+        'SELECT COUNT(*)::int AS count FROM trips',
+      );
+      return Number(result.rows[0]?.count ?? 0);
+    },
     async create(userId, input: CreateTripInput) {
       const result = await pool.query<TripRow>(
         `

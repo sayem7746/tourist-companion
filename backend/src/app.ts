@@ -45,6 +45,7 @@ import { createMemoryPartnerStore } from './partners/memory-store.js';
 import { createPgPartnerStore } from './partners/pg-store.js';
 import type { PartnerStore } from './partners/types.js';
 import { registerPlacesRoutes } from './places/routes.js';
+import { registerDashboardRoutes } from './dashboard/routes.js';
 import { registerHealthRoutes } from './routes/health.js';
 import { registerMetricsRoutes } from './routes/metrics.js';
 
@@ -308,6 +309,11 @@ export function buildApp(config: AppConfig): FastifyInstance {
   void registerReferralRoutes(app, config, resolvePartnerStore);
   void registerContentAdminRoutes(app, config, resolveContentStore);
   void registerFaqRoutes(app, config, resolveContentStore);
+  void registerDashboardRoutes(app, config, {
+    resolveAuthStore,
+    resolveTripStore,
+    resolvePartnerStore,
+  });
 
   return app;
 }

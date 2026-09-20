@@ -40,6 +40,10 @@ function routeKey(method: string, url: string): string {
   return `${method.toUpperCase()} ${path}`;
 }
 
+export function routeCount(snapshot: MetricsSnapshot, method: string, path: string): number {
+  return snapshot.byRoute[routeKey(method, path)]?.count ?? 0;
+}
+
 export function createMetricsCollector(startedAt = new Date()) {
   const byRoute = new Map<
     string,

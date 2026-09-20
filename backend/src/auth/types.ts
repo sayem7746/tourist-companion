@@ -45,6 +45,7 @@ export interface AuthStore {
   }): Promise<AuthUser>;
   findByEmail(email: string): Promise<UserRecord | undefined>;
   findById(id: string): Promise<UserRecord | undefined>;
+  count(): Promise<number>;
   updatePasswordHash(userId: string, passwordHash: string): Promise<void>;
   createResetToken(input: {
     userId: string;

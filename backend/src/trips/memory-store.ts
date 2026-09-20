@@ -52,6 +52,9 @@ export function createMemoryTripStore(): TripStore {
       const trip = ownedTrip(userId, tripId);
       return trip ? assemble(trip) : undefined;
     },
+    async count() {
+      return trips.size;
+    },
     async create(userId, input) {
       const trip: Trip = {
         id: randomUUID(),

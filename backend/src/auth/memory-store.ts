@@ -35,6 +35,9 @@ export function createMemoryAuthStore(): AuthStore {
     async findById(id) {
       return usersById.get(id);
     },
+    async count() {
+      return usersById.size;
+    },
     async updatePasswordHash(userId, passwordHash) {
       const user = usersById.get(userId);
       if (!user) return;

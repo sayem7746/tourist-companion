@@ -62,6 +62,12 @@ export function createPgAuthStore(pool: pg.Pool): AuthStore {
       );
       return result.rows[0] ? mapRecord(result.rows[0]) : undefined;
     },
+    async count() {
+      const result = await pool.query<{ count: number | string }>(
+        'SELECT COUNT(*)::int AS count FROM users',
+      );
+      return Number(result.rows[0]?.count ?? 0);
+    },
     async updatePasswordHash(userId, passwordHash) {
       await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [
         passwordHash,

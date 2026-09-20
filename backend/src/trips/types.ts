@@ -96,6 +96,7 @@ export interface SaveTripPlaceInput {
 export interface TripStore {
   list(userId: string): Promise<Trip[]>;
   get(userId: string, tripId: string): Promise<Trip | undefined>;
+  count(): Promise<number>;
   create(userId: string, input: CreateTripInput): Promise<Trip>;
   update(userId: string, tripId: string, patch: UpdateTripInput): Promise<Trip | undefined>;
   delete(userId: string, tripId: string): Promise<boolean>;

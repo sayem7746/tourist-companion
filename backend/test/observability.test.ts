@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { buildApp } from '../src/app.js';
 import { loadConfig } from '../src/config.js';
 import { serializeErrorForLog } from '../src/observability/error-log.js';
-import { createMetricsCollector } from '../src/observability/metrics.js';
+import { createMetricsCollector, routeCount } from '../src/observability/metrics.js';
 
 const app = buildApp(
   loadConfig({
@@ -112,5 +112,7 @@ describe('metrics collector', () => {
     expect(snap.requestsTotal).toBe(20);
     expect(snap.latencyMs.p95).toBe(19);
     expect(snap.byRoute['GET /metrics']).toBeUndefined();
+    expect(routeCount(snap, 'GET', '/health')).toBe(20);
+    expect(routeCount(snap, 'POST', '/concierge/chat')).toBe(0);
   });
 });

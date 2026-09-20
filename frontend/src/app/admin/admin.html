@@ -15,6 +15,27 @@
       This JWT authorizes partner and content admin APIs. Scripts may still send
       <code>X-Admin-Token</code> or a Bearer <code>ADMIN_TOKEN</code>.
     </p>
+    @if (dashboardPending()) {
+      <p class="meta" aria-live="polite">Loading operational counts…</p>
+    }
+    @if (dashboardError()) {
+      <p class="error" role="alert">{{ dashboardError() }}</p>
+    }
+    @if (dashboard()) {
+      <ul class="stats" aria-label="Operational counts">
+        @for (card of cards(); track card.key) {
+          <li class="stat" [class.stat-alert]="card.alert">
+            <span class="stat-value">{{ card.value }}</span>
+            <span class="stat-label">{{ card.label }}</span>
+            <span class="stat-hint">{{ card.hint }}</span>
+          </li>
+        }
+      </ul>
+      <p class="meta">
+        Users, trips, and referrals are stored records. Concierge, nearby, and errors are this API
+        process since last restart.
+      </p>
+    }
     <p class="nav">
       <a routerLink="/admin/content">Manage content</a>
       <a routerLink="/admin/faqs">Manage FAQs</a>
