@@ -9,6 +9,8 @@ Development, staging, and production must not share databases, JWT secrets, or A
 | Public config | `NG_APP_API_BASE_URL`, Angular `src/environments/` | `HOST`, `PORT`, `LOG_LEVEL`, `FRONTEND_ORIGIN`, `APP_ENV` |
 | Secrets | None (SPA is public) | `DATABASE_URL`, `JWT_SECRET`, future third-party API keys |
 
+Open-Meteo weather hints use a public forecast API (no key). Set `WEATHER_PROVIDER=seed` to skip live fetch.
+
 Angular environment files are compiled into the client. Put only public API origins there.
 
 ## Example files (placeholders only)

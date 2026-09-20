@@ -74,6 +74,14 @@ function filledPlan(tripId: string): Itinerary {
   };
   base.days[0] = {
     ...base.days[0],
+    weather: {
+      source: 'open-meteo',
+      condition: 'rain',
+      summary: 'Rain likely · 24–31°C',
+      hint: 'A compact umbrella and indoor mall connectors help.',
+      indoorSafe: true,
+      disclaimer: 'Planning hint only — not a forecast guarantee. Conditions can change.',
+    },
     items: [
       item({
         id: 'a1',
@@ -256,6 +264,9 @@ describe('TripDashboard', () => {
     expect(compiled.textContent).toContain('Langkawi');
     expect(compiled.textContent).toContain('5 days');
     expect(compiled.textContent).toContain("Today's Plan");
+    expect(compiled.textContent).toContain('Weather note');
+    expect(compiled.textContent).toContain('Indoor Safe');
+    expect(compiled.textContent).toContain('Planning hint only — not a forecast guarantee. Conditions can change.');
     expect(compiled.textContent).toContain('09:30 AM');
     expect(compiled.textContent).toContain('Petronas Twin Towers');
     expect(compiled.querySelector('a[href="/explore/my-attr-petronas"]')?.textContent).toContain('Petronas Twin Towers');
@@ -293,6 +304,8 @@ describe('TripDashboard', () => {
 
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.textContent).toContain('Petronas Twin Towers');
+    expect(compiled.textContent).toContain('Indoor Safe');
+    expect(compiled.textContent).toContain('not a forecast guarantee');
     http.verify();
   });
 

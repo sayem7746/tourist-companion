@@ -4,7 +4,7 @@ Product spec for a **1–7 day** trip plan: calendar days, timed blocks, places,
 
 Asana: [Define itinerary data model](https://app.asana.com/1/1218080418840809/project/1218661619289569/task/1218660706637518) (EPIC 06 — Smart Itinerary Planner).
 
-Shared contract: `Itinerary`, `ItineraryDay`, `ItineraryItem`, `ITINERARY_ITEM_KINDS`, and `ITINERARY_MIN_DAYS` / `ITINERARY_MAX_DAYS` in `shared/types/index.ts`.
+Shared contract: `Itinerary`, `ItineraryDay`, `ItineraryItem`, `DayWeatherHint`, `ITINERARY_ITEM_KINDS`, and `ITINERARY_MIN_DAYS` / `ITINERARY_MAX_DAYS` in `shared/types/index.ts`.
 
 Timezone for dates and wall-clock times: **`Asia/Kuala_Lumpur`**.
 
@@ -26,7 +26,7 @@ Align with Stitch [TripCompanion — Tropical Sanctuary](https://stitch.withgoog
 | Booking | outbound ticket/table link (app does not book) | `bookingUrl`; optional `referralPartnerId` |
 | Cards | 16px radius, `#FFFFFF`, `1px #E2E8F0` | Item cards, not a data field |
 
-SOS stays emergency-only. Weather badges on Home (Indoor Safe) are a later weather-notes task, not stored on this model.
+SOS stays emergency-only. Weather planning hints attach to `ItineraryDay.weather` at read time (Open-Meteo when available, Malaysia climate seed otherwise) and must not be presented as forecast guarantees. The gold **Indoor Safe** badge is display-only from `weather.indoorSafe`.
 
 Saved Explore places (`SavedTripPlace`) are a wishlist. An itinerary item may point at the same `placeId` after the traveler (or generator) adds it to a day.
 
@@ -60,10 +60,25 @@ interface ItineraryDay {
   dayNumber: number; // 1 … dayCount
   date: string; // YYYY-MM-DD
   items: ItineraryItem[];
+  weather?: DayWeatherHint | null; // read-time overlay, not persisted
 }
 ```
 
 `status`: `draft` after generation, `active` once the traveler is using it, `archived` if replaced. Regeneration of a day (later task) keeps `locked` items.
+
+## Weather notes
+
+Each `ItineraryDay` may include `weather` when the itinerary is read or generated. It is **not** stored in PostgreSQL.
+
+| Field | Meaning |
+| --- | --- |
+| `source` | `open-meteo` when a daily forecast row is returned; `seed` for Malaysia climate fallback |
+| `condition` | `storm` \| `rain` \| `heat` \| `haze_season` \| `typical` |
+| `summary` / `hint` | Planning copy for the Plan tab |
+| `indoorSafe` | When true, Plan shows a gold **Indoor Safe** chip |
+| `disclaimer` | Always present: forecasts and climate patterns are not guarantees |
+
+Live fetch is optional (`WEATHER_PROVIDER=open-meteo`, default outside tests). Timeouts, HTTP errors, and dates outside the forecast window use the seed. Copy must not say the weather *will* happen.
 
 ## Items (time blocks)
 
@@ -95,7 +110,7 @@ interface ItineraryItem {
 | `startTime` / `endTime` | yes | `HH:mm`, 24h, `endTime` > `startTime` |
 | `placeId` | no | Catalog / nearby / saved place id; omit for free-text notes and some travel legs |
 | `travelTimeMinutes` | no | Integer ≥ 0; inbound commute to this block, or the leg duration when `kind` is `travel` |
-| `notes` | no | Traveler or generator copy (hours, dress code, “Indoor Safe” later) |
+| `notes` | no | Traveler or generator copy (hours, dress code) |
 | `bookingUrl` | no | HTTPS outbound only; never implies in-app checkout |
 | `referralPartnerId` | no | `Provider.id`; use with or without `bookingUrl` |
 | `locked` | yes | Default `false`. Locked items survive day/activity regen |
@@ -147,8 +162,8 @@ Trip 21–27 Sep 2026, Kuala Lumpur. Selected day Thursday 22 Sep.
 | `activity` | 09:30–11:00 | Petronas Twin Towers | `placeId` seed attraction; `bookingUrl` tickets; `locked` false |
 | `travel` omitted; next row has inbound minutes | | | |
 | `meal` | 12:00–13:00 | Madam Kwan’s | `travelTimeMinutes: 15`; food `placeId` |
-| `activity` | 16:00–17:30 | Suria KLCC (indoor) | `notes` for weather; gold “Indoor Safe” is display-only until weather notes |
+| `activity` | 16:00–17:30 | Suria KLCC (indoor) | `notes` for hours; day `weather.indoorSafe` shows gold “Indoor Safe” |
 
 ## Out of scope
 
-API routes, generator heuristics, drag-reorder UI, weather overlay, multi-city days, overlapping concurrent options, and in-app payments. Concierge **Add to Plan** should create an `activity` or `meal` item once CRUD exists; until then it only deep-links to `/trips`.
+API routes, generator heuristics, drag-reorder UI, multi-city days, overlapping concurrent options, and in-app payments. Concierge **Add to Plan** should create an `activity` or `meal` item once CRUD exists; until then it only deep-links to `/trips`.

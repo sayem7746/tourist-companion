@@ -96,15 +96,29 @@ describe('itinerary CRUD endpoints', () => {
         itinerary: {
           dayCount: number;
           status: string;
-          days: Array<{ dayNumber: number; date: string; items: unknown[] }>;
+          days: Array<{ dayNumber: number; date: string; items: unknown[]; weather?: { source: string; condition: string; indoorSafe: boolean; disclaimer: string; hint: string } }>;
         };
       }
     ).itinerary;
     expect(itinerary.status).toBe('draft');
     expect(itinerary.dayCount).toBe(7);
     expect(itinerary.days).toHaveLength(7);
-    expect(itinerary.days[0]).toMatchObject({ dayNumber: 1, date: '2026-10-01', items: [] });
+    expect(itinerary.days[0]).toMatchObject({
+      dayNumber: 1,
+      date: '2026-10-01',
+      items: [],
+      weather: {
+        source: 'seed',
+        condition: 'haze_season',
+        indoorSafe: false,
+        disclaimer: 'Planning hint only — not a forecast guarantee. Conditions can change.',
+      },
+    });
+    expect(itinerary.days[0].weather?.hint).toMatch(/not report live air quality/i);
     expect(itinerary.days[6]).toMatchObject({ dayNumber: 7, date: '2026-10-07' });
+    expect(itinerary.days.every((day) => day.weather?.disclaimer.includes('not a forecast guarantee'))).toBe(
+      true,
+    );
   });
 
   it('creates, updates, reorders, and deletes items', async () => {
@@ -344,6 +358,7 @@ describe('itinerary CRUD endpoints', () => {
     expect(day1Body.generation).toMatchObject({
       implemented: true,
       source: 'places-seed',
+      weatherSource: 'seed',
       daysRegenerated: [1],
     });
     expect(day1Body.itinerary.generatedAt).toEqual(expect.any(String));

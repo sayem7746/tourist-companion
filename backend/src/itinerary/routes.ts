@@ -5,8 +5,11 @@ import type { AppConfig } from '../config.js';
 import { NotFoundError, ServiceUnavailableError, ValidationError } from '../errors.js';
 import type { TripStore } from '../trips/types.js';
 import { validateRequest } from '../validate.js';
+import { attachDayWeather } from '../weather/attach.js';
+import { createWeatherClientFromConfig } from '../weather/client.js';
+import type { WeatherClient } from '../weather/types.js';
 import { planItinerary } from './generate.js';
-import { ITINERARY_ITEM_KINDS, ITINERARY_STATUSES, type ItineraryStore } from './types.js';
+import { ITINERARY_ITEM_KINDS, ITINERARY_STATUSES, type Itinerary, type ItineraryStore } from './types.js';
 
 const time = z
   .string()
@@ -129,6 +132,7 @@ export async function registerItineraryRoutes(
   config: AppConfig,
   resolveStore: () => ItineraryStore | undefined,
   resolveTripStore: () => TripStore | undefined,
+  resolveWeather: () => WeatherClient = () => createWeatherClientFromConfig(config),
 ): Promise<void> {
   const getStore = (): ItineraryStore => {
     const store = resolveStore();
@@ -156,63 +160,70 @@ export async function registerItineraryRoutes(
 
   const auth = { preHandler: requireAuth(config) };
 
+  const withWeather = async (userId: string, tripId: string, itinerary: Itinerary): Promise<Itinerary> => {
+    const trip = await getTripStore().get(userId, tripId);
+    if (!trip) return itinerary;
+    return attachDayWeather(itinerary, trip.destination, resolveWeather());
+  };
+
   app.get('/trips/:id/itinerary', auth, async (request) => {
     const { params } = validateRequest(request, { params: tripParams });
-    const itinerary = await getStore().get(requireUserId(request), params.id);
+    const userId = requireUserId(request);
+    const itinerary = await getStore().get(userId, params.id);
     if (!itinerary) {
       throw new NotFoundError('Trip not found');
     }
-    return { itinerary };
+    return { itinerary: await withWeather(userId, params.id, itinerary) };
   });
 
   app.put('/trips/:id/itinerary', auth, async (request) => {
     const { params, body } = validateRequest(request, { params: tripParams, body: putSchema });
-    const itinerary = await getStore().put(requireUserId(request), params.id, body);
+    const userId = requireUserId(request);
+    const itinerary = await getStore().put(userId, params.id, body);
     if (!itinerary) {
       throw new NotFoundError('Trip not found');
     }
-    return { itinerary };
+    return { itinerary: await withWeather(userId, params.id, itinerary) };
   });
 
   app.post('/trips/:id/itinerary/items', auth, async (request, reply) => {
     const { params, body } = validateRequest(request, { params: tripParams, body: createItemSchema });
-    const itinerary = await getStore().createItem(requireUserId(request), params.id, body);
+    const userId = requireUserId(request);
+    const itinerary = await getStore().createItem(userId, params.id, body);
     if (!itinerary) {
       throw new NotFoundError('Trip not found');
     }
-    return reply.status(201).send({ itinerary });
+    return reply.status(201).send({ itinerary: await withWeather(userId, params.id, itinerary) });
   });
 
   app.patch('/trips/:id/itinerary/items/:itemId', auth, async (request) => {
     const { params, body } = validateRequest(request, { params: itemParams, body: patchItemSchema });
-    const itinerary = await getStore().updateItem(
-      requireUserId(request),
-      params.id,
-      params.itemId,
-      body,
-    );
+    const userId = requireUserId(request);
+    const itinerary = await getStore().updateItem(userId, params.id, params.itemId, body);
     if (!itinerary) {
       throw new NotFoundError('Itinerary item not found');
     }
-    return { itinerary };
+    return { itinerary: await withWeather(userId, params.id, itinerary) };
   });
 
   app.delete('/trips/:id/itinerary/items/:itemId', auth, async (request) => {
     const { params } = validateRequest(request, { params: itemParams });
-    const itinerary = await getStore().deleteItem(requireUserId(request), params.id, params.itemId);
+    const userId = requireUserId(request);
+    const itinerary = await getStore().deleteItem(userId, params.id, params.itemId);
     if (!itinerary) {
       throw new NotFoundError('Itinerary item not found');
     }
-    return { itinerary };
+    return { itinerary: await withWeather(userId, params.id, itinerary) };
   });
 
   app.post('/trips/:id/itinerary/reorder', auth, async (request) => {
     const { params, body } = validateRequest(request, { params: tripParams, body: reorderSchema });
-    const itinerary = await getStore().reorder(requireUserId(request), params.id, body);
+    const userId = requireUserId(request);
+    const itinerary = await getStore().reorder(userId, params.id, body);
     if (!itinerary) {
       throw new NotFoundError('Trip not found');
     }
-    return { itinerary };
+    return { itinerary: await withWeather(userId, params.id, itinerary) };
   });
 
   const generateDraft = async (request: FastifyRequest) => {
@@ -244,11 +255,14 @@ export async function registerItineraryRoutes(
     if (!updated) {
       throw new NotFoundError('Trip not found');
     }
+    const decorated = await withWeather(userId, params.id, updated);
+    const weatherSource = decorated.days.find((day) => day.weather?.source)?.weather?.source ?? 'seed';
     return {
-      itinerary: updated,
+      itinerary: decorated,
       generation: {
         implemented: true,
         source: 'places-seed',
+        weatherSource,
         daysRegenerated: planned.map((day) => day.dayNumber),
       },
     };

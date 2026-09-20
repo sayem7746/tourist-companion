@@ -216,6 +216,25 @@ export interface Itinerary {
   updatedAt?: string;
 }
 
+export const WEATHER_DISCLAIMER =
+  'Planning hint only — not a forecast guarantee. Conditions can change.';
+
+export const WEATHER_SOURCES = ['open-meteo', 'seed'] as const;
+export type WeatherSource = (typeof WEATHER_SOURCES)[number];
+
+export const WEATHER_CONDITIONS = ['storm', 'rain', 'heat', 'haze_season', 'typical'] as const;
+export type WeatherCondition = (typeof WEATHER_CONDITIONS)[number];
+
+/** Day-level planning hint. Live Open-Meteo when available; otherwise climate seed. */
+export interface DayWeatherHint {
+  source: WeatherSource;
+  condition: WeatherCondition;
+  summary: string;
+  hint: string;
+  indoorSafe: boolean;
+  disclaimer: string;
+}
+
 /** Calendar day in the Plan tab / Home “Today's Plan” timeline. */
 export interface ItineraryDay {
   id: ItineraryDayId;
@@ -225,6 +244,8 @@ export interface ItineraryDay {
   /** ISO calendar date `YYYY-MM-DD` in `Asia/Kuala_Lumpur`. */
   date: string;
   items: ItineraryItem[];
+  /** Read-time weather overlay; not persisted on the itinerary. */
+  weather?: DayWeatherHint | null;
 }
 
 /**

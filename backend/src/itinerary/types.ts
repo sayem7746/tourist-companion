@@ -1,3 +1,5 @@
+import type { DayWeatherHint } from '../weather/types.js';
+
 export const ITINERARY_MIN_DAYS = 1;
 export const ITINERARY_MAX_DAYS = 7;
 
@@ -29,6 +31,8 @@ export interface ItineraryDay {
   dayNumber: number;
   date: string;
   items: ItineraryItem[];
+  /** Enriched at read time; not stored. */
+  weather?: DayWeatherHint | null;
 }
 
 export interface Itinerary {

@@ -31,6 +31,9 @@ const envSchema = z.object({
   GOOGLE_PLACES_API_KEY: z.string().min(1).optional(),
   GOOGLE_PLACES_BASE_URL: z.string().url().default('https://places.googleapis.com'),
   OVERPASS_URL: z.string().url().default('https://overpass-api.de/api/interpreter'),
+  WEATHER_PROVIDER: z.enum(['open-meteo', 'seed']).optional(),
+  OPEN_METEO_BASE_URL: z.string().url().default('https://api.open-meteo.com'),
+  WEATHER_TIMEOUT_MS: z.coerce.number().int().min(200).max(15_000).default(2_500),
 });
 
 export function hasUsableApiKey(key: string | undefined): boolean {

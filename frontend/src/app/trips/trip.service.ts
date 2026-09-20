@@ -83,12 +83,28 @@ export interface ItineraryItem {
   title: string | null;
 }
 
+export const WEATHER_SOURCES = ['open-meteo', 'seed'] as const;
+export type WeatherSource = (typeof WEATHER_SOURCES)[number];
+
+export const WEATHER_CONDITIONS = ['storm', 'rain', 'heat', 'haze_season', 'typical'] as const;
+export type WeatherCondition = (typeof WEATHER_CONDITIONS)[number];
+
+export interface DayWeatherHint {
+  source: WeatherSource;
+  condition: WeatherCondition;
+  summary: string;
+  hint: string;
+  indoorSafe: boolean;
+  disclaimer: string;
+}
+
 export interface ItineraryDay {
   id: string;
   itineraryId: string;
   dayNumber: number;
   date: string;
   items: ItineraryItem[];
+  weather?: DayWeatherHint | null;
 }
 
 export interface Itinerary {

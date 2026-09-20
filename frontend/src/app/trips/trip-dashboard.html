@@ -55,6 +55,19 @@
       <h2>Today's Plan</h2>
       @if (selectedDay(); as day) {
         <p class="meta">{{ formatDate(day.date) }} · {{ highlights() }} highlight{{ highlights() === 1 ? '' : 's' }}</p>
+        @if (day.weather; as weather) {
+          <aside class="plan-card weather-card note-card" aria-label="Weather planning hint">
+            <div class="card-head">
+              <h3>Weather note</h3>
+              @if (weather.indoorSafe) {
+                <span class="chip chip-gold">Indoor Safe</span>
+              }
+            </div>
+            <p class="weather-summary">{{ weather.summary }}</p>
+            <p class="notes">{{ weather.hint }}</p>
+            <p class="weather-disclaimer">{{ weather.disclaimer }}</p>
+          </aside>
+        }
       }
       @if (!itineraryPending() && itinerary() && !planEmpty()) {
         <div class="regen-pills" role="group" aria-label="Regenerate itinerary">

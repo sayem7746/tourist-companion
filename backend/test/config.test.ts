@@ -46,5 +46,8 @@ describe('loadConfig', () => {
     expect(cfg.PLACES_PROVIDER).toBeUndefined();
     expect(cfg.GOOGLE_PLACES_BASE_URL).toBe('https://places.googleapis.com');
     expect(cfg.OVERPASS_URL).toBe('https://overpass-api.de/api/interpreter');
+    expect(cfg.WEATHER_PROVIDER).toBeUndefined();
+    expect(cfg.OPEN_METEO_BASE_URL).toBe('https://api.open-meteo.com');
+    expect(cfg.WEATHER_TIMEOUT_MS).toBe(2_500);
   });
 });
